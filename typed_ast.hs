@@ -23,7 +23,7 @@ data UntypedAst = AddU | MultU | NegateU
   | AppU UntypedAst UntypedAst
   | LambdaU String UntypedType UntypedAst
   | VarU String
-  | IdU | ComposeU | ApplyU
+  | IdU | ComposeU | ApplyU | Choose2U
 
 data UntypedType = IntUT | ArrowUT UntypedType UntypedType
 
@@ -53,6 +53,7 @@ data Ast a where
   IdT :: LangType a => Ast (a -> a)
   ComposeT :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a))
   ApplyT :: LangType a => Ast (a -> (a -> a) -> a)
+  Choose2T :: LangType a => Ast (Int -> a -> a -> a)
 
 deriving instance Typeable1 Ast
 deriving instance Show (Ast a)
@@ -167,6 +168,10 @@ typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
     OpaqueAstPoly (LeftTL HereTL) $
       (OpaqueAstPolyHelperExists :: LangType a => Ast (a -> (a -> a) -> a) -> OpaqueAstPolyHelperExists a)
       ApplyT
+  typecheck_inner ctx Choose2U =
+    OpaqueAstPoly (RightTL (LeftTL HereTL)) $
+      (OpaqueAstPolyHelperExists :: LangType a => Ast (Int -> a -> a -> a) -> OpaqueAstPolyHelperExists a)
+      Choose2T
 
 forcetype (OpaqueAst a) = case cast a of
   Just x -> x
@@ -191,6 +196,7 @@ eval s (LambdaT name tt body) = result where
 eval s IdT = (\x -> x)
 eval s ComposeT = (\f -> \g -> \x -> f (g x))
 eval s ApplyT = (\x -> \f -> f x)
+eval s Choose2T = (\x -> \a -> \b -> if x == 0 then a else b)
 
 example1 =
   AppU (LambdaU "arg" (ArrowUT IntUT (ArrowUT IntUT IntUT)) (AppU (AppU (VarU "arg") (LiteralU 11)) (LiteralU 6))) AddU
@@ -206,9 +212,12 @@ example4 = AppU
   (AppU ApplyU (LiteralU 5))
   (LambdaU "x" IntUT (AppU (AppU MultU (VarU "x")) (VarU "x") ))
 
+example5 = (Choose2U `AppU` (LiteralU 0) `AppU` AddU `AppU` MultU) `AppU` (LiteralU 1) `AppU` (LiteralU 2)
+
 main = do
   putStrLn $ show $ (typecheck_ast example3)
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example1) :: Ast Int )
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example2) :: Ast Int )
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example3) :: Ast Int )
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example4) :: Ast Int )
+  putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example5) :: Ast Int )
