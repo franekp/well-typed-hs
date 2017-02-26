@@ -60,7 +60,7 @@ deriving instance Show (Ast a)
 
 class (Typeable a) => LangType a where
   get_type :: LangType a => TypedType a
-  make_app_node_arity :: Ast a -> OpaqueAst -> OpaqueAst
+  make_app_node_mono :: Ast a -> OpaqueAst -> OpaqueAst
 
 type_of :: LangType a => Ast a -> TypedType a
 type_of a = get_type
@@ -81,36 +81,36 @@ unify (BothTL right left) phe (ArrowTT l r) cont = unify left phe l cont  -- ???
 
 instance LangType Int where
   get_type = IntTT
-  make_app_node_arity fun arg = case fun of
+  make_app_node_mono fun arg = case fun of
     ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
     _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
 
 instance LangType Void where
   get_type = VoidTT
-  make_app_node_arity fun arg = case fun of
+  make_app_node_mono fun arg = case fun of
     ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
     _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
 
 instance (LangType a, LangType b) => LangType (a -> b) where
   get_type = ArrowTT (get_type :: TypedType a) (get_type :: TypedType b)
-  make_app_node_arity fun arg = case forcetype arg of
+  make_app_node_mono fun arg = case forcetype arg of
     ErrorT msg -> OpaqueAst $ (ErrorT $ (msg ++ " --- expected type compatibile with: " ++ (show $ dynTypeRep $ toDyn fun) ++ "//  " ++ show fun) :: Ast Void)
     argg -> OpaqueAst $ AppT fun argg
 
 make_app_node_poly :: LangType a => TypeLocation -> (forall x. LangType x => OpaqueAstPolyHelperExists x) -> Ast a -> OpaqueAst
 make_app_node_poly (LeftTL loc) phe arg = unify loc phe (type_of arg) do_stuff where
   do_stuff :: OpaqueAstPolyHelperExists x -> OpaqueAst
-  do_stuff (OpaqueAstPolyHelperExists fun) = make_app_node_arity fun (OpaqueAst arg)
+  do_stuff (OpaqueAstPolyHelperExists fun) = make_app_node_mono fun (OpaqueAst arg)
 make_app_node_poly (BothTL loc _) phe arg = unify loc phe (type_of arg) do_stuff where
   do_stuff :: OpaqueAstPolyHelperExists x -> OpaqueAst
-  do_stuff (OpaqueAstPolyHelperExists fun) = make_app_node_arity fun (OpaqueAst arg)
+  do_stuff (OpaqueAstPolyHelperExists fun) = make_app_node_mono fun (OpaqueAst arg)
 make_app_node_poly (RightTL loc) phe arg = OpaqueAstPoly loc $ do_stuff phe arg where
   -- this is the true type for that, but it did not worked - this more specific type is automagically generalized somehow
   -- and conveys information that each x from the left corresponds to x from the right - the type variable stays the same
   -- do_stuff :: LangType aa => (forall x. LangType x => OpaqueAstPolyHelperExists x) -> Ast aa -> (forall y. LangType y => OpaqueAstPolyHelperExists y)
   do_stuff :: (LangType aa, LangType x) => OpaqueAstPolyHelperExists x -> Ast aa -> OpaqueAstPolyHelperExists x
   do_stuff (OpaqueAstPolyHelperExists fun) arg =
-    case make_app_node_arity fun (OpaqueAst arg) of
+    case make_app_node_mono fun (OpaqueAst arg) of
       OpaqueAst result ->  OpaqueAstPolyHelperExists result
 make_app_node_poly HereTL phe arg = OpaqueAst $ (ErrorT $ "Trying to use variable of generic type as a function with argument: " ++ show arg :: Ast Void)
 
@@ -136,7 +136,7 @@ typecheck_type (ArrowUT a b) =
 
 typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
   make_app_node :: OpaqueAst -> OpaqueAst -> OpaqueAst
-  make_app_node (OpaqueAst func) a = make_app_node_arity func a
+  make_app_node (OpaqueAst func) a = make_app_node_mono func a
   make_app_node (OpaqueAstPoly loc polyhelperexists) (OpaqueAst arg) =
    make_app_node_poly loc polyhelperexists arg
   typecheck_inner :: (String -> Maybe UntypedType) -> UntypedAst -> OpaqueAst
