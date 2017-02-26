@@ -28,8 +28,11 @@ data UntypedAst = AddU | MultU | NegateU
 data UntypedType = IntUT | ArrowUT UntypedType UntypedType
 
 data TypedType a where
-  ArrowTT :: TypedType a -> TypedType b -> TypedType (a -> b)
+  ArrowTT :: (LangType a, LangType b) => TypedType a -> TypedType b -> TypedType (a -> b)
   IntTT :: TypedType Int
+  VoidTT :: TypedType Void
+
+data TypeLocation = HereTL | LeftTL TypeLocation | RightTL TypeLocation | BothTL TypeLocation TypeLocation
 
 deriving instance Show (TypedType a)
 
@@ -55,29 +58,55 @@ deriving instance Typeable1 Ast
 deriving instance Show (Ast a)
 
 class (Typeable a) => LangType a where
+  get_type :: LangType a => TypedType a
   make_app_node_arity :: Ast a -> OpaqueAst -> OpaqueAst
+  -- make_app_node_poly :: (LangType x) => OpaqueAstPolyHelperExists x -> Ast a -> OpaqueAst
+
+polyhelperexists_error :: String -> OpaqueAstPolyHelperExists Void
+polyhelperexists_error a = OpaqueAstPolyHelperExists $ (ErrorT a :: Ast Void)
+
+unify :: forall res a. LangType a => TypeLocation -> (forall x. LangType x => OpaqueAstPolyHelperExists x) -> TypedType a -> (forall y. LangType y => OpaqueAstPolyHelperExists y -> res) -> res
+unify HereTL phe tt cont = make_result phe tt cont where
+  make_result :: LangType x => OpaqueAstPolyHelperExists x -> TypedType x -> (forall y. LangType y => OpaqueAstPolyHelperExists y -> res) -> res
+  make_result phe_ tt_ cont_ = cont_ phe_
+unify (LeftTL _) phe IntTT cont = cont $ polyhelperexists_error "expected function, got IntTT"
+unify (RightTL _) phe IntTT cont = cont $ polyhelperexists_error "expected function, got IntTT"
+unify (BothTL _ _) phe IntTT cont = cont $ polyhelperexists_error "expected function, got IntTT"
+unify (LeftTL left) phe (ArrowTT l r) cont = unify left phe l cont
+unify (RightTL right) phe (ArrowTT l r) cont = unify right phe r cont
+unify (BothTL right left) phe (ArrowTT l r) cont = unify left phe l cont  -- ???
 
 instance LangType Int where
+  get_type = IntTT
   make_app_node_arity fun arg = case fun of
     ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
     _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
 
 instance LangType Void where
+  get_type = VoidTT
   make_app_node_arity fun arg = case fun of
     ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
     _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
 
 instance (LangType a, LangType b) => LangType (a -> b) where
+  get_type = ArrowTT (get_type :: TypedType a) (get_type :: TypedType b)
   make_app_node_arity fun arg = case forcetype arg of
     ErrorT msg -> OpaqueAst $ (ErrorT $ (msg ++ " --- expected type compatibile with: " ++ (show $ dynTypeRep $ toDyn fun) ++ "//  " ++ show fun) :: Ast Void)
     argg -> OpaqueAst $ AppT fun argg
 
-data OpaqueAstPolyHelperExists a where
-  OpaqueAstPolyHelperExists :: (LangType a, LangType b) => Ast b -> OpaqueAstPolyHelperExists a
+  {-make_app_node_poly (OpaqueAstPolyHelperExists (LeftTL loc) fun) arg =
+    let
+      do_stuff :: (LangType x) => OpaqueAstPolyHelperExists x -> Ast x -> OpaqueAst
+
+    in-}
+
+
+data OpaqueAstPolyHelperExists x where
+  OpaqueAstPolyHelperExists :: (LangType x, LangType a) => Ast a -> OpaqueAstPolyHelperExists x
 
 data OpaqueAst where
   OpaqueAst :: LangType a => Ast a -> OpaqueAst
-  OpaqueAstPoly :: (forall a. LangType a => OpaqueAstPolyHelperExists a) -> OpaqueAst
+  OpaqueAstPoly :: {-TypeLocation ->-} (forall x. LangType x => OpaqueAstPolyHelperExists x) -> OpaqueAst
 
 instance Show OpaqueAst where
   show (OpaqueAst a) = show a
