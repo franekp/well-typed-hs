@@ -184,7 +184,7 @@ eval s (LambdaT name tt body) = result where
     new_s :: forall a. LangType a => String -> TypedType a -> Maybe a
     new_s v t = case (cast param) of
       Just p ->
-        if v == name && True
+        if v == name
           then Just p  -- very important 'Just' here, it compiles without that too!
           else s v t
       Nothing -> s v t
