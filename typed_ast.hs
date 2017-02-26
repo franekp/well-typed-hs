@@ -98,20 +98,23 @@ instance (LangType a, LangType b) => LangType (a -> b) where
     argg -> OpaqueAst $ AppT fun argg
 
 make_app_node_poly :: LangType a => TypeLocation -> (forall x. LangType x => PolyAst x) -> Ast a -> OpaqueAst
-make_app_node_poly (LeftTL loc) phe arg = unify loc phe (type_of arg) do_stuff where
+make_app_node_poly (LeftTL left) phe arg = unify left phe (type_of arg) do_stuff where
   do_stuff :: PolyAst x -> OpaqueAst
   do_stuff (PolyAst (OpaqueAst fun)) = make_app_node_mono fun (OpaqueAst arg)
-make_app_node_poly (BothTL loc _) phe arg = unify loc phe (type_of arg) do_stuff where
+  do_stuff (PolyAst (OpaqueAstPoly loc newphe)) = make_app_node_poly loc newphe arg
+make_app_node_poly (BothTL left right) phe arg = unify left phe (type_of arg) do_stuff where
   do_stuff :: PolyAst x -> OpaqueAst
   do_stuff (PolyAst (OpaqueAst fun)) = make_app_node_mono fun (OpaqueAst arg)
-make_app_node_poly (RightTL loc) phe arg = OpaqueAstPoly loc $ do_stuff phe arg where
+  do_stuff (PolyAst (OpaqueAstPoly loc newphe)) = make_app_node_poly loc newphe arg
+make_app_node_poly (RightTL right) phe arg = OpaqueAstPoly right $ do_stuff phe arg where
   -- this is the true type for that, but it did not worked - this more specific type is automagically generalized somehow
   -- and conveys information that each x from the left corresponds to x from the right - the type variable stays the same
   -- do_stuff :: LangType aa => (forall x. LangType x => PolyAst x) -> Ast aa -> (forall y. LangType y => PolyAst y)
   do_stuff :: (LangType aa, LangType x) => PolyAst x -> Ast aa -> PolyAst x
   do_stuff (PolyAst (OpaqueAst fun)) arg =
-    case make_app_node_mono fun (OpaqueAst arg) of
-      OpaqueAst result ->  PolyAst $ OpaqueAst result
+    PolyAst $ make_app_node_mono fun (OpaqueAst arg)
+  do_stuff (PolyAst (OpaqueAstPoly loc newphe)) arg =
+    PolyAst $ make_app_node_poly loc newphe arg
 make_app_node_poly HereTL phe arg = OpaqueAst $ (ErrorT $ "Trying to use variable of generic type as a function with argument: " ++ show arg :: Ast Void)
 
 data PolyAst x where
