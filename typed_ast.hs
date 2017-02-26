@@ -66,7 +66,7 @@ type_of :: LangType a => Ast a -> TypedType a
 type_of a = get_type
 
 polyhelperexists_error :: String -> PolyAst Void
-polyhelperexists_error a = PolyAst $ (ErrorT a :: Ast Void)
+polyhelperexists_error a = PolyAst $ OpaqueAst $ (ErrorT a :: Ast Void)
 
 unify :: forall res a. LangType a => TypeLocation -> (forall x. LangType x => PolyAst x) -> TypedType a -> (forall y. LangType y => PolyAst y -> res) -> res
 unify HereTL phe tt cont = make_result phe tt cont where
@@ -100,22 +100,22 @@ instance (LangType a, LangType b) => LangType (a -> b) where
 make_app_node_poly :: LangType a => TypeLocation -> (forall x. LangType x => PolyAst x) -> Ast a -> OpaqueAst
 make_app_node_poly (LeftTL loc) phe arg = unify loc phe (type_of arg) do_stuff where
   do_stuff :: PolyAst x -> OpaqueAst
-  do_stuff (PolyAst fun) = make_app_node_mono fun (OpaqueAst arg)
+  do_stuff (PolyAst (OpaqueAst fun)) = make_app_node_mono fun (OpaqueAst arg)
 make_app_node_poly (BothTL loc _) phe arg = unify loc phe (type_of arg) do_stuff where
   do_stuff :: PolyAst x -> OpaqueAst
-  do_stuff (PolyAst fun) = make_app_node_mono fun (OpaqueAst arg)
+  do_stuff (PolyAst (OpaqueAst fun)) = make_app_node_mono fun (OpaqueAst arg)
 make_app_node_poly (RightTL loc) phe arg = OpaqueAstPoly loc $ do_stuff phe arg where
   -- this is the true type for that, but it did not worked - this more specific type is automagically generalized somehow
   -- and conveys information that each x from the left corresponds to x from the right - the type variable stays the same
   -- do_stuff :: LangType aa => (forall x. LangType x => PolyAst x) -> Ast aa -> (forall y. LangType y => PolyAst y)
   do_stuff :: (LangType aa, LangType x) => PolyAst x -> Ast aa -> PolyAst x
-  do_stuff (PolyAst fun) arg =
+  do_stuff (PolyAst (OpaqueAst fun)) arg =
     case make_app_node_mono fun (OpaqueAst arg) of
-      OpaqueAst result ->  PolyAst result
+      OpaqueAst result ->  PolyAst $ OpaqueAst result
 make_app_node_poly HereTL phe arg = OpaqueAst $ (ErrorT $ "Trying to use variable of generic type as a function with argument: " ++ show arg :: Ast Void)
 
 data PolyAst x where
-  PolyAst :: (LangType x, LangType a) => Ast a -> PolyAst x
+  PolyAst :: LangType x => OpaqueAst -> PolyAst x
 
 data OpaqueAst where
   OpaqueAst :: LangType a => Ast a -> OpaqueAst
@@ -157,20 +157,20 @@ typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
         OpaqueType tt -> OpaqueAst $ LambdaT name tt bodynode
   typecheck_inner ctx IdU =
     OpaqueAstPoly (BothTL HereTL HereTL) $
-      (PolyAst :: LangType a => Ast (a -> a) -> PolyAst a)
+      ((PolyAst . OpaqueAst) :: LangType a => Ast (a -> a) -> PolyAst a)
       IdT
   typecheck_inner ctx ComposeU =
     -- should be (BothTL (BothTL HereTL HereTL) (BothTL (BothTL HereTL HereTL) (BothTL HereTL HereTL))) but not used for now
     OpaqueAstPoly (LeftTL (BothTL HereTL HereTL)) $
-      (PolyAst :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a)) -> PolyAst a)
+      ((PolyAst . OpaqueAst) :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a)) -> PolyAst a)
       ComposeT
   typecheck_inner ctx ApplyU =
     OpaqueAstPoly (LeftTL HereTL) $
-      (PolyAst :: LangType a => Ast (a -> (a -> a) -> a) -> PolyAst a)
+      ((PolyAst . OpaqueAst) :: LangType a => Ast (a -> (a -> a) -> a) -> PolyAst a)
       ApplyT
   typecheck_inner ctx Choose2U =
     OpaqueAstPoly (RightTL (LeftTL HereTL)) $
-      (PolyAst :: LangType a => Ast (Int -> a -> a -> a) -> PolyAst a)
+      ((PolyAst . OpaqueAst) :: LangType a => Ast (Int -> a -> a -> a) -> PolyAst a)
       Choose2T
 
 forcetype (OpaqueAst a) = case cast a of
