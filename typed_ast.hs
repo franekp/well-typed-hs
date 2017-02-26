@@ -52,11 +52,12 @@ data Ast a where
   LambdaT :: (LangType a, LangType b) => String -> TypedType a -> Ast b -> Ast (a -> b)
   IdT :: LangType a => Ast (a -> a)
   ComposeT :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a))
-  ApplyT :: LangType a => Ast (a -> (a -> a) -> a)
+  ApplyT :: (LangType a, LangType b) => Ast (a -> (a -> b) -> b)
   Choose2T :: LangType a => Ast (Int -> a -> a -> a)
 
 deriving instance Typeable1 Ast
 deriving instance Show (Ast a)
+deriving instance Show TypeLocation
 
 class (Typeable a) => LangType a where
   get_type :: LangType a => TypedType a
@@ -126,6 +127,8 @@ data OpaqueAst where
 
 instance Show OpaqueAst where
   show (OpaqueAst a) = show a
+  show (OpaqueAstPoly tl polyast) = case (polyast :: PolyAst Void) of
+    PolyAst opaque_ast -> "[" ++ show tl ++ "] " ++ show opaque_ast
 
 typecheck_ast :: UntypedAst -> OpaqueAst
 typecheck_type :: UntypedType -> OpaqueType
@@ -164,15 +167,19 @@ typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
       IdT
   typecheck_inner ctx ComposeU =
     -- should be (BothTL (BothTL HereTL HereTL) (BothTL (BothTL HereTL HereTL) (BothTL HereTL HereTL))) but not used for now
-    OpaqueAstPoly (LeftTL (BothTL HereTL HereTL)) $
+    OpaqueAstPoly (LeftTL $ BothTL HereTL HereTL) $
       ((PolyAst . OpaqueAst) :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a)) -> PolyAst a)
       ComposeT
-  typecheck_inner ctx ApplyU =
-    OpaqueAstPoly (LeftTL HereTL) $
-      ((PolyAst . OpaqueAst) :: LangType a => Ast (a -> (a -> a) -> a) -> PolyAst a)
-      ApplyT
+  typecheck_inner ctx ApplyU = OpaqueAstPoly (LeftTL HereTL) (helper ApplyT)
+    where
+      helper :: forall a. LangType a => (forall b. LangType b => Ast (a -> (a -> b) -> b)) -> PolyAst a
+      helper arg =
+        let
+          inner :: LangType a => (forall b. LangType b => PolyAst b) -> PolyAst a
+          inner polyast = PolyAst $ OpaqueAstPoly (RightTL $ LeftTL $ RightTL HereTL) polyast
+        in inner ( (PolyAst . OpaqueAst :: LangType b => Ast (a -> (a -> b) -> b) -> PolyAst b) arg)
   typecheck_inner ctx Choose2U =
-    OpaqueAstPoly (RightTL (LeftTL HereTL)) $
+    OpaqueAstPoly (RightTL $ LeftTL HereTL) $
       ((PolyAst . OpaqueAst) :: LangType a => Ast (Int -> a -> a -> a) -> PolyAst a)
       Choose2T
 
@@ -211,14 +218,14 @@ example3 = AppU
     (LambdaU "x" IntUT (AppU (AppU MultU (VarU "x")) (VarU "x") ) )
   ) (LambdaU "x" IntUT (AppU (AppU MultU (VarU "x")) (VarU "x") ) ) ) (LiteralU 3)
 
-example4 = AppU
-  (AppU ApplyU (LiteralU 5))
-  (LambdaU "x" IntUT (AppU (AppU MultU (VarU "x")) (VarU "x") ))
+example4 =
+  ApplyU `AppU` (LambdaU "x" IntUT $ MultU `AppU` VarU "x" `AppU` VarU "x") `AppU`
+  (LambdaU "f" (ArrowUT IntUT IntUT) $ VarU "f" `AppU` LiteralU 7)
 
 example5 = (Choose2U `AppU` (LiteralU 0) `AppU` AddU `AppU` MultU) `AppU` (LiteralU 1) `AppU` (LiteralU 2)
 
 main = do
-  putStrLn $ show $ (typecheck_ast example3)
+  putStrLn $ show $ (typecheck_ast example4)
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example1) :: Ast Int )
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example2) :: Ast Int )
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example3) :: Ast Int )
