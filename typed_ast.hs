@@ -75,12 +75,9 @@ instance (LangType a, LangType b) => LangType (a -> b) where
 data OpaqueAstPolyHelperExists a where
   OpaqueAstPolyHelperExists :: (LangType a, LangType b) => Ast b -> OpaqueAstPolyHelperExists a
 
-newtype OpaqueAstPolyHelper =
-  OpaqueAstPolyHelper {unOpaqueAstPolyHelper :: LangType a => OpaqueAstPolyHelperExists a}
-
 data OpaqueAst where
   OpaqueAst :: LangType a => Ast a -> OpaqueAst
-  OpaqueAstPoly :: OpaqueAstPolyHelper -> OpaqueAst
+  OpaqueAstPoly :: (forall a. LangType a => OpaqueAstPolyHelperExists a) -> OpaqueAst
 
 instance Show OpaqueAst where
   show (OpaqueAst a) = show a
@@ -98,7 +95,7 @@ typecheck_type (ArrowUT a b) =
 typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
   make_app_node :: OpaqueAst -> OpaqueAst -> OpaqueAst
   make_app_node (OpaqueAst func) a = make_app_node_arity func a
-  make_app_node (OpaqueAstPoly (OpaqueAstPolyHelper polyhelperexists)) (OpaqueAst arg) =
+  make_app_node (OpaqueAstPoly polyhelperexists) (OpaqueAst arg) =
     let
       do_stuff :: (LangType a) => OpaqueAstPolyHelperExists a -> Ast a -> OpaqueAst
       do_stuff phe a = case phe of
@@ -123,16 +120,16 @@ typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
       OpaqueAst bodynode -> case typecheck_type ty of
         OpaqueType tt -> OpaqueAst $ LambdaT name tt bodynode
   typecheck_inner ctx IdU =
-    OpaqueAstPoly $ OpaqueAstPolyHelper $
+    OpaqueAstPoly $
       (OpaqueAstPolyHelperExists :: LangType a => Ast (a -> a) -> OpaqueAstPolyHelperExists a)
       IdT
   typecheck_inner ctx ComposeU =
-    OpaqueAstPoly $ OpaqueAstPolyHelper $
+    OpaqueAstPoly $
       -- THIS IS WRONG! ; the last argument of OpaqueAstPolyHelperExists should be (a -> a), not a. But it does not compile otherwise (TODO)
       (OpaqueAstPolyHelperExists :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a)) -> OpaqueAstPolyHelperExists a)
       ComposeT
   typecheck_inner ctx ApplyU =
-    OpaqueAstPoly $ OpaqueAstPolyHelper $
+    OpaqueAstPoly $
       (OpaqueAstPolyHelperExists :: LangType a => Ast (a -> (a -> a) -> a) -> OpaqueAstPolyHelperExists a)
       ApplyT
 
