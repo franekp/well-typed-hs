@@ -41,53 +41,52 @@ data TypedType a where
 deriving instance Show (TypedType a)
 
 data OpaqueType where
-  OpaqueType :: forall a. (Typeable a, ArityOk a) => TypedType a -> OpaqueType
+  OpaqueType :: forall a. LangType a => TypedType a -> OpaqueType
 
-type Store = (forall a. (Typeable a, ArityOk a) => String -> TypedType a -> Maybe a)
+type Store = (forall a. LangType a => String -> TypedType a -> Maybe a)
 
 data Ast a where
   AddT :: Ast (Int -> Int -> Int)
   MultT :: Ast (Int -> Int -> Int)
   NegateT :: Ast (Int -> Int)
   LiteralT :: Int -> Ast Int
-  ErrorT :: (Typeable a, ArityOk a) => String -> Ast a
-  AppT :: (Typeable a, Typeable b, ArityOk a, ArityOk b) => Ast (a -> b) -> Ast a -> Ast b
-  VarT :: (Typeable a, ArityOk a) => String -> TypedType a -> Ast a
-  LambdaT :: (Typeable a, Typeable b, ArityOk a, ArityOk b) => String -> TypedType a -> Ast b -> Ast (a -> b)
-  IdT :: (Typeable a, ArityOk a) => Ast (a -> a)
-  ComposeT :: (Typeable a, ArityOk a) => Ast ((a -> a) -> (a -> a) -> (a -> a))
-  ApplyT :: (Typeable a, ArityOk a) => Ast (a -> (a -> a) -> a)
+  ErrorT :: LangType a => String -> Ast a
+  AppT :: (LangType a, LangType b) => Ast (a -> b) -> Ast a -> Ast b
+  VarT :: LangType a => String -> TypedType a -> Ast a
+  LambdaT :: (LangType a, LangType b) => String -> TypedType a -> Ast b -> Ast (a -> b)
+  IdT :: LangType a => Ast (a -> a)
+  ComposeT :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a))
+  ApplyT :: LangType a => Ast (a -> (a -> a) -> a)
 
 deriving instance Typeable1 Ast
 deriving instance Show (Ast a)
 
-class ArityOk fun where
-  make_app_node_arity :: Ast fun -> OpaqueAst -> OpaqueAst
+class (Typeable a) => LangType a where
+  make_app_node_arity :: Ast a -> OpaqueAst -> OpaqueAst
 
-instance ArityOk Int where
+instance LangType Int where
   make_app_node_arity fun arg = case fun of
     ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
     _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
 
-instance ArityOk Void where
+instance LangType Void where
   make_app_node_arity fun arg = case fun of
     ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
     _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
 
-instance (ArityOk b, ArityOk a, Typeable a, Typeable b) => ArityOk (a -> b) where
+instance (LangType a, LangType b) => LangType (a -> b) where
   make_app_node_arity fun arg = case forcetype arg of
     ErrorT msg -> OpaqueAst $ (ErrorT $ (msg ++ " --- expected type compatibile with: " ++ (show $ dynTypeRep $ toDyn fun) ++ "//  " ++ show fun) :: Ast Void)
     argg -> OpaqueAst $ AppT fun argg
 
 data OpaqueAstPolyHelperExists a where
-  OpaqueAstPolyHelperExists :: ((ArityOk b, Typeable b, Typeable a, ArityOk a)
-    => (Ast b) -> (OpaqueAstPolyHelperExists a))
+  OpaqueAstPolyHelperExists :: (LangType a, LangType b) => Ast b -> OpaqueAstPolyHelperExists a
 
 newtype OpaqueAstPolyHelper =
-  OpaqueAstPolyHelper {unOpaqueAstPolyHelper :: (forall a. (Typeable a, ArityOk a) => OpaqueAstPolyHelperExists a)}
+  OpaqueAstPolyHelper {unOpaqueAstPolyHelper :: LangType a => OpaqueAstPolyHelperExists a}
 
 data OpaqueAst where
-  OpaqueAst :: forall a. (Typeable a, ArityOk a) => Ast a -> OpaqueAst
+  OpaqueAst :: LangType a => Ast a -> OpaqueAst
   OpaqueAstPoly :: OpaqueAstPolyHelper -> OpaqueAst
 
 instance Show OpaqueAst where
@@ -95,7 +94,7 @@ instance Show OpaqueAst where
 
 typecheck_ast :: UntypedAst -> OpaqueAst
 typecheck_type :: UntypedType -> OpaqueType
-forcetype :: (Typeable a, ArityOk a) => OpaqueAst -> Ast a
+forcetype :: LangType a => OpaqueAst -> Ast a
 
 typecheck_type IntUT = OpaqueType IntTT
 typecheck_type (ArrowUT a b) =
@@ -108,7 +107,7 @@ typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
   make_app_node (OpaqueAst func) a = make_app_node_arity func a
   make_app_node (OpaqueAstPoly (OpaqueAstPolyHelper polyhelperexists)) (OpaqueAst arg) =
     let
-      do_stuff :: (ArityOk a) => OpaqueAstPolyHelperExists a -> Ast a -> OpaqueAst
+      do_stuff :: (LangType a) => OpaqueAstPolyHelperExists a -> Ast a -> OpaqueAst
       do_stuff phe a = case phe of
         OpaqueAstPolyHelperExists func ->
           make_app_node_arity func (OpaqueAst a)
@@ -132,23 +131,23 @@ typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
         OpaqueType tt -> OpaqueAst $ LambdaT name tt bodynode
   typecheck_inner ctx IdU =
     OpaqueAstPoly $ OpaqueAstPolyHelper $
-      (OpaqueAstPolyHelperExists :: (ArityOk a, Typeable a) => Ast (a -> a) -> OpaqueAstPolyHelperExists a)
+      (OpaqueAstPolyHelperExists :: LangType a => Ast (a -> a) -> OpaqueAstPolyHelperExists a)
       IdT
   typecheck_inner ctx ComposeU =
     OpaqueAstPoly $ OpaqueAstPolyHelper $
       -- THIS IS WRONG! ; the last argument of OpaqueAstPolyHelperExists should be (a -> a), not a. But it does not compile otherwise (TODO)
-      (OpaqueAstPolyHelperExists :: (ArityOk a, Typeable a) => Ast ((a -> a) -> (a -> a) -> (a -> a)) -> OpaqueAstPolyHelperExists a)
+      (OpaqueAstPolyHelperExists :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a)) -> OpaqueAstPolyHelperExists a)
       ComposeT
   typecheck_inner ctx ApplyU =
     OpaqueAstPoly $ OpaqueAstPolyHelper $
-      (OpaqueAstPolyHelperExists :: (ArityOk a, Typeable a) => Ast (a -> (a -> a) -> a) -> OpaqueAstPolyHelperExists a)
+      (OpaqueAstPolyHelperExists :: LangType a => Ast (a -> (a -> a) -> a) -> OpaqueAstPolyHelperExists a)
       ApplyT
 
 forcetype (OpaqueAst a) = case cast a of
   Just x -> x
   Nothing -> ErrorT $ "wrong type of: " ++ show a
 
-eval :: (Typeable a, ArityOk a) => Store -> Ast a -> a
+eval :: LangType a => Store -> Ast a -> a
 eval s AddT = addF
 eval s MultT = multF
 eval s NegateT = negateF
@@ -157,7 +156,7 @@ eval s (AppT func a) = (eval s func) (eval s a)
 eval s (VarT name tt) = let Just val = s name tt in val
 eval s (LambdaT name tt body) = result where
   result param = eval new_s body where
-    new_s :: forall a. (Typeable a, ArityOk a) => String -> TypedType a -> Maybe a
+    new_s :: forall a. LangType a => String -> TypedType a -> Maybe a
     new_s v t = case (cast param) of
       Just p ->
         if v == name && True
