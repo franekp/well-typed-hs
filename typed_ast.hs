@@ -103,7 +103,7 @@ make_app_node_poly (LeftTL loc) phe arg = unify loc phe (type_of arg) do_stuff w
 make_app_node_poly (BothTL loc _) phe arg = unify loc phe (type_of arg) do_stuff where
   do_stuff :: OpaqueAstPolyHelperExists x -> OpaqueAst
   do_stuff (OpaqueAstPolyHelperExists fun) = make_app_node_arity fun (OpaqueAst arg)
-make_app_node_poly (RightTL loc) phe arg = OpaqueAstPoly {- loc -} $ do_stuff phe arg where
+make_app_node_poly (RightTL loc) phe arg = OpaqueAstPoly loc $ do_stuff phe arg where
   -- this is the true type for that, but it did not worked - this more specific type is automagically generalized somehow
   -- and conveys information that each x from the left corresponds to x from the right - the type variable stays the same
   -- do_stuff :: LangType aa => (forall x. LangType x => OpaqueAstPolyHelperExists x) -> Ast aa -> (forall y. LangType y => OpaqueAstPolyHelperExists y)
@@ -118,7 +118,7 @@ data OpaqueAstPolyHelperExists x where
 
 data OpaqueAst where
   OpaqueAst :: LangType a => Ast a -> OpaqueAst
-  OpaqueAstPoly :: {- TypeLocation -> -} (forall x. LangType x => OpaqueAstPolyHelperExists x) -> OpaqueAst
+  OpaqueAstPoly :: TypeLocation -> (forall x. LangType x => OpaqueAstPolyHelperExists x) -> OpaqueAst
 
 instance Show OpaqueAst where
   show (OpaqueAst a) = show a
@@ -136,14 +136,8 @@ typecheck_type (ArrowUT a b) =
 typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
   make_app_node :: OpaqueAst -> OpaqueAst -> OpaqueAst
   make_app_node (OpaqueAst func) a = make_app_node_arity func a
-  make_app_node (OpaqueAstPoly polyhelperexists) (OpaqueAst arg) =
-    let
-      do_stuff :: (LangType a) => OpaqueAstPolyHelperExists a -> Ast a -> OpaqueAst
-      do_stuff phe a = case phe of
-        OpaqueAstPolyHelperExists func ->
-          make_app_node_arity func (OpaqueAst a)
-    in do_stuff polyhelperexists arg
-
+  make_app_node (OpaqueAstPoly loc polyhelperexists) (OpaqueAst arg) =
+   make_app_node_poly loc polyhelperexists arg
   typecheck_inner :: (String -> Maybe UntypedType) -> UntypedAst -> OpaqueAst
   typecheck_inner ctx AddU = OpaqueAst $ AddT
   typecheck_inner ctx MultU = OpaqueAst $ MultT
@@ -161,16 +155,16 @@ typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
       OpaqueAst bodynode -> case typecheck_type ty of
         OpaqueType tt -> OpaqueAst $ LambdaT name tt bodynode
   typecheck_inner ctx IdU =
-    OpaqueAstPoly $
+    OpaqueAstPoly (BothTL HereTL HereTL) $
       (OpaqueAstPolyHelperExists :: LangType a => Ast (a -> a) -> OpaqueAstPolyHelperExists a)
       IdT
   typecheck_inner ctx ComposeU =
-    OpaqueAstPoly $
-      -- THIS IS WRONG! ; the last argument of OpaqueAstPolyHelperExists should be (a -> a), not a. But it does not compile otherwise (TODO)
+    -- should be (BothTL (BothTL HereTL HereTL) (BothTL (BothTL HereTL HereTL) (BothTL HereTL HereTL))) but not used for now
+    OpaqueAstPoly (LeftTL (BothTL HereTL HereTL)) $
       (OpaqueAstPolyHelperExists :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a)) -> OpaqueAstPolyHelperExists a)
       ComposeT
   typecheck_inner ctx ApplyU =
-    OpaqueAstPoly $
+    OpaqueAstPoly (LeftTL HereTL) $
       (OpaqueAstPolyHelperExists :: LangType a => Ast (a -> (a -> a) -> a) -> OpaqueAstPolyHelperExists a)
       ApplyT
 
@@ -195,6 +189,7 @@ eval s (LambdaT name tt body) = result where
           else s v t
       Nothing -> s v t
 eval s IdT = (\x -> x)
+eval s ComposeT = (\f -> \g -> \x -> f (g x))
 eval s ApplyT = (\x -> \f -> f x)
 
 example1 =
@@ -212,8 +207,8 @@ example4 = AppU
   (LambdaU "x" IntUT (AppU (AppU MultU (VarU "x")) (VarU "x") ))
 
 main = do
-  putStrLn $ show $ (typecheck_ast example4)
+  putStrLn $ show $ (typecheck_ast example3)
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example1) :: Ast Int )
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example2) :: Ast Int )
-  -- putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example3) :: Ast Int )
+  putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example3) :: Ast Int )
   putStrLn $ show $ eval (\_ -> \_ -> Nothing) (forcetype (typecheck_ast example4) :: Ast Int )
