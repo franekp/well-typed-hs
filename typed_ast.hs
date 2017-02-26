@@ -18,13 +18,6 @@ import Data.Void
 import Data.Typeable
 import Data.Dynamic
 
-addF :: Int -> Int -> Int
-addF a b = a + b
-multF :: Int -> Int -> Int
-multF a b = a * b
-negateF :: Int -> Int
-negateF a = -a
-
 data UntypedAst = AddU | MultU | NegateU
   | LiteralU Int
   | AppU UntypedAst UntypedAst
@@ -148,9 +141,9 @@ forcetype (OpaqueAst a) = case cast a of
   Nothing -> ErrorT $ "wrong type of: " ++ show a
 
 eval :: LangType a => Store -> Ast a -> a
-eval s AddT = addF
-eval s MultT = multF
-eval s NegateT = negateF
+eval s AddT = (\a -> \b -> a + b)
+eval s MultT = (\a -> \b -> a * b)
+eval s NegateT = (\a -> -a)
 eval s (LiteralT n) = n
 eval s (AppT func a) = (eval s func) (eval s a)
 eval s (VarT name tt) = let Just val = s name tt in val
