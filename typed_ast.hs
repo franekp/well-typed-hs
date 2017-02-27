@@ -66,16 +66,18 @@ class (Typeable a) => LangType a where
 type_of :: LangType a => Ast a -> TypedType a
 type_of a = get_type
 
-polyhelperexists_error :: String -> PolyAst Void
-polyhelperexists_error a = PolyAst $ OpaqueAst $ (ErrorT a :: Ast Void)
+polyast_error :: String -> PolyAst Void
+polyast_error a = PolyAst $ OpaqueAst $ (ErrorT a :: Ast Void)
 
-unify :: forall res a. LangType a => TypeLocation -> (forall x. LangType x => PolyAst x) -> TypedType a -> (forall y. LangType y => PolyAst y -> res) -> res
+unify :: forall res a. LangType a =>
+  TypeLocation -> (forall x. LangType x => PolyAst x) -> TypedType a
+  -> (forall y. LangType y => PolyAst y -> res) -> res
 unify HereTL phe tt cont = make_result phe tt cont where
   make_result :: LangType x => PolyAst x -> TypedType x -> (forall y. LangType y => PolyAst y -> res) -> res
   make_result phe_ tt_ cont_ = cont_ phe_
-unify (LeftTL _) phe IntTT cont = cont $ polyhelperexists_error "expected function, got IntTT"
-unify (RightTL _) phe IntTT cont = cont $ polyhelperexists_error "expected function, got IntTT"
-unify (BothTL _ _) phe IntTT cont = cont $ polyhelperexists_error "expected function, got IntTT"
+unify (LeftTL _) phe IntTT cont = cont $ polyast_error "expected function, got IntTT"
+unify (RightTL _) phe IntTT cont = cont $ polyast_error "expected function, got IntTT"
+unify (BothTL _ _) phe IntTT cont = cont $ polyast_error "expected function, got IntTT"
 unify (LeftTL left) phe (ArrowTT l r) cont = unify left phe l cont
 unify (RightTL right) phe (ArrowTT l r) cont = unify right phe r cont
 unify (BothTL right left) phe (ArrowTT l r) cont = unify left phe l cont  -- ???
