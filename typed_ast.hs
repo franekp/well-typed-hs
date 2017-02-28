@@ -100,16 +100,16 @@ unify (LeftTL left) phe (ArrowTT l r) cont = unify left phe l cont
 unify (RightTL right) phe (ArrowTT l r) cont = unify right phe r cont
 unify (BothTL right left) phe (ArrowTT l r) cont = unify left phe l cont  -- ???
 
-make_app_poly :: LangType a => TypeLocation -> (forall x. LangType x => PolyAst x) -> Ast a -> OpaqueAst
-make_app_poly (LeftTL left) phe arg = unify left phe (type_of arg) do_stuff where
+make_app_poly_mono :: LangType a => TypeLocation -> (forall x. LangType x => PolyAst x) -> Ast a -> OpaqueAst
+make_app_poly_mono (LeftTL left) phe arg = unify left phe (type_of arg) do_stuff where
   do_stuff :: PolyAst x -> OpaqueAst
   do_stuff (PolyAst (OpaqueAst fun)) = make_app_mono fun (OpaqueAst arg)
-  do_stuff (PolyAst (OpaqueAstPoly loc newphe)) = make_app_poly loc newphe arg
-make_app_poly (BothTL left right) phe arg = unify left phe (type_of arg) do_stuff where
+  do_stuff (PolyAst (OpaqueAstPoly loc newphe)) = make_app_poly_mono loc newphe arg
+make_app_poly_mono (BothTL left right) phe arg = unify left phe (type_of arg) do_stuff where
   do_stuff :: PolyAst x -> OpaqueAst
   do_stuff (PolyAst (OpaqueAst fun)) = make_app_mono fun (OpaqueAst arg)
-  do_stuff (PolyAst (OpaqueAstPoly loc newphe)) = make_app_poly loc newphe arg
-make_app_poly (RightTL right) phe arg = OpaqueAstPoly right $ do_stuff phe arg where
+  do_stuff (PolyAst (OpaqueAstPoly loc newphe)) = make_app_poly_mono loc newphe arg
+make_app_poly_mono (RightTL right) phe arg = OpaqueAstPoly right $ do_stuff phe arg where
   -- this is the true type for that, but it did not worked - this more specific type is automagically generalized somehow
   -- and conveys information that each x from the left corresponds to x from the right - the type variable stays the same
   -- do_stuff :: LangType aa => (forall x. LangType x => PolyAst x) -> Ast aa -> (forall y. LangType y => PolyAst y)
@@ -117,13 +117,13 @@ make_app_poly (RightTL right) phe arg = OpaqueAstPoly right $ do_stuff phe arg w
   do_stuff (PolyAst (OpaqueAst fun)) arg =
     PolyAst $ make_app_mono fun (OpaqueAst arg)
   do_stuff (PolyAst (OpaqueAstPoly loc newphe)) arg =
-    PolyAst $ make_app_poly loc newphe arg
-make_app_poly HereTL phe arg = OpaqueAst $ (ErrorT $ "Trying to use variable of generic type as a function with argument: " ++ show arg :: Ast Void)
+    PolyAst $ make_app_poly_mono loc newphe arg
+make_app_poly_mono HereTL phe arg = OpaqueAst $ (ErrorT $ "Trying to use variable of generic type as a function with argument: " ++ show arg :: Ast Void)
 
 make_app :: OpaqueAst -> OpaqueAst -> OpaqueAst
 make_app (OpaqueAst func) a = make_app_mono func a
 make_app (OpaqueAstPoly loc polyhelperexists) (OpaqueAst arg) =
- make_app_poly loc polyhelperexists arg
+ make_app_poly_mono loc polyhelperexists arg
 
 data PolyAst x where
   PolyAst :: LangType x => OpaqueAst -> PolyAst x
