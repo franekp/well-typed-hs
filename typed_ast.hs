@@ -16,7 +16,6 @@
 
 import Data.Void
 import Data.Typeable
-import Data.Dynamic
 
 data UntypedAst = AddU | MultU | NegateU
   | LiteralU Int
@@ -61,28 +60,32 @@ deriving instance Show TypeLocation
 
 class (Typeable a) => LangType a where
   get_type :: LangType a => TypedType a
-  make_app_mono :: Ast a -> OpaqueAst -> OpaqueAst
 
 instance LangType Int where
   get_type = IntTT
-  make_app_mono fun arg = case fun of
-    ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
-    _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
 
 instance LangType Void where
   get_type = VoidTT
-  make_app_mono fun arg = case fun of
-    ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
-    _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
 
 instance (LangType a, LangType b) => LangType (a -> b) where
   get_type = ArrowTT (get_type :: TypedType a) (get_type :: TypedType b)
-  make_app_mono fun arg = case forcetype arg of
-    ErrorT msg -> OpaqueAst $ (ErrorT $ (msg ++ " --- expected type compatibile with: " ++ (show $ dynTypeRep $ toDyn fun) ++ "//  " ++ show fun) :: Ast Void)
-    argg -> OpaqueAst $ AppT fun argg
 
 type_of :: LangType a => Ast a -> TypedType a
 type_of a = get_type
+
+make_app_mono :: LangType a => Ast a -> OpaqueAst -> OpaqueAst
+make_app_mono fun arg = case type_of fun of
+  IntTT -> case fun of
+    ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
+    _ -> OpaqueAst (ErrorT "Int is not a function!" :: Ast Void)
+  VoidTT -> case fun of
+    ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
+    _ -> OpaqueAst (ErrorT "Void is not a function!" :: Ast Void)
+  ArrowTT a b -> case forcetype arg of
+    ErrorT msg -> OpaqueAst $ (ErrorT $
+      (msg ++ " --- expected type compatibile with: "
+      ++ (show $ type_of fun) {- ++ show fun -}) :: Ast Void)
+    argg -> OpaqueAst $ AppT fun argg
 
 polyast_error :: String -> PolyAst Void
 polyast_error a = PolyAst $ OpaqueAst $ (ErrorT a :: Ast Void)
