@@ -63,6 +63,24 @@ class (Typeable a) => LangType a where
   get_type :: LangType a => TypedType a
   make_app_node_mono :: Ast a -> OpaqueAst -> OpaqueAst
 
+instance LangType Int where
+  get_type = IntTT
+  make_app_node_mono fun arg = case fun of
+    ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
+    _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
+
+instance LangType Void where
+  get_type = VoidTT
+  make_app_node_mono fun arg = case fun of
+    ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
+    _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
+
+instance (LangType a, LangType b) => LangType (a -> b) where
+  get_type = ArrowTT (get_type :: TypedType a) (get_type :: TypedType b)
+  make_app_node_mono fun arg = case forcetype arg of
+    ErrorT msg -> OpaqueAst $ (ErrorT $ (msg ++ " --- expected type compatibile with: " ++ (show $ dynTypeRep $ toDyn fun) ++ "//  " ++ show fun) :: Ast Void)
+    argg -> OpaqueAst $ AppT fun argg
+
 type_of :: LangType a => Ast a -> TypedType a
 type_of a = get_type
 
@@ -81,24 +99,6 @@ unify (BothTL _ _) phe IntTT cont = cont $ polyast_error "expected function, got
 unify (LeftTL left) phe (ArrowTT l r) cont = unify left phe l cont
 unify (RightTL right) phe (ArrowTT l r) cont = unify right phe r cont
 unify (BothTL right left) phe (ArrowTT l r) cont = unify left phe l cont  -- ???
-
-instance LangType Int where
-  get_type = IntTT
-  make_app_node_mono fun arg = case fun of
-    ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
-    _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
-
-instance LangType Void where
-  get_type = VoidTT
-  make_app_node_mono fun arg = case fun of
-    ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
-    _ -> OpaqueAst (ErrorT "wrong arity" :: Ast Void)
-
-instance (LangType a, LangType b) => LangType (a -> b) where
-  get_type = ArrowTT (get_type :: TypedType a) (get_type :: TypedType b)
-  make_app_node_mono fun arg = case forcetype arg of
-    ErrorT msg -> OpaqueAst $ (ErrorT $ (msg ++ " --- expected type compatibile with: " ++ (show $ dynTypeRep $ toDyn fun) ++ "//  " ++ show fun) :: Ast Void)
-    argg -> OpaqueAst $ AppT fun argg
 
 make_app_node_poly :: LangType a => TypeLocation -> (forall x. LangType x => PolyAst x) -> Ast a -> OpaqueAst
 make_app_node_poly (LeftTL left) phe arg = unify left phe (type_of arg) do_stuff where
@@ -119,6 +119,11 @@ make_app_node_poly (RightTL right) phe arg = OpaqueAstPoly right $ do_stuff phe 
   do_stuff (PolyAst (OpaqueAstPoly loc newphe)) arg =
     PolyAst $ make_app_node_poly loc newphe arg
 make_app_node_poly HereTL phe arg = OpaqueAst $ (ErrorT $ "Trying to use variable of generic type as a function with argument: " ++ show arg :: Ast Void)
+
+make_app_node :: OpaqueAst -> OpaqueAst -> OpaqueAst
+make_app_node (OpaqueAst func) a = make_app_node_mono func a
+make_app_node (OpaqueAstPoly loc polyhelperexists) (OpaqueAst arg) =
+ make_app_node_poly loc polyhelperexists arg
 
 data PolyAst x where
   PolyAst :: LangType x => OpaqueAst -> PolyAst x
@@ -143,10 +148,6 @@ typecheck_type (ArrowUT a b) =
       OpaqueType bt -> OpaqueType $ ArrowTT at bt
 
 typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
-  make_app_node :: OpaqueAst -> OpaqueAst -> OpaqueAst
-  make_app_node (OpaqueAst func) a = make_app_node_mono func a
-  make_app_node (OpaqueAstPoly loc polyhelperexists) (OpaqueAst arg) =
-   make_app_node_poly loc polyhelperexists arg
   typecheck_inner :: (String -> Maybe UntypedType) -> UntypedAst -> OpaqueAst
   typecheck_inner ctx AddU = OpaqueAst $ AddT
   typecheck_inner ctx MultU = OpaqueAst $ MultT
