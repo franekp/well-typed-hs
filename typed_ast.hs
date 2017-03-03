@@ -27,7 +27,7 @@ data UntypedAst = AddU | MultU | NegateU
 data UntypedType = IntUT | ArrowUT UntypedType UntypedType
 
 data TypedType a where
-  ArrowTT :: (LangType a, LangType b) => TypedType a -> TypedType b -> TypedType (a -> b)
+  ArrowTT :: (Any a, Any b) => TypedType a -> TypedType b -> TypedType (a -> b)
   IntTT :: TypedType Int
   VoidTT :: TypedType Void
 
@@ -36,44 +36,44 @@ data TypeLocation = HereTL | LeftTL TypeLocation | RightTL TypeLocation | BothTL
 deriving instance Show (TypedType a)
 
 data OpaqueType where
-  OpaqueType :: forall a. LangType a => TypedType a -> OpaqueType
+  OpaqueType :: forall a. Any a => TypedType a -> OpaqueType
 
-type Store = (forall a. LangType a => String -> TypedType a -> Maybe a)
+type Store = (forall a. Any a => String -> TypedType a -> Maybe a)
 
 data Ast a where
   AddT :: Ast (Int -> Int -> Int)
   MultT :: Ast (Int -> Int -> Int)
   NegateT :: Ast (Int -> Int)
   LiteralT :: Int -> Ast Int
-  ErrorT :: LangType a => String -> Ast a
-  AppT :: (LangType a, LangType b) => Ast (a -> b) -> Ast a -> Ast b
-  VarT :: LangType a => String -> TypedType a -> Ast a
-  LambdaT :: (LangType a, LangType b) => String -> TypedType a -> Ast b -> Ast (a -> b)
-  IdT :: LangType a => Ast (a -> a)
-  ComposeT :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a))
-  ApplyT :: (LangType a, LangType b) => Ast (a -> (a -> b) -> b)
-  Choose2T :: LangType a => Ast (Int -> a -> a -> a)
+  ErrorT :: Any a => String -> Ast a
+  AppT :: (Any a, Any b) => Ast (a -> b) -> Ast a -> Ast b
+  VarT :: Any a => String -> TypedType a -> Ast a
+  LambdaT :: (Any a, Any b) => String -> TypedType a -> Ast b -> Ast (a -> b)
+  IdT :: Any a => Ast (a -> a)
+  ComposeT :: Any a => Ast ((a -> a) -> (a -> a) -> (a -> a))
+  ApplyT :: (Any a, Any b) => Ast (a -> (a -> b) -> b)
+  Choose2T :: Any a => Ast (Int -> a -> a -> a)
 
 deriving instance Typeable1 Ast
 deriving instance Show (Ast a)
 deriving instance Show TypeLocation
 
-class (Typeable a) => LangType a where
-  get_type :: LangType a => TypedType a
+class (Typeable a) => Any a where
+  get_type :: Any a => TypedType a
 
-instance LangType Int where
+instance Any Int where
   get_type = IntTT
 
-instance LangType Void where
+instance Any Void where
   get_type = VoidTT
 
-instance (LangType a, LangType b) => LangType (a -> b) where
+instance (Any a, Any b) => Any (a -> b) where
   get_type = ArrowTT (get_type :: TypedType a) (get_type :: TypedType b)
 
-type_of :: LangType a => Ast a -> TypedType a
+type_of :: Any a => Ast a -> TypedType a
 type_of a = get_type
 
-make_app_mono_mono :: (LangType a, LangType b) => Ast a -> Ast b -> OpaqueAst
+make_app_mono_mono :: (Any a, Any b) => Ast a -> Ast b -> OpaqueAst
 make_app_mono_mono fun arg = case type_of fun of
   IntTT -> case fun of
     ErrorT a -> OpaqueAst (ErrorT a :: Ast Void)
@@ -90,11 +90,11 @@ make_app_mono_mono fun arg = case type_of fun of
 polyast_error :: String -> PolyAst Void
 polyast_error a = PolyAst $ OpaqueAst $ (ErrorT a :: Ast Void)
 
-elim_one_forall_with_lookup_in_monotype :: forall res a. LangType a =>
-  TypeLocation -> (forall x. LangType x => PolyAst x) -> TypedType a
-  -> (forall y. LangType y => PolyAst y -> res) -> res
+elim_one_forall_with_lookup_in_monotype :: forall res a. Any a =>
+  TypeLocation -> (forall x. Any x => PolyAst x) -> TypedType a
+  -> (forall y. Any y => PolyAst y -> res) -> res
 elim_one_forall_with_lookup_in_monotype HereTL phe tt cont = make_result phe tt cont where
-  make_result :: LangType x => PolyAst x -> TypedType x -> (forall y. LangType y => PolyAst y -> res) -> res
+  make_result :: Any x => PolyAst x -> TypedType x -> (forall y. Any y => PolyAst y -> res) -> res
   make_result phe_ tt_ cont_ = cont_ phe_
 elim_one_forall_with_lookup_in_monotype (LeftTL _) phe IntTT cont = cont $ polyast_error "expected function, got IntTT"
 elim_one_forall_with_lookup_in_monotype (RightTL _) phe IntTT cont = cont $ polyast_error "expected function, got IntTT"
@@ -103,7 +103,7 @@ elim_one_forall_with_lookup_in_monotype (LeftTL left) phe (ArrowTT l r) cont = e
 elim_one_forall_with_lookup_in_monotype (RightTL right) phe (ArrowTT l r) cont = elim_one_forall_with_lookup_in_monotype right phe r cont
 elim_one_forall_with_lookup_in_monotype (BothTL right left) phe (ArrowTT l r) cont = elim_one_forall_with_lookup_in_monotype left phe l cont  -- ???
 
-make_app_poly_mono :: LangType a => TypeLocation -> (forall x. LangType x => PolyAst x) -> Ast a -> OpaqueAst
+make_app_poly_mono :: Any a => TypeLocation -> (forall x. Any x => PolyAst x) -> Ast a -> OpaqueAst
 make_app_poly_mono (LeftTL left) phe arg = elim_one_forall_with_lookup_in_monotype left phe (type_of arg) do_stuff where
   do_stuff :: PolyAst x -> OpaqueAst
   do_stuff (PolyAst (OpaqueAst fun)) = make_app_mono_mono fun arg
@@ -115,8 +115,8 @@ make_app_poly_mono (BothTL left right) phe arg = elim_one_forall_with_lookup_in_
 make_app_poly_mono (RightTL right) phe arg = OpaqueAstPoly right $ do_stuff phe arg where
   -- this is the true type for that, but it did not worked - this more specific type is automagically generalized somehow
   -- and conveys information that each x from the left corresponds to x from the right - the type variable stays the same
-  -- do_stuff :: LangType aa => (forall x. LangType x => PolyAst x) -> Ast aa -> (forall y. LangType y => PolyAst y)
-  do_stuff :: (LangType aa, LangType x) => PolyAst x -> Ast aa -> PolyAst x
+  -- do_stuff :: Any aa => (forall x. Any x => PolyAst x) -> Ast aa -> (forall y. Any y => PolyAst y)
+  do_stuff :: (Any aa, Any x) => PolyAst x -> Ast aa -> PolyAst x
   do_stuff (PolyAst fun) arg = PolyAst $ make_app fun (OpaqueAst arg)
 make_app_poly_mono HereTL phe arg = OpaqueAst $ (ErrorT $ "Trying to use variable of generic type as a function with argument: " ++ show arg :: Ast Void)
 
@@ -126,11 +126,11 @@ make_app (OpaqueAstPoly loc polyhelperexists) (OpaqueAst arg) =
  make_app_poly_mono loc polyhelperexists arg
 
 data PolyAst x where
-  PolyAst :: LangType x => OpaqueAst -> PolyAst x
+  PolyAst :: Any x => OpaqueAst -> PolyAst x
 
 data OpaqueAst where
-  OpaqueAst :: LangType a => Ast a -> OpaqueAst
-  OpaqueAstPoly :: TypeLocation -> (forall x. LangType x => PolyAst x) -> OpaqueAst
+  OpaqueAst :: Any a => Ast a -> OpaqueAst
+  OpaqueAstPoly :: TypeLocation -> (forall x. Any x => PolyAst x) -> OpaqueAst
 
 instance Show OpaqueAst where
   show (OpaqueAst a) = show a
@@ -139,7 +139,7 @@ instance Show OpaqueAst where
 
 typecheck_ast :: UntypedAst -> OpaqueAst
 typecheck_type :: UntypedType -> OpaqueType
-forcetype :: LangType a => OpaqueAst -> Ast a
+forcetype :: Any a => OpaqueAst -> Ast a
 
 typecheck_type IntUT = OpaqueType IntTT
 typecheck_type (ArrowUT a b) =
@@ -166,31 +166,31 @@ typecheck_ast a = typecheck_inner (\_ -> Nothing) a where
         OpaqueType tt -> OpaqueAst $ LambdaT name tt bodynode
   typecheck_inner ctx IdU =
     OpaqueAstPoly (BothTL HereTL HereTL) $
-      ((PolyAst . OpaqueAst) :: LangType a => Ast (a -> a) -> PolyAst a)
+      ((PolyAst . OpaqueAst) :: Any a => Ast (a -> a) -> PolyAst a)
       IdT
   typecheck_inner ctx ComposeU =
     -- should be (BothTL (BothTL HereTL HereTL) (BothTL (BothTL HereTL HereTL) (BothTL HereTL HereTL))) but not used for now
     OpaqueAstPoly (LeftTL $ BothTL HereTL HereTL) $
-      ((PolyAst . OpaqueAst) :: LangType a => Ast ((a -> a) -> (a -> a) -> (a -> a)) -> PolyAst a)
+      ((PolyAst . OpaqueAst) :: Any a => Ast ((a -> a) -> (a -> a) -> (a -> a)) -> PolyAst a)
       ComposeT
   typecheck_inner ctx ApplyU = OpaqueAstPoly (LeftTL HereTL) (helper ApplyT)
     where
-      helper :: forall a. LangType a => (forall b. LangType b => Ast (a -> (a -> b) -> b)) -> PolyAst a
+      helper :: forall a. Any a => (forall b. Any b => Ast (a -> (a -> b) -> b)) -> PolyAst a
       helper arg =
         let
-          inner :: LangType a => (forall b. LangType b => PolyAst b) -> PolyAst a
+          inner :: Any a => (forall b. Any b => PolyAst b) -> PolyAst a
           inner polyast = PolyAst $ OpaqueAstPoly (RightTL $ LeftTL $ RightTL HereTL) polyast
-        in inner ( (PolyAst . OpaqueAst :: LangType b => Ast (a -> (a -> b) -> b) -> PolyAst b) arg)
+        in inner ( (PolyAst . OpaqueAst :: Any b => Ast (a -> (a -> b) -> b) -> PolyAst b) arg)
   typecheck_inner ctx Choose2U =
     OpaqueAstPoly (RightTL $ LeftTL HereTL) $
-      ((PolyAst . OpaqueAst) :: LangType a => Ast (Int -> a -> a -> a) -> PolyAst a)
+      ((PolyAst . OpaqueAst) :: Any a => Ast (Int -> a -> a -> a) -> PolyAst a)
       Choose2T
 
 forcetype (OpaqueAst a) = case cast a of
   Just x -> x
   Nothing -> ErrorT $ "wrong type of: " ++ show a
 
-eval :: LangType a => Store -> Ast a -> a
+eval :: Any a => Store -> Ast a -> a
 eval s AddT = (\a -> \b -> a + b)
 eval s MultT = (\a -> \b -> a * b)
 eval s NegateT = (\a -> -a)
@@ -199,7 +199,7 @@ eval s (AppT func a) = (eval s func) (eval s a)
 eval s (VarT name tt) = let Just val = s name tt in val
 eval s (LambdaT name tt body) = result where
   result param = eval new_s body where
-    new_s :: forall a. LangType a => String -> TypedType a -> Maybe a
+    new_s :: forall a. Any a => String -> TypedType a -> Maybe a
     new_s v t = case (cast param) of
       Just p ->
         if v == name
