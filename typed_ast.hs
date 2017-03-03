@@ -26,19 +26,19 @@ data UntypedAst = AddU | MultU | NegateU
 
 data UntypedType = IntUT | ArrowUT UntypedType UntypedType
 
-data TypedType a where
-  ArrowTT :: (Any a, Any b) => TypedType a -> TypedType b -> TypedType (a -> b)
-  IntTT :: TypedType Int
-  VoidTT :: TypedType Void
+data Type a where
+  ArrowTT :: (Any a, Any b) => Type a -> Type b -> Type (a -> b)
+  IntTT :: Type Int
+  VoidTT :: Type Void
 
 data TypeLocation = HereTL | LeftTL TypeLocation | RightTL TypeLocation | BothTL TypeLocation TypeLocation
 
-deriving instance Show (TypedType a)
+deriving instance Show (Type a)
 
 data OpaqueType where
-  OpaqueType :: forall a. Any a => TypedType a -> OpaqueType
+  OpaqueType :: forall a. Any a => Type a -> OpaqueType
 
-type Store = (forall a. Any a => String -> TypedType a -> Maybe a)
+type Store = (forall a. Any a => String -> Type a -> Maybe a)
 
 data Ast a where
   AddT :: Ast (Int -> Int -> Int)
@@ -47,8 +47,8 @@ data Ast a where
   LiteralT :: Int -> Ast Int
   ErrorT :: Any a => String -> Ast a
   AppT :: (Any a, Any b) => Ast (a -> b) -> Ast a -> Ast b
-  VarT :: Any a => String -> TypedType a -> Ast a
-  LambdaT :: (Any a, Any b) => String -> TypedType a -> Ast b -> Ast (a -> b)
+  VarT :: Any a => String -> Type a -> Ast a
+  LambdaT :: (Any a, Any b) => String -> Type a -> Ast b -> Ast (a -> b)
   IdT :: Any a => Ast (a -> a)
   ComposeT :: Any a => Ast ((a -> a) -> (a -> a) -> (a -> a))
   ApplyT :: (Any a, Any b) => Ast (a -> (a -> b) -> b)
@@ -59,7 +59,7 @@ deriving instance Show (Ast a)
 deriving instance Show TypeLocation
 
 class (Typeable a) => Any a where
-  get_type :: Any a => TypedType a
+  get_type :: Any a => Type a
 
 instance Any Int where
   get_type = IntTT
@@ -68,9 +68,9 @@ instance Any Void where
   get_type = VoidTT
 
 instance (Any a, Any b) => Any (a -> b) where
-  get_type = ArrowTT (get_type :: TypedType a) (get_type :: TypedType b)
+  get_type = ArrowTT (get_type :: Type a) (get_type :: Type b)
 
-type_of :: Any a => Ast a -> TypedType a
+type_of :: Any a => Ast a -> Type a
 type_of a = get_type
 
 make_app_mono_mono :: (Any a, Any b) => Ast a -> Ast b -> OpaqueAst
@@ -91,10 +91,10 @@ polyast_error :: String -> PolyAst Void
 polyast_error a = PolyAst $ OpaqueAst $ (ErrorT a :: Ast Void)
 
 elim_one_forall_with_lookup_in_monotype :: forall res a. Any a =>
-  TypeLocation -> (forall x. Any x => PolyAst x) -> TypedType a
+  TypeLocation -> (forall x. Any x => PolyAst x) -> Type a
   -> (forall y. Any y => PolyAst y -> res) -> res
 elim_one_forall_with_lookup_in_monotype HereTL phe tt cont = make_result phe tt cont where
-  make_result :: Any x => PolyAst x -> TypedType x -> (forall y. Any y => PolyAst y -> res) -> res
+  make_result :: Any x => PolyAst x -> Type x -> (forall y. Any y => PolyAst y -> res) -> res
   make_result phe_ tt_ cont_ = cont_ phe_
 elim_one_forall_with_lookup_in_monotype (LeftTL _) phe IntTT cont = cont $ polyast_error "expected function, got IntTT"
 elim_one_forall_with_lookup_in_monotype (RightTL _) phe IntTT cont = cont $ polyast_error "expected function, got IntTT"
@@ -199,7 +199,7 @@ eval s (AppT func a) = (eval s func) (eval s a)
 eval s (VarT name tt) = let Just val = s name tt in val
 eval s (LambdaT name tt body) = result where
   result param = eval new_s body where
-    new_s :: forall a. Any a => String -> TypedType a -> Maybe a
+    new_s :: forall a. Any a => String -> Type a -> Maybe a
     new_s v t = case (cast param) of
       Just p ->
         if v == name
