@@ -49,20 +49,20 @@ type_of a = get_type
 instance Show (Quantified Type) where
   show qq = "forall" ++ str ZeroTV qq where
     str :: Name a => TypeVar a -> Quantified Type -> String
-    str last_tv (NilQT (Opaque tp)) = ". " ++ show tp
-    str last_tv (ConsQT ident poly) = " " ++ show last_tv ++ do_stuff last_tv poly where
+    str last_tv (MonoQ (Mono tp)) = ". " ++ show tp
+    str last_tv (PolyQ ident poly) = " " ++ show last_tv ++ do_stuff last_tv poly where
       do_stuff :: Name a => TypeVar a -> Poly Type a -> String
       do_stuff tv (Poly x) = str (SuccTV tv) x
 
-example1 = ConsQT 0 (helper get_type)
+example1 = PolyQ 0 (helper get_type)
   where
     helper :: forall a. Any a => (forall b. Any b => Type (a -> Int -> (a -> Int -> b) -> b)) -> Poly Type a
     helper arg =
       let
         inner :: Any a => (forall b. Any b => Poly Type b) -> Poly Type a
-        inner polyast = Poly $ ConsQT 1 polyast
-      in inner ( (Poly . NilQT . Opaque :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> Poly Type b) arg)
+        inner polyast = Poly $ PolyQ 1 polyast
+      in inner ( (Poly . MonoQ . Mono :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> Poly Type b) arg)
 
-example2 = NilQT $ Opaque $ (get_type :: Type (Int -> Int -> Int))
+example2 = MonoQ $ Mono $ (get_type :: Type (Int -> Int -> Int))
 
 main = putStrLn $ show $ example1

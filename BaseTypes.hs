@@ -44,12 +44,12 @@ class Any a => Name a where
   type_variable_name :: TypeVar a -> String
   get_type_variable :: TypeVar a
 
-data Opaque t where
-  Opaque :: Any a => t a -> Opaque t
+data Mono t where
+  Mono :: Any a => t a -> Mono t
 
 data Poly t a where
   Poly :: Any a => Quantified t -> Poly t a
 
 data Quantified t where
-  NilQT :: Opaque t -> Quantified t
-  ConsQT :: Int -> (forall a. Any a => Poly t a) -> Quantified t
+  MonoQ :: Mono t -> Quantified t
+  PolyQ :: Int -> (forall a. Any a => Poly t a) -> Quantified t
