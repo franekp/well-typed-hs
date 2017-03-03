@@ -54,7 +54,7 @@ instance Show (Quantified Type) where
       do_stuff :: Name a => TypeVar a -> Poly Type a -> String
       do_stuff tv (Poly x) = str (SuccTV tv) x
 
-example1 = PolyQ 0 (helper get_type)
+types_example_1 = PolyQ 0 (helper get_type)
   where
     helper :: forall a. Any a => (forall b. Any b => Type (a -> Int -> (a -> Int -> b) -> b)) -> Poly Type a
     helper arg =
@@ -63,6 +63,10 @@ example1 = PolyQ 0 (helper get_type)
         inner polyast = Poly $ PolyQ 1 polyast
       in inner ( (Poly . MonoQ . Mono :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> Poly Type b) arg)
 
-example2 = MonoQ $ Mono $ (get_type :: Type (Int -> Int -> Int))
+types_example_2 = PolyQ 2 $
+    ((Poly . MonoQ . Mono) :: Any a => Type ((a -> a) -> (a -> a) -> (a -> a)) -> Poly Type a)
+    get_type
 
-main = putStrLn $ show $ example1
+main = do
+  putStrLn $ show $ types_example_1
+  putStrLn $ show $ types_example_2
