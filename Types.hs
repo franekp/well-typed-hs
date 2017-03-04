@@ -45,7 +45,7 @@ class Any a => Name a where
   get_type_variable :: TypeVar a
 
 data Mono :: (* -> *) -> * where
-  Mono :: t a -> Mono t
+  Mono :: Typeable a => t a -> Mono t
 
 data ExistsPoly :: (* -> *) -> * -> * where
   ExistsPoly :: Any a => Poly t -> ExistsPoly t a

@@ -16,6 +16,7 @@
 module Instances where
 
 import Data.Void (Void)
+import Data.Typeable (Typeable1, cast)
 import qualified Data.Char
 
 import Types
@@ -50,6 +51,20 @@ instance Any TypeHole where
 
 type_of :: Any a => t a -> Type a
 type_of a = get_type
+
+deriving instance Eq (Type a)
+deriving instance Typeable1 Type
+instance Eq (Mono Type) where
+  Mono a == Mono b = case cast b of
+    Just bb -> a == bb
+    Nothing -> False
+
+deriving instance Eq (TypeVar a)
+deriving instance Typeable1 TypeVar
+instance Eq (Mono TypeVar) where
+  Mono a == Mono b = case cast b of
+    Just bb -> a == bb
+    Nothing -> False
 
 instance Show (Type a) where
   show ((a `ArrowTT` b) `ArrowTT` c) = "(" ++ show (a `ArrowTT` b) ++ ") -> " ++ show c
