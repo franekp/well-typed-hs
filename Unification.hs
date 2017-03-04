@@ -15,8 +15,8 @@
 
 module Unification (unify) where
 
-import BaseTypes
-import Types hiding (main)
+import Types
+import Instances hiding (main)
 
 make_quantifiers_common :: Poly t -> Poly t -> (Poly t, Poly t)
 make_quantifiers_common (MonoP a) (MonoP b) = (MonoP a, MonoP b)

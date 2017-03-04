@@ -15,65 +15,41 @@
 
 module Types where
 
+import Data.Typeable (Typeable, Typeable1)
 import Data.Void (Void)
 
-import BaseTypes
-import Names
+data NameZero
+  deriving Typeable
+data NameSucc a
+  deriving Typeable
 
-instance Show (Type a) where
-  show ((a `ArrowTT` b) `ArrowTT` c) = "(" ++ show (a `ArrowTT` b) ++ ") -> " ++ show c
-  show (a `ArrowTT` b) = show a ++ " -> " ++ show b
-  show IntTT = "Int"
-  show VoidTT = "Void"
-  show (TypeVarTT a) = type_variable_name a
-  show TypeHoleTT = "<type_hole>"
+data TypeHole
+  deriving Typeable
 
-instance Show (Mono Type) where
-  show (Mono a) = show a
+data Type :: * -> * where
+  ArrowTT :: (Any a, Any b) => Type a -> Type b -> Type (a -> b)
+  IntTT :: Type Int
+  VoidTT :: Type Void
+  TypeVarTT :: Name a => TypeVar a -> Type a
+  TypeHoleTT :: Type TypeHole
 
-instance Show (TypeVar a) where
-  show ZeroTV = type_variable_name ZeroTV
-  show (SuccTV a) = type_variable_name (SuccTV a)
+data TypeVar :: * -> * where
+  ZeroTV :: TypeVar NameZero
+  SuccTV :: Name a => TypeVar a -> TypeVar (NameSucc a)
 
-instance Show (Mono TypeVar) where
-  show (Mono a) = show a
+class Typeable a => Any a where
+  get_type :: Any a => Type a
 
-instance (Any a, Any b) => Any (a -> b) where
-  get_type = ArrowTT (get_type :: Type a) (get_type :: Type b)
+class Any a => Name a where
+  type_variable_name :: TypeVar a -> String
+  get_type_variable :: TypeVar a
 
-instance Any Int where
-  get_type = IntTT
+data Mono :: (* -> *) -> * where
+  Mono :: t a -> Mono t
 
-instance Any Void where
-  get_type = VoidTT
+data ExistsPoly :: (* -> *) -> * -> * where
+  ExistsPoly :: Any a => Poly t -> ExistsPoly t a
 
-instance Any TypeHole where
-  get_type = TypeHoleTT
-
-type_of :: Any a => t a -> Type a
-type_of a = get_type
-
-instance Show (Mono t) => Show (Poly t) where
-  show qq = "forall" ++ str ZeroTV qq where
-    str :: (Name a, Show (Mono t)) => TypeVar a -> Poly t -> String
-    str last_tv (MonoP tp) = ". " ++ show tp
-    str last_tv (ForallP ident poly) = " " ++ show last_tv ++ do_stuff last_tv poly where
-      do_stuff :: (Name a, Show (Mono t)) => TypeVar a -> ExistsPoly t a -> String
-      do_stuff tv (ExistsPoly x) = str (SuccTV tv) x
-
-types_example_1 = ForallP 4 (helper get_type)
-  where
-    helper :: forall a. Any a => (forall b. Any b => Type (a -> Int -> (a -> Int -> b) -> b)) -> ExistsPoly Type a
-    helper arg =
-      let
-        inner :: Any a => (forall b. Any b => ExistsPoly Type b) -> ExistsPoly Type a
-        inner polyast = ExistsPoly $ ForallP 5 polyast
-      in inner ( (ExistsPoly . MonoP . Mono :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> ExistsPoly Type b) arg)
-
-types_example_2 = ForallP 3 $
-    ((ExistsPoly . MonoP . Mono) :: Any a => Type ((a -> a) -> (a -> a) -> (a -> a)) -> ExistsPoly Type a)
-    get_type
-
-main = do
-  putStrLn $ show $ types_example_1
-  putStrLn $ show $ types_example_2
+data Poly :: (* -> *) -> * where
+  MonoP :: Mono t -> Poly t
+  ForallP :: Int -> (forall a. Any a => ExistsPoly t a) -> Poly t
