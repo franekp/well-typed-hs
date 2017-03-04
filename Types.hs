@@ -28,8 +28,15 @@ instance Show (Type a) where
   show (TypeVarTT a) = type_variable_name a
   show TypeHoleTT = "<type_hole>"
 
-instance Name a => Show (TypeVar a) where
-  show a = type_variable_name a
+instance Show (Mono Type) where
+  show (Mono a) = show a
+
+instance Show (TypeVar a) where
+  show ZeroTV = type_variable_name ZeroTV
+  show (SuccTV a) = type_variable_name (SuccTV a)
+
+instance Show (Mono TypeVar) where
+  show (Mono a) = show a
 
 instance (Any a, Any b) => Any (a -> b) where
   get_type = ArrowTT (get_type :: Type a) (get_type :: Type b)
@@ -46,24 +53,24 @@ instance Any TypeHole where
 type_of :: Any a => t a -> Type a
 type_of a = get_type
 
-instance Show (Poly Type) where
+instance Show (Mono t) => Show (Poly t) where
   show qq = "forall" ++ str ZeroTV qq where
-    str :: Name a => TypeVar a -> Poly Type -> String
-    str last_tv (MonoP (Mono tp)) = ". " ++ show tp
+    str :: (Name a, Show (Mono t)) => TypeVar a -> Poly t -> String
+    str last_tv (MonoP tp) = ". " ++ show tp
     str last_tv (ForallP ident poly) = " " ++ show last_tv ++ do_stuff last_tv poly where
-      do_stuff :: Name a => TypeVar a -> ExistsPoly Type a -> String
+      do_stuff :: (Name a, Show (Mono t)) => TypeVar a -> ExistsPoly t a -> String
       do_stuff tv (ExistsPoly x) = str (SuccTV tv) x
 
-types_example_1 = ForallP 0 (helper get_type)
+types_example_1 = ForallP 4 (helper get_type)
   where
     helper :: forall a. Any a => (forall b. Any b => Type (a -> Int -> (a -> Int -> b) -> b)) -> ExistsPoly Type a
     helper arg =
       let
         inner :: Any a => (forall b. Any b => ExistsPoly Type b) -> ExistsPoly Type a
-        inner polyast = ExistsPoly $ ForallP 1 polyast
+        inner polyast = ExistsPoly $ ForallP 5 polyast
       in inner ( (ExistsPoly . MonoP . Mono :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> ExistsPoly Type b) arg)
 
-types_example_2 = ForallP 2 $
+types_example_2 = ForallP 3 $
     ((ExistsPoly . MonoP . Mono) :: Any a => Type ((a -> a) -> (a -> a) -> (a -> a)) -> ExistsPoly Type a)
     get_type
 
