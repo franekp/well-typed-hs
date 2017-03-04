@@ -49,7 +49,7 @@ type_of a = get_type
 instance Show (Poly Type) where
   show qq = "forall" ++ str ZeroTV qq where
     str :: Name a => TypeVar a -> Poly Type -> String
-    str last_tv (SimpleP (Mono tp)) = ". " ++ show tp
+    str last_tv (MonoP (Mono tp)) = ". " ++ show tp
     str last_tv (ForallP ident poly) = " " ++ show last_tv ++ do_stuff last_tv poly where
       do_stuff :: Name a => TypeVar a -> ExistsPoly Type a -> String
       do_stuff tv (ExistsPoly x) = str (SuccTV tv) x
@@ -61,10 +61,10 @@ types_example_1 = ForallP 0 (helper get_type)
       let
         inner :: Any a => (forall b. Any b => ExistsPoly Type b) -> ExistsPoly Type a
         inner polyast = ExistsPoly $ ForallP 1 polyast
-      in inner ( (ExistsPoly . SimpleP . Mono :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> ExistsPoly Type b) arg)
+      in inner ( (ExistsPoly . MonoP . Mono :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> ExistsPoly Type b) arg)
 
 types_example_2 = ForallP 2 $
-    ((ExistsPoly . SimpleP . Mono) :: Any a => Type ((a -> a) -> (a -> a) -> (a -> a)) -> ExistsPoly Type a)
+    ((ExistsPoly . MonoP . Mono) :: Any a => Type ((a -> a) -> (a -> a) -> (a -> a)) -> ExistsPoly Type a)
     get_type
 
 main = do

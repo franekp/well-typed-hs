@@ -19,9 +19,9 @@ import BaseTypes
 import Types hiding (main)
 
 make_quantifiers_common :: Poly t -> Poly t -> (Poly t, Poly t)
-make_quantifiers_common (SimpleP a) (SimpleP b) = (SimpleP a, SimpleP b)
-make_quantifiers_common (SimpleP a) b = (aa, bb) where
-  (bb, aa) = make_quantifiers_common b (SimpleP a)
+make_quantifiers_common (MonoP a) (MonoP b) = (MonoP a, MonoP b)
+make_quantifiers_common (MonoP a) b = (aa, bb) where
+  (bb, aa) = make_quantifiers_common b (MonoP a)
 make_quantifiers_common (ForallP id_a a_) b_ =
   let
     helper_left :: Any a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly t a

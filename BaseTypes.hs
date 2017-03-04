@@ -51,5 +51,5 @@ data ExistsPoly :: (* -> *) -> * -> * where
   ExistsPoly :: Any a => Poly t -> ExistsPoly t a
 
 data Poly :: (* -> *) -> * where
-  SimpleP :: Mono t -> Poly t
+  MonoP :: Mono t -> Poly t
   ForallP :: Int -> (forall a. Any a => ExistsPoly t a) -> Poly t
