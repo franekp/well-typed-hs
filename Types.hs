@@ -38,10 +38,10 @@ data TypeVar :: * -> * where
   SuccTV :: TypeVar a -> TypeVar (NameSucc a)
 
 class Typeable a => Any a where
-  get_type :: Any a => Type a
+  any_type :: Any a => Type a
 
 class Any a => Name a where
-  get_type_variable :: TypeVar a
+  any_type_variable :: TypeVar a
 
 data Mono :: (* -> *) -> * where
   Mono :: Typeable a => t a -> Mono t

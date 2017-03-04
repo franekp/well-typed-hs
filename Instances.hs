@@ -28,31 +28,31 @@ type_variable_name (SuccTV a) = case type_variable_name a of
   c:t -> (:t) $ Data.Char.chr $ (+1) $ Data.Char.ord c
 
 instance Name NameZero where
-  get_type_variable = ZeroTV
+  any_type_variable = ZeroTV
 
 instance Name a => Name (NameSucc a) where
-  get_type_variable = SuccTV get_type_variable
+  any_type_variable = SuccTV any_type_variable
 
 instance Any NameZero where
-  get_type = TypeVarTT $ ZeroTV
+  any_type = TypeVarTT $ ZeroTV
 
 instance Name a => Any (NameSucc a) where
-  get_type = TypeVarTT $ SuccTV get_type_variable
+  any_type = TypeVarTT $ SuccTV any_type_variable
 
 instance (Any a, Any b) => Any (a -> b) where
-  get_type = ArrowTT (get_type :: Type a) (get_type :: Type b)
+  any_type = ArrowTT (any_type :: Type a) (any_type :: Type b)
 
 instance Any Int where
-  get_type = IntTT
+  any_type = IntTT
 
 instance Any Void where
-  get_type = VoidTT
+  any_type = VoidTT
 
 instance Any TypeHole where
-  get_type = TypeHoleTT
+  any_type = TypeHoleTT
 
 type_of :: Any a => t a -> Type a
-type_of a = get_type
+type_of a = any_type
 
 deriving instance Eq (Type a)
 deriving instance Typeable1 Type
@@ -94,7 +94,7 @@ instance Show (Mono t) => Show (Poly t) where
       do_stuff :: (Name a, Show (Mono t)) => TypeVar a -> ExistsPoly t a -> String
       do_stuff tv (ExistsPoly x) = str (SuccTV tv) x
 
-types_example_1 = ForallP 4 (helper get_type)
+types_example_1 = ForallP 4 (helper any_type)
   where
     helper :: forall a. Any a => (forall b. Any b => Type (a -> Int -> (a -> Int -> b) -> b)) -> ExistsPoly Type a
     helper arg =
@@ -105,7 +105,7 @@ types_example_1 = ForallP 4 (helper get_type)
 
 types_example_2 = ForallP 3 $
     ((ExistsPoly . MonoP . Mono) :: Any a => Type ((a -> a) -> (a -> a) -> (a -> a)) -> ExistsPoly Type a)
-    get_type
+    any_type
 
 main = do
   putStrLn $ show $ types_example_1
