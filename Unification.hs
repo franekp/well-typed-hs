@@ -18,28 +18,28 @@ module Unification (unify) where
 import BaseTypes
 import Types hiding (main)
 
-make_quantifiers_common :: Quantified t -> Quantified t -> (Quantified t, Quantified t)
-make_quantifiers_common (MonoQ a) (MonoQ b) = (MonoQ a, MonoQ b)
-make_quantifiers_common (MonoQ a) b = (aa, bb) where
-  (bb, aa) = make_quantifiers_common b (MonoQ a)
-make_quantifiers_common (PolyQ id_a a_) b_ =
+make_quantifiers_common :: Poly t -> Poly t -> (Poly t, Poly t)
+make_quantifiers_common (SimpleP a) (SimpleP b) = (SimpleP a, SimpleP b)
+make_quantifiers_common (SimpleP a) b = (aa, bb) where
+  (bb, aa) = make_quantifiers_common b (SimpleP a)
+make_quantifiers_common (ForallP id_a a_) b_ =
   let
-    helper_left :: Any a => Poly t a -> Poly t a -> Poly t a
-    helper_left (Poly a_) (Poly b_) =
-      let (aa, bb) = make_quantifiers_common a_ b_ in Poly aa
-    helper_right :: Any a => Poly t a -> Poly t a -> Poly t a
-    helper_right (Poly a_) (Poly b_) =
-      let (aa, bb) = make_quantifiers_common a_ b_ in Poly bb
+    helper_left :: Any a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly t a
+    helper_left (ExistsPoly a_) (ExistsPoly b_) =
+      let (aa, bb) = make_quantifiers_common a_ b_ in ExistsPoly aa
+    helper_right :: Any a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly t a
+    helper_right (ExistsPoly a_) (ExistsPoly b_) =
+      let (aa, bb) = make_quantifiers_common a_ b_ in ExistsPoly bb
   in
-  (PolyQ id_a $ helper_left a_ (Poly b_), PolyQ id_a $ helper_right a_ (Poly b_))
+  (ForallP id_a $ helper_left a_ (ExistsPoly b_), ForallP id_a $ helper_right a_ (ExistsPoly b_))
 
-lift_quantifier :: Quantified t -> Int -> Quantified t
+lift_quantifier :: Poly t -> Int -> Poly t
 lift_quantifier = undefined
-elim_quantifier :: Quantified t -> Type a -> Quantified t
+elim_quantifier :: Poly t -> Type a -> Poly t
 elim_quantifier = undefined
-unify :: forall t u. (forall a. Any a => t a -> Type a) -> Quantified t
-  -> (forall a. Any a => t a -> Type a) -> Quantified t
-  -> (forall a b. t a -> t b -> Quantified u) -> Quantified u
+unify :: forall t u. (forall a. Any a => t a -> Type a) -> Poly t
+  -> (forall a. Any a => t a -> Type a) -> Poly t
+  -> (forall a b. t a -> t b -> Poly u) -> Poly u
 unify f_a a_ f_b b_ cont =
   let (a, b) = make_quantifiers_common a_ b_ in
   undefined

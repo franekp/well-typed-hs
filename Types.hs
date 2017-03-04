@@ -46,25 +46,25 @@ instance Any TypeHole where
 type_of :: Any a => t a -> Type a
 type_of a = get_type
 
-instance Show (Quantified Type) where
+instance Show (Poly Type) where
   show qq = "forall" ++ str ZeroTV qq where
-    str :: Name a => TypeVar a -> Quantified Type -> String
-    str last_tv (MonoQ (Mono tp)) = ". " ++ show tp
-    str last_tv (PolyQ ident poly) = " " ++ show last_tv ++ do_stuff last_tv poly where
-      do_stuff :: Name a => TypeVar a -> Poly Type a -> String
-      do_stuff tv (Poly x) = str (SuccTV tv) x
+    str :: Name a => TypeVar a -> Poly Type -> String
+    str last_tv (SimpleP (Mono tp)) = ". " ++ show tp
+    str last_tv (ForallP ident poly) = " " ++ show last_tv ++ do_stuff last_tv poly where
+      do_stuff :: Name a => TypeVar a -> ExistsPoly Type a -> String
+      do_stuff tv (ExistsPoly x) = str (SuccTV tv) x
 
-types_example_1 = PolyQ 0 (helper get_type)
+types_example_1 = ForallP 0 (helper get_type)
   where
-    helper :: forall a. Any a => (forall b. Any b => Type (a -> Int -> (a -> Int -> b) -> b)) -> Poly Type a
+    helper :: forall a. Any a => (forall b. Any b => Type (a -> Int -> (a -> Int -> b) -> b)) -> ExistsPoly Type a
     helper arg =
       let
-        inner :: Any a => (forall b. Any b => Poly Type b) -> Poly Type a
-        inner polyast = Poly $ PolyQ 1 polyast
-      in inner ( (Poly . MonoQ . Mono :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> Poly Type b) arg)
+        inner :: Any a => (forall b. Any b => ExistsPoly Type b) -> ExistsPoly Type a
+        inner polyast = ExistsPoly $ ForallP 1 polyast
+      in inner ( (ExistsPoly . SimpleP . Mono :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> ExistsPoly Type b) arg)
 
-types_example_2 = PolyQ 2 $
-    ((Poly . MonoQ . Mono) :: Any a => Type ((a -> a) -> (a -> a) -> (a -> a)) -> Poly Type a)
+types_example_2 = ForallP 2 $
+    ((ExistsPoly . SimpleP . Mono) :: Any a => Type ((a -> a) -> (a -> a) -> (a -> a)) -> ExistsPoly Type a)
     get_type
 
 main = do
