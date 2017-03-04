@@ -20,7 +20,7 @@ import Data.Void (Void)
 import BaseTypes
 import Names
 
-instance Any a => Show (Type a) where
+instance Show (Type a) where
   show ((a `ArrowTT` b) `ArrowTT` c) = "(" ++ show (a `ArrowTT` b) ++ ") -> " ++ show c
   show (a `ArrowTT` b) = show a ++ " -> " ++ show b
   show IntTT = "Int"
