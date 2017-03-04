@@ -21,14 +21,16 @@ import qualified Data.Char
 
 import Types
 
+type_variable_name :: TypeVar a -> String
+type_variable_name ZeroTV = "a"
+type_variable_name (SuccTV a) = case type_variable_name a of
+  'z':t -> 'a':'\'':t
+  c:t -> (:t) $ Data.Char.chr $ (+1) $ Data.Char.ord c
+
 instance Name NameZero where
-  type_variable_name ZeroTV = "a"
   get_type_variable = ZeroTV
 
 instance Name a => Name (NameSucc a) where
-  type_variable_name (SuccTV a) = case type_variable_name a of
-    'z':t -> 'a':'\'':t
-    c:t -> (:t) $ Data.Char.chr $ (+1) $ Data.Char.ord c
   get_type_variable = SuccTV get_type_variable
 
 instance Any NameZero where

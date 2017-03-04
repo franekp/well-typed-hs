@@ -27,7 +27,7 @@ data TypeHole
   deriving Typeable
 
 data Type :: * -> * where
-  ArrowTT :: (Any a, Any b) => Type a -> Type b -> Type (a -> b)
+  ArrowTT :: Type a -> Type b -> Type (a -> b)
   IntTT :: Type Int
   VoidTT :: Type Void
   TypeVarTT :: Name a => TypeVar a -> Type a
@@ -35,13 +35,12 @@ data Type :: * -> * where
 
 data TypeVar :: * -> * where
   ZeroTV :: TypeVar NameZero
-  SuccTV :: Name a => TypeVar a -> TypeVar (NameSucc a)
+  SuccTV :: TypeVar a -> TypeVar (NameSucc a)
 
 class Typeable a => Any a where
   get_type :: Any a => Type a
 
 class Any a => Name a where
-  type_variable_name :: TypeVar a -> String
   get_type_variable :: TypeVar a
 
 data Mono :: (* -> *) -> * where
