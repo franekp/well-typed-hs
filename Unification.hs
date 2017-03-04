@@ -38,8 +38,18 @@ lift_quantifier = undefined
 elim_quantifier :: Poly t -> Type a -> Poly t
 elim_quantifier = undefined
 
-data Mapping = Mapping [(Int, Mono TypeVar)]
+newtype Mapping = Mapping [(Int, Mono TypeVar)]
   deriving Show
+
+mapping_int_to_var :: Mapping -> Int -> Mono TypeVar
+mapping_int_to_var (Mapping []) a = error $ "Int \"" ++ show a ++ "\" not found in a Mapping."
+mapping_int_to_var (Mapping ((num, var):t)) a =
+  if a == num then var else mapping_int_to_var (Mapping t) a
+
+mapping_var_to_int :: Mapping -> Mono TypeVar -> Int
+mapping_var_to_int (Mapping []) a = error $ "TypeVar \"" ++ show a ++ "\" not found in a Mapping."
+mapping_var_to_int (Mapping ((num, var):t)) a =
+  if a == var then num else mapping_var_to_int (Mapping t) a
 
 unpack_poly :: Poly t -> (Mono t, Mapping)
 unpack_poly arg = unpack_poly' ZeroTV arg $ Mapping [] where
@@ -61,3 +71,6 @@ main = do
   putStrLn $ show $ e2
   putStrLn $ show $ unpack_poly e1
   putStrLn $ show $ unpack_poly e2
+  let (_, m1) = unpack_poly e1
+  putStrLn $ show $ m1 `mapping_int_to_var` 4
+  putStrLn $ show $ m1 `mapping_var_to_int` (Mono ZeroTV)
