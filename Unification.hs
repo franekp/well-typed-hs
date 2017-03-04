@@ -15,6 +15,8 @@
 
 module Unification (unify) where
 
+import Data.Typeable (Typeable, cast)
+
 import Types
 import Instances hiding (main)
 
@@ -32,11 +34,6 @@ make_quantifiers_common (ForallP id_a a_) b_ =
       let (aa, bb) = make_quantifiers_common a_ b_ in ExistsPoly bb
   in
   (ForallP id_a $ helper_left a_ (ExistsPoly b_), ForallP id_a $ helper_right a_ (ExistsPoly b_))
-
-lift_quantifier :: Poly t -> Int -> Poly t
-lift_quantifier = undefined
-elim_quantifier :: Poly t -> Type a -> Poly t
-elim_quantifier = undefined
 
 newtype Mapping = Mapping [(Int, Mono TypeVar)]
   deriving Show
@@ -58,11 +55,32 @@ unpack_poly arg = unpack_poly' ZeroTV arg $ Mapping [] where
   unpack_poly' last_tv (ForallP num (ExistsPoly poly :: ExistsPoly t a)) (Mapping m) =
     unpack_poly' (SuccTV last_tv) poly $ Mapping $ (num, Mono last_tv):m
 
+data Constraint = Constraint (Mono TypeVar) (Mono Type)
+
+substitute_var :: Mono Type -> Mono TypeVar -> Mono Type -> Mono Type
+((Mono t) `substitute_var` var) replacement = case t of
+  a `ArrowTT` b -> let arrow (Mono a) (Mono b) = Mono $ a `ArrowTT` b in
+    ((Mono a `substitute_var` var) replacement) `arrow` ((Mono b `substitute_var` var) replacement)
+  IntTT -> Mono IntTT
+  VoidTT -> Mono VoidTT
+  TypeVarTT a ->
+    if Mono a == var then replacement else Mono $ TypeVarTT a
+  TypeHoleTT -> Mono TypeHoleTT
+
+apply_constraint :: Mapping -> Constraint -> Poly t -> Poly t
+apply_constraint = undefined
+
+gen_constraints :: Mono t -> Mono t -> [Constraint]
+gen_constraints = undefined
+
 unify :: forall t u. (forall a. Any a => t a -> Type a) -> Poly t
   -> (forall a. Any a => t a -> Type a) -> Poly t
   -> (forall a b. t a -> t b -> Poly u) -> Poly u
-unify f_a a_ f_b b_ cont =
-  let (a, b) = make_quantifiers_common a_ b_ in
+unify f_a a_input f_b b_input cont =
+  let (a_poly, b_poly) = make_quantifiers_common a_input b_input in
+  let (a_mono, m) = unpack_poly a_poly in
+  let (b_mono, _) = unpack_poly b_poly in
+
   undefined
 
 main = do
@@ -71,6 +89,7 @@ main = do
   putStrLn $ show $ e2
   putStrLn $ show $ unpack_poly e1
   putStrLn $ show $ unpack_poly e2
-  let (_, m1) = unpack_poly e1
+  let (mono1, m1) = unpack_poly e1
   putStrLn $ show $ m1 `mapping_int_to_var` 4
   putStrLn $ show $ m1 `mapping_var_to_int` (Mono ZeroTV)
+  putStrLn $ show $ ((mono1 `substitute_var` Mono ZeroTV) (Mono VoidTT))
