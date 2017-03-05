@@ -62,6 +62,9 @@ mapping_type_to_int (TypeMapping ((num, tp):t)) a =
   if a == tp then num else mapping_type_to_int (TypeMapping t) a
 
 unpack_poly :: Poly t -> (Mono t, VarMapping)
+-- FIXME: there should first be a pass that will fill arg
+-- with TypeHoles and next take maximum of all the type variables present there
+-- and this maximum + 1 should be here instead of ZeroTV!
 unpack_poly arg = unpack_poly' ZeroTV arg $ VarMapping [] where
   unpack_poly' :: forall a t. Name a => TypeVar a -> Poly t -> VarMapping -> (Mono t, VarMapping)
   unpack_poly' last_tv (MonoP a) m = (a, m)
@@ -80,11 +83,11 @@ substitute_var :: Mono Type -> Mono TypeVar -> Mono Type -> Mono Type
     if Mono a == var then replacement else Mono $ TypeVarTT a
   TypeHoleTT -> Mono TypeHoleTT
 
-apply_constraint :: forall t. VarMapping -> Constraint -> Poly t -> Poly t
-apply_constraint m constr poly = undefined where
+apply_constraint :: forall t. Show (Mono t) => VarMapping -> Constraint -> Poly t -> Poly t
+apply_constraint var_map (Constraint var_to_replace replacement) input = result where
   duplicate_foralls_except_one_and_step_inside_them ::
-    Int -> Poly t -> (TypeMapping -> Poly t -> Poly t) -> Poly t
-  duplicate_foralls_except_one_and_step_inside_them except_q input cont = helper input (TypeMapping []) where
+    Int -> (TypeMapping -> Poly t -> Poly t) -> Poly t
+  duplicate_foralls_except_one_and_step_inside_them except_q cont = helper input (TypeMapping []) where
       helper :: Poly t -> TypeMapping -> Poly t
       helper current (TypeMapping m) = case current of
         MonoP mono -> cont (TypeMapping m) input
@@ -98,6 +101,30 @@ apply_constraint m constr poly = undefined where
               (ExistsPoly poly :: ExistsPoly t TypeHole) -> helper poly (TypeMapping m)
           else
             ForallP num $ do_stuff exists_poly
+  result :: Poly t
+  result = duplicate_foralls_except_one_and_step_inside_them
+    (var_map `mapping_var_to_int` var_to_replace)
+    do_something_inside
+  do_something_inside :: TypeMapping -> Poly t -> Poly t
+  --do_something_inside type_map poly = error $ show type_map ++ show poly
+  do_something_inside type_map (MonoP mono) = MonoP mono
+  do_something_inside type_map (ForallP num exists_poly) =
+    let
+      apply_type :: forall a. Any a => Type a -> (forall b. Any b => ExistsPoly t b) -> Poly t
+      apply_type _ (ExistsPoly poly :: ExistsPoly t a) = poly
+    in if num /= (var_map `mapping_var_to_int` var_to_replace) then
+      case type_map `mapping_int_to_type` num of
+        Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
+    else
+      let
+        true_replacement = make_true_replacement type_map replacement
+        make_true_replacement :: TypeMapping -> Mono Type -> Mono Type
+        make_true_replacement (TypeMapping ((n, tp):m)) current =
+          make_true_replacement (TypeMapping m) $
+            (current `substitute_var` (var_map `mapping_int_to_var` n)) tp
+        make_true_replacement (TypeMapping []) current = current
+      in case true_replacement of
+        Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
 
 gen_constraints :: Mono t -> Mono t -> [Constraint]
 gen_constraints = undefined
@@ -122,3 +149,15 @@ main = do
   putStrLn $ show $ m1 `mapping_int_to_var` 4
   putStrLn $ show $ m1 `mapping_var_to_int` (Mono ZeroTV)
   putStrLn $ show $ ((mono1 `substitute_var` Mono ZeroTV) (Mono VoidTT))
+  let a = ZeroTV
+  let b = SuccTV a
+  let c = SuccTV b
+  let d = SuccTV c
+  let e = SuccTV d
+  let f = SuccTV e
+  let g = SuccTV f
+  putStrLn $ show $ Mono f == Mono f
+  putStrLn $ show $ apply_constraint (VarMapping [(4, Mono e), (3, Mono f), (5, Mono g)])
+    (Constraint (Mono e) (Mono (ArrowTT (TypeVarTT f) (TypeVarTT f)))) e1
+  putStrLn $ show $ apply_constraint (VarMapping [(4, Mono e), (3, Mono f), (5, Mono g)])
+    (Constraint (Mono g) (Mono (ArrowTT (IntTT) (TypeVarTT e)))) e1
