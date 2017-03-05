@@ -35,25 +35,38 @@ make_quantifiers_common (ForallP id_a a_) b_ =
   in
   (ForallP id_a $ helper_left a_ (ExistsPoly b_), ForallP id_a $ helper_right a_ (ExistsPoly b_))
 
-newtype Mapping = Mapping [(Int, Mono TypeVar)]
+newtype VarMapping = VarMapping [(Int, Mono TypeVar)]
   deriving Show
 
-mapping_int_to_var :: Mapping -> Int -> Mono TypeVar
-mapping_int_to_var (Mapping []) a = error $ "Int \"" ++ show a ++ "\" not found in a Mapping."
-mapping_int_to_var (Mapping ((num, var):t)) a =
-  if a == num then var else mapping_int_to_var (Mapping t) a
+newtype TypeMapping = TypeMapping [(Int, Mono Type)]
+  deriving Show
 
-mapping_var_to_int :: Mapping -> Mono TypeVar -> Int
-mapping_var_to_int (Mapping []) a = error $ "TypeVar \"" ++ show a ++ "\" not found in a Mapping."
-mapping_var_to_int (Mapping ((num, var):t)) a =
-  if a == var then num else mapping_var_to_int (Mapping t) a
+mapping_int_to_var :: VarMapping -> Int -> Mono TypeVar
+mapping_int_to_var (VarMapping []) a = error $ "Int \"" ++ show a ++ "\" not found in a VarMapping."
+mapping_int_to_var (VarMapping ((num, var):t)) a =
+  if a == num then var else mapping_int_to_var (VarMapping t) a
 
-unpack_poly :: Poly t -> (Mono t, Mapping)
-unpack_poly arg = unpack_poly' ZeroTV arg $ Mapping [] where
-  unpack_poly' :: forall a t. Name a => TypeVar a -> Poly t -> Mapping -> (Mono t, Mapping)
+mapping_var_to_int :: VarMapping -> Mono TypeVar -> Int
+mapping_var_to_int (VarMapping []) a = error $ "TypeVar \"" ++ show a ++ "\" not found in a VarMapping."
+mapping_var_to_int (VarMapping ((num, var):t)) a =
+  if a == var then num else mapping_var_to_int (VarMapping t) a
+
+mapping_int_to_type :: TypeMapping -> Int -> Mono Type
+mapping_int_to_type (TypeMapping []) a = error $ "Int \"" ++ show a ++ "\" not found in a TypeMapping."
+mapping_int_to_type (TypeMapping ((num, tp):t)) a =
+  if a == num then tp else mapping_int_to_type (TypeMapping t) a
+
+mapping_type_to_int :: TypeMapping -> Mono Type -> Int
+mapping_type_to_int (TypeMapping []) a = error $ "Type \"" ++ show a ++ "\" not found in a TypeMapping."
+mapping_type_to_int (TypeMapping ((num, tp):t)) a =
+  if a == tp then num else mapping_type_to_int (TypeMapping t) a
+
+unpack_poly :: Poly t -> (Mono t, VarMapping)
+unpack_poly arg = unpack_poly' ZeroTV arg $ VarMapping [] where
+  unpack_poly' :: forall a t. Name a => TypeVar a -> Poly t -> VarMapping -> (Mono t, VarMapping)
   unpack_poly' last_tv (MonoP a) m = (a, m)
-  unpack_poly' last_tv (ForallP num (ExistsPoly poly :: ExistsPoly t a)) (Mapping m) =
-    unpack_poly' (SuccTV last_tv) poly $ Mapping $ (num, Mono last_tv):m
+  unpack_poly' last_tv (ForallP num (ExistsPoly poly :: ExistsPoly t a)) (VarMapping m) =
+    unpack_poly' (SuccTV last_tv) poly $ VarMapping $ (num, Mono last_tv):m
 
 data Constraint = Constraint (Mono TypeVar) (Mono Type)
 
@@ -67,7 +80,7 @@ substitute_var :: Mono Type -> Mono TypeVar -> Mono Type -> Mono Type
     if Mono a == var then replacement else Mono $ TypeVarTT a
   TypeHoleTT -> Mono TypeHoleTT
 
-apply_constraint :: Mapping -> Constraint -> Poly t -> Poly t
+apply_constraint :: VarMapping -> Constraint -> Poly t -> Poly t
 apply_constraint = undefined
 
 gen_constraints :: Mono t -> Mono t -> [Constraint]
