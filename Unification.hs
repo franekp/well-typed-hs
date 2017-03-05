@@ -80,8 +80,24 @@ substitute_var :: Mono Type -> Mono TypeVar -> Mono Type -> Mono Type
     if Mono a == var then replacement else Mono $ TypeVarTT a
   TypeHoleTT -> Mono TypeHoleTT
 
-apply_constraint :: VarMapping -> Constraint -> Poly t -> Poly t
-apply_constraint = undefined
+apply_constraint :: forall t. VarMapping -> Constraint -> Poly t -> Poly t
+apply_constraint m constr poly = undefined where
+  duplicate_foralls_except_one_and_step_inside_them ::
+    Int -> Poly t -> (TypeMapping -> Poly t -> Poly t) -> Poly t
+  duplicate_foralls_except_one_and_step_inside_them except_q input cont = helper input (TypeMapping []) where
+      helper :: Poly t -> TypeMapping -> Poly t
+      helper current (TypeMapping m) = case current of
+        MonoP mono -> cont (TypeMapping m) input
+        ForallP num exists_poly ->
+          let
+            do_stuff :: forall a. ExistsPoly t a -> ExistsPoly t a
+            do_stuff (ExistsPoly poly) = ExistsPoly $ helper poly $ TypeMapping $ (num, Mono (any_type :: Type a)):m
+          in
+          if num == except_q then
+            case exists_poly of
+              (ExistsPoly poly :: ExistsPoly t TypeHole) -> helper poly (TypeMapping m)
+          else
+            ForallP num $ do_stuff exists_poly
 
 gen_constraints :: Mono t -> Mono t -> [Constraint]
 gen_constraints = undefined
