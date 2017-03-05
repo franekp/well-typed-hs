@@ -90,7 +90,7 @@ instance Show (Mono t) => Show (Poly t) where
   show qq = "forall" ++ str ZeroTV qq where
     str :: (Name a, Show (Mono t)) => TypeVar a -> Poly t -> String
     str last_tv (MonoP tp) = ". " ++ show tp
-    str last_tv (ForallP ident poly) = " " ++ show last_tv ++ do_stuff last_tv poly where
+    str last_tv (ForallP ident poly) = " " ++ show last_tv ++ show ident ++ do_stuff last_tv poly where
       do_stuff :: (Name a, Show (Mono t)) => TypeVar a -> ExistsPoly t a -> String
       do_stuff tv (ExistsPoly x) = str (SuccTV tv) x
 

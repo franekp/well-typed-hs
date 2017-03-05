@@ -65,6 +65,7 @@ unpack_poly :: Poly t -> (Mono t, VarMapping)
 -- FIXME: there should first be a pass that will fill arg
 -- with TypeHoles and next take maximum of all the type variables present there
 -- and this maximum + 1 should be here instead of ZeroTV!
+-- and make this function take 2 arguments so that they remain in sync.
 unpack_poly arg = unpack_poly' ZeroTV arg $ VarMapping [] where
   unpack_poly' :: forall a t. Name a => TypeVar a -> Poly t -> VarMapping -> (Mono t, VarMapping)
   unpack_poly' last_tv (MonoP a) m = (a, m)
@@ -127,6 +128,8 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
         Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
 
 gen_constraints :: Mono t -> Mono t -> [Constraint]
+-- FIXME: this should also take a parameter that indicates which variables
+-- in the types are of interest and which should be ignored
 gen_constraints = undefined
 
 unify :: forall t u. (forall a. Any a => t a -> Type a) -> Poly t
