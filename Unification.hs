@@ -83,16 +83,22 @@ dump_typevars (ForallP _ exists_poly) = result exists_poly where
   result :: ExistsPoly t TypeHole -> [Mono TypeVar]
   result (ExistsPoly poly) = dump_typevars poly
 
-unpack_poly :: Poly t -> (Mono t, VarMapping)
--- FIXME: there should first be a pass that will fill arg
--- with TypeHoles and next take maximum of all the type variables present there
--- and this maximum + 1 should be here instead of ZeroTV!
--- and make this function take 2 arguments so that they remain in sync.
-unpack_poly arg = unpack_poly' ZeroTV arg $ VarMapping [] where
-  unpack_poly' :: forall a t. Name a => TypeVar a -> Poly t -> VarMapping -> (Mono t, VarMapping)
-  unpack_poly' last_tv (MonoP a) m = (a, m)
-  unpack_poly' last_tv (ForallP num (ExistsPoly poly :: ExistsPoly t a)) (VarMapping m) =
-    unpack_poly' (SuccTV last_tv) poly $ VarMapping $ (num, Mono last_tv):m
+unpack_poly :: Poly t -> Poly t -> (Mono t, Mono t, VarMapping, Mono TypeVar)
+unpack_poly a b =
+  case start_var of
+    Mono ZeroTV -> unpack_poly' ZeroTV a b $ VarMapping []
+    Mono (SuccTV s) -> unpack_poly' (SuccTV s) a b $ VarMapping []
+  where
+    start_var = typevar_max_plus_one $ dump_typevars a ++ dump_typevars b
+    unpack_poly' :: forall a t. Name a => TypeVar a -> Poly t -> Poly t
+      -> VarMapping -> (Mono t, Mono t, VarMapping, Mono TypeVar)
+    unpack_poly' last_tv (MonoP a) (MonoP b) m = (a, b, m, start_var)
+    unpack_poly' last_tv
+      (ForallP num_a (ExistsPoly poly_a :: ExistsPoly t a))
+      (ForallP num_b (ExistsPoly poly_b :: ExistsPoly t a ))
+      (VarMapping m) =
+        if num_a /= num_b then error "make_quantifiers_common not called before unpack_poly!" else
+        unpack_poly' (SuccTV last_tv) poly_a poly_b $ VarMapping $ (num_a, Mono last_tv):m
 
 data Constraint = Constraint (Mono TypeVar) (Mono Type)
 
@@ -159,20 +165,17 @@ unify :: forall t u. (forall a. Any a => t a -> Type a) -> Poly t
   -> (forall a b. t a -> t b -> Poly u) -> Poly u
 unify f_a a_input f_b b_input cont =
   let (a_poly, b_poly) = make_quantifiers_common a_input b_input in
-  let (a_mono, m) = unpack_poly a_poly in
-  let (b_mono, _) = unpack_poly b_poly in
-
+  let (a_mono, b_mono, m, start_var) = unpack_poly a_poly b_poly in
   undefined
 
 main = do
   let (e1, e2) = make_quantifiers_common types_example_1 types_example_2
   putStrLn $ show $ e1
   putStrLn $ show $ e2
-  putStrLn $ show $ unpack_poly e1
-  putStrLn $ show $ unpack_poly e2
-  let (mono1, m1) = unpack_poly e1
-  putStrLn $ show $ m1 `mapping_int_to_var` 4
-  putStrLn $ show $ m1 `mapping_var_to_int` (Mono ZeroTV)
+  putStrLn $ show $ unpack_poly e1 e2
+  let (mono1, mono2, m, start_var) = unpack_poly e1 e2
+  putStrLn $ show $ m `mapping_int_to_var` 4
+  putStrLn $ show $ m `mapping_var_to_int` (Mono ZeroTV)
   putStrLn $ show $ ((mono1 `substitute_var` Mono ZeroTV) (Mono VoidTT))
   let a = ZeroTV
   let b = SuccTV a
