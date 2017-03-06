@@ -61,6 +61,28 @@ mapping_type_to_int (TypeMapping []) a = error $ "Type \"" ++ show a ++ "\" not 
 mapping_type_to_int (TypeMapping ((num, tp):t)) a =
   if a == tp then num else mapping_type_to_int (TypeMapping t) a
 
+typevar_max_plus_one :: [Mono TypeVar] -> Mono TypeVar
+typevar_max_plus_one [] = Mono ZeroTV
+typevar_max_plus_one li = helper li [] where
+  helper :: [Mono TypeVar] -> [Mono TypeVar] -> Mono TypeVar
+  helper (Mono h:t) res = case h of
+    ZeroTV -> helper t res
+    SuccTV a -> helper t (Mono a:res)
+  helper [] res = case typevar_max_plus_one res of
+    Mono (SuccTV a) -> Mono $ SuccTV $ SuccTV a
+    Mono ZeroTV -> Mono $ SuccTV $ ZeroTV
+
+dump_typevars :: Poly t -> [Mono TypeVar]
+dump_typevars (MonoP (Mono tt)) = do_stuff (type_of tt) [] where
+  do_stuff :: Any a => Type a -> [Mono TypeVar] -> [Mono TypeVar]
+  do_stuff arg acc = case arg of
+    a `ArrowTT` b -> do_stuff a $ do_stuff b $ acc
+    TypeVarTT a -> Mono a:acc
+    _ -> acc
+dump_typevars (ForallP _ exists_poly) = result exists_poly where
+  result :: ExistsPoly t TypeHole -> [Mono TypeVar]
+  result (ExistsPoly poly) = dump_typevars poly
+
 unpack_poly :: Poly t -> (Mono t, VarMapping)
 -- FIXME: there should first be a pass that will fill arg
 -- with TypeHoles and next take maximum of all the type variables present there

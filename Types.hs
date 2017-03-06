@@ -35,7 +35,7 @@ data Type :: * -> * where
 
 data TypeVar :: * -> * where
   ZeroTV :: TypeVar NameZero
-  SuccTV :: TypeVar a -> TypeVar (NameSucc a)
+  SuccTV :: Name a => TypeVar a -> TypeVar (NameSucc a)
 
 class Typeable a => Any a where
   any_type :: Any a => Type a
