@@ -51,6 +51,11 @@ mapping_var_to_int (VarMapping []) a = error $ "TypeVar \"" ++ show a ++ "\" not
 mapping_var_to_int (VarMapping ((num, var):t)) a =
   if a == var then num else mapping_var_to_int (VarMapping t) a
 
+mapping_contains_var :: VarMapping -> Mono TypeVar -> Bool
+mapping_contains_var (VarMapping []) a = False
+mapping_contains_var (VarMapping ((num, var):t)) a =
+  if a == var then True else mapping_contains_var (VarMapping t) a
+
 mapping_int_to_type :: TypeMapping -> Int -> Mono Type
 mapping_int_to_type (TypeMapping []) a = error $ "Int \"" ++ show a ++ "\" not found in a TypeMapping."
 mapping_int_to_type (TypeMapping ((num, tp):t)) a =
@@ -102,16 +107,6 @@ unpack_poly a b =
 
 data Constraint = Constraint (Mono TypeVar) (Mono Type)
 
-substitute_var :: Mono Type -> Mono TypeVar -> Mono Type -> Mono Type
-((Mono t) `substitute_var` var) replacement = case t of
-  a `ArrowTT` b -> let arrow (Mono a) (Mono b) = Mono $ a `ArrowTT` b in
-    ((Mono a `substitute_var` var) replacement) `arrow` ((Mono b `substitute_var` var) replacement)
-  IntTT -> Mono IntTT
-  VoidTT -> Mono VoidTT
-  TypeVarTT a ->
-    if Mono a == var then replacement else Mono $ TypeVarTT a
-  TypeHoleTT -> Mono TypeHoleTT
-
 map_vars :: (Mono TypeVar -> Mono Type) -> Mono Type -> Mono Type
 map_vars f (Mono t) = case t of
   a `ArrowTT` b ->
@@ -146,7 +141,6 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
     (var_map `mapping_var_to_int` var_to_replace)
     do_something_inside
   do_something_inside :: TypeMapping -> Poly t -> Poly t
-  --do_something_inside type_map poly = error $ show type_map ++ show poly
   do_something_inside type_map (MonoP mono) = MonoP mono
   do_something_inside type_map (ForallP num exists_poly) =
     let
@@ -157,12 +151,14 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
         Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
     else
       let
-        true_replacement = make_true_replacement type_map replacement
-        make_true_replacement :: TypeMapping -> Mono Type -> Mono Type
-        make_true_replacement (TypeMapping ((n, tp):m)) current =
-          make_true_replacement (TypeMapping m) $
-            (current `substitute_var` (var_map `mapping_int_to_var` n)) tp
-        make_true_replacement (TypeMapping []) current = current
+        true_replacement = make_true_replacement replacement
+        make_true_replacement :: Mono Type -> Mono Type
+        make_true_replacement tt = map_vars helper tt where
+          helper :: Mono TypeVar -> Mono Type
+          helper tv = if var_map `mapping_contains_var` tv
+            then type_map `mapping_int_to_type` (var_map `mapping_var_to_int` tv)
+            else case tv of
+              Mono vv -> Mono $ TypeVarTT vv
       in case true_replacement of
         Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
 
@@ -187,7 +183,6 @@ main = do
   let (mono1, mono2, m, start_var) = unpack_poly e1 e2
   putStrLn $ show $ m `mapping_int_to_var` 4
   putStrLn $ show $ m `mapping_var_to_int` (Mono ZeroTV)
-  putStrLn $ show $ ((mono1 `substitute_var` Mono ZeroTV) (Mono VoidTT))
   let a = ZeroTV
   let b = SuccTV a
   let c = SuccTV b
@@ -196,7 +191,7 @@ main = do
   let f = SuccTV e
   let g = SuccTV f
   putStrLn $ show $ Mono f == Mono f
-  putStrLn $ show $ apply_constraint (VarMapping [(4, Mono e), (3, Mono f), (5, Mono g)])
-    (Constraint (Mono e) (Mono (ArrowTT (TypeVarTT f) (TypeVarTT f)))) e1
-  putStrLn $ show $ apply_constraint (VarMapping [(4, Mono e), (3, Mono f), (5, Mono g)])
-    (Constraint (Mono g) (Mono (ArrowTT (IntTT) (TypeVarTT e)))) e1
+  putStrLn $ show $ apply_constraint (VarMapping [(4, Mono a), (5, Mono b), (3, Mono c)])
+    (Constraint (Mono a) (Mono (ArrowTT (TypeVarTT c) (TypeVarTT c)))) e1
+  putStrLn $ show $ apply_constraint (VarMapping [(4, Mono a), (5, Mono b), (3, Mono c)])
+    (Constraint (Mono b) (Mono (ArrowTT IntTT (TypeVarTT a)))) e1
