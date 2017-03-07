@@ -118,7 +118,7 @@ map_vars f (Mono t) = case t of
   TypeVarTT tv -> f $ Mono tv
   x -> Mono x
 
-apply_constraint :: forall t. Show (Mono t) => VarMapping -> Constraint -> Poly t -> Poly t
+apply_constraint :: forall t. VarMapping -> Constraint -> Poly t -> Poly t
 apply_constraint var_map (Constraint var_to_replace replacement) input = result where
   duplicate_foralls_except_one_and_step_inside_them ::
     Int -> (TypeMapping -> Poly t -> Poly t) -> Poly t
@@ -162,10 +162,18 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
       in case true_replacement of
         Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
 
-gen_constraints :: Mono t -> Mono t -> [Constraint]
--- FIXME: this should also take a parameter that indicates which variables
--- in the types are of interest and which should be ignored
-gen_constraints = undefined
+gen_constraints :: (Any a, Any b) => Mono TypeVar -> Type a -> Type b -> [Constraint]
+gen_constraints start_var (a `ArrowTT` b) (a' `ArrowTT` b') =
+  gen_constraints start_var a a' ++ gen_constraints start_var b b'
+gen_constraints start_var (TypeVarTT a) a' = if Mono a < start_var then [] else
+  case a' of
+    TypeVarTT a'' ->
+      if Mono a == Mono a'' then [] else
+      [Constraint (Mono a) (Mono a')]
+    _ -> [Constraint (Mono a) (Mono a')]
+gen_constraints start_var a (TypeVarTT a') =
+  gen_constraints start_var (TypeVarTT a') a
+gen_constraints _ _ _ = []
 
 unify :: forall t u. (forall a. Any a => t a -> Type a) -> Poly t
   -> (forall a. Any a => t a -> Type a) -> Poly t
@@ -173,7 +181,16 @@ unify :: forall t u. (forall a. Any a => t a -> Type a) -> Poly t
 unify f_a a_input f_b b_input cont =
   let (a_poly, b_poly) = synchronize_quantifiers a_input b_input in
   let (a_mono, b_mono, m, start_var) = unpack_poly a_poly b_poly in
-  undefined
+  let
+    constraints = case a_mono of
+      Mono a -> case b_mono of
+        Mono b -> gen_constraints start_var (f_a a) (f_b b)
+  in let
+    helper :: [Constraint] -> Poly t -> Poly t -> (Poly t, Poly t)
+    helper [] aa bb = (aa, bb)
+    helper (c:cs) aa bb = helper cs (apply_constraint m c aa) (apply_constraint m c bb)
+    (a_res, b_res) = helper constraints a_poly b_poly
+  in undefined
 
 main = do
   let (e1, e2) = synchronize_quantifiers types_example_1 types_example_2
