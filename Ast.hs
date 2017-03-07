@@ -17,6 +17,8 @@ module Ast where
 
 import Data.Void
 import Data.Typeable (Typeable, Typeable1, Typeable2, cast)
+import Data.List (foldl')
+import Data.Bits (xor)
 
 import Types
 import Instances
@@ -65,15 +67,32 @@ eval s (AppA fun arg) = eval s fun $ eval s arg
 data Expr = AddE
   | LiteralE Int
   | AppE Expr Expr
-  | LambdaE String TypeExpr Expr
+  | LambdaE String PolyTypeExpr Expr
   | VarE String
 
-data TypeExpr = IntTE | ArrowTE TypeExpr TypeExpr
+data MonoTypeExpr = IntMTE | ArrowMTE MonoTypeExpr MonoTypeExpr | VarMTE String
+data PolyTypeExpr = ForallPTE String PolyTypeExpr | MonoPTE MonoTypeExpr
 
-typecheck_type :: TypeExpr -> Mono Type
-typecheck_type IntTE = Mono IntTT
-typecheck_type (a `ArrowTE` b) = case (typecheck_type a, typecheck_type b) of
-  (Mono a', Mono b') -> Mono $ a' `ArrowTT` b'
+typecheck_monotype :: (String -> Mono Type) -> MonoTypeExpr -> Mono Type
+typecheck_monotype ctx IntMTE = Mono IntTT
+typecheck_monotype ctx (a `ArrowMTE` b) =
+  case (typecheck_monotype ctx a, typecheck_monotype ctx b) of
+    (Mono a', Mono b') -> Mono $ a' `ArrowTT` b'
+typecheck_monotype ctx (VarMTE var) = ctx var
+
+hash :: String -> Int
+hash = foldl' (\h c -> 33*h `xor` fromEnum c) 5381
+
+-- FIXME: this should be a monad generating unique ids, not hashes!
+typecheck_polytype' :: (String -> Mono Type) -> PolyTypeExpr -> Poly Type
+typecheck_polytype' ctx (MonoPTE monotype) = MonoP $ typecheck_monotype ctx monotype
+typecheck_polytype' ctx (ForallPTE var inner) = ForallP (hash var) (
+    ExistsPoly $ typecheck_polytype'
+      (\x -> if x == var then Mono (any_type :: Type a) else ctx x) inner
+    :: forall a. Any a => ExistsPoly Type a)
+
+typecheck_polytype :: PolyTypeExpr -> Poly Type
+typecheck_polytype = typecheck_polytype' (\_ -> error "not found")
 
 lookup_var :: forall e. Env e -> String -> Mono (Ast e)
 lookup_var NilE var = Mono (ErrorA $ "unknown variable: '" ++ var ++ "'" :: Ast e Void)
@@ -97,9 +116,12 @@ typecheck e (AppE fun arg) =
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
         Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast e Void)
       _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast e Void)
-typecheck e (LambdaE var_name ty body) =
-  case typecheck_type ty of
-    Mono tt ->
-      let body_ast = typecheck (ConsE var_name tt e) body in
-       polymap (\b -> MonoP $ Mono $ LambdaA b) body_ast
+typecheck e (LambdaE var_name ty body) = polymap helper $ (typecheck_polytype ty :: Poly Type) where
+  helper :: forall a. Any a => Type a -> Poly (Ast e)
+  helper tt = polymap (MonoP . Mono . (
+      LambdaA :: forall b. Any b => Ast (Cons a e) b -> Ast e (a -> b)
+    )) body_ast
+    where
+      body_ast :: Poly (Ast (Cons a e))
+      body_ast = typecheck (ConsE var_name tt e) body
 typecheck e (VarE name) = MonoP $ lookup_var e name
