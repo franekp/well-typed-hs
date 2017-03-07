@@ -21,7 +21,7 @@ import Data.List (foldl')
 import Data.Bits (xor)
 
 import Types
-import Instances
+import Instances hiding (main)
 import Unification
 
 data Nil :: *
@@ -54,6 +54,10 @@ data Ast :: * -> * -> * where
   AppA :: (Any a, Any b, Typeable e) => Ast e (a -> b) -> Ast e a -> Ast e b
 
 deriving instance Typeable2 Ast
+deriving instance Show (Ast e a)
+
+instance Show (Mono (Ast e)) where
+  show (Mono a) = show a
 
 eval :: Store e -> Ast e a -> a
 eval s AddA = \x y -> x + y
@@ -101,6 +105,10 @@ lookup_var (ConsE name ty rest) var =
     case lookup_var rest var of
       Mono res -> Mono $ LiftA res
 
+-- TODO: add possibility of referencing type variables declared in outer scope!
+-- so typecheck will take the same (String -> Mono Type) = TypeEnv parameter
+-- as in typecheck_polytype' and typecheck_monotype
+
 typecheck :: forall e. Typeable e => Env e -> Expr -> Poly (Ast e)
 typecheck e AddE = MonoP $ Mono $ AddA
 typecheck e (LiteralE val) = MonoP $ Mono $ LiteralA val
@@ -125,3 +133,14 @@ typecheck e (LambdaE var_name ty body) = polymap helper $ (typecheck_polytype ty
       body_ast :: Poly (Ast (Cons a e))
       body_ast = typecheck (ConsE var_name tt e) body
 typecheck e (VarE name) = MonoP $ lookup_var e name
+
+expr_1 =
+  LambdaE "a" (ForallPTE "a" $ MonoPTE $ VarMTE "a") $
+  LambdaE "f" (ForallPTE "b" $ ForallPTE "c" $ MonoPTE $ VarMTE "b" `ArrowMTE` VarMTE "c") $
+  VarE "f" `AppE` VarE "a"
+ast_1 = typecheck NilE expr_1
+type_1 = polymap (MonoP . Mono . type_of) ast_1
+
+main = do
+  print $ type_1
+  print $ ast_1
