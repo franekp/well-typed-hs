@@ -16,6 +16,7 @@
 module Unification (unify) where
 
 import Data.Typeable (Typeable, cast)
+import Debug.Trace
 
 import Types
 import Instances hiding (main)
@@ -106,6 +107,7 @@ unpack_poly a b =
         unpack_poly' (SuccTV last_tv) poly_a poly_b $ VarMapping $ (num_a, Mono last_tv):m
 
 data Constraint = Constraint (Mono TypeVar) (Mono Type)
+  deriving Show
 
 map_vars :: (Mono TypeVar -> Mono Type) -> Mono Type -> Mono Type
 map_vars f (Mono t) = case t of
@@ -162,6 +164,7 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
       in case true_replacement of
         Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
 
+-- TODO add a check to detect infinite types
 gen_constraints :: (Any a, Any b) => Mono TypeVar -> Type a -> Type b -> [Constraint]
 gen_constraints start_var (a `ArrowTT` b) (a' `ArrowTT` b') =
   gen_constraints start_var a a' ++ gen_constraints start_var b b'
@@ -175,7 +178,24 @@ gen_constraints start_var a (TypeVarTT a') =
   gen_constraints start_var (TypeVarTT a') a
 gen_constraints _ _ _ = []
 
-zip_quantifiers :: forall t u. Poly t -> Poly t -> (forall a b. t a -> t b -> Poly u) -> Poly u
+var_to_type :: Mono TypeVar -> Mono Type
+var_to_type (Mono a) = Mono $ TypeVarTT a
+
+apply_constraint_to_constraint_list ::
+  Mono TypeVar -> Constraint -> [Constraint] -> [Constraint]
+apply_constraint_to_constraint_list start_var (Constraint var replacement) li =
+  concat $ map apply li where
+    apply :: Constraint -> [Constraint]
+    apply (Constraint v r) =
+      let mapped_r = map_vars (\rv -> if rv /= var then var_to_type rv else replacement) r in
+      if v /= var then
+        [Constraint v $ mapped_r]
+      else
+        case (replacement, mapped_r) of
+          (Mono a, Mono b) -> gen_constraints start_var a b
+
+zip_quantifiers :: forall t u. Poly t -> Poly t
+  -> (forall a b. (Any a, Any b) => t a -> t b -> Poly u) -> Poly u
 zip_quantifiers (MonoP (Mono a)) (MonoP (Mono b)) cont = cont a b
 zip_quantifiers (ForallP num_a exists_poly_a) (ForallP num_b exists_poly_b) cont =
   if num_a /= num_b then
@@ -188,10 +208,10 @@ zip_quantifiers (ForallP num_a exists_poly_a) (ForallP num_b exists_poly_b) cont
       ExistsPoly $ zip_quantifiers poly_a poly_b cont
 zip_quantifiers _ _ _ = error "zip_quantifiers: quantifier list length mismatch"
 
-unify :: forall t u.
+unify :: --forall t u. Show (Mono t) =>
   (forall a. Any a => t a -> Type a) -> Poly t ->
   (forall a. Any a => t a -> Type a) -> Poly t ->
-  (forall a b. t a -> t b -> Poly u) -> Poly u
+  (forall a b. (Any a, Any b) => t a -> t b -> Poly u) -> Poly u
 unify f_a a_input f_b b_input cont =
   let (a_poly, b_poly) = synchronize_quantifiers a_input b_input in
   let (a_mono, b_mono, m, start_var) = unpack_poly a_poly b_poly in
@@ -202,18 +222,19 @@ unify f_a a_input f_b b_input cont =
   in let
     helper :: [Constraint] -> Poly t -> Poly t -> (Poly t, Poly t)
     helper [] aa bb = (aa, bb)
-    helper (c:cs) aa bb = helper cs (apply_constraint m c aa) (apply_constraint m c bb)
+    helper (c:cs) aa bb = res where
+      res = helper
+        (apply_constraint_to_constraint_list start_var c cs)
+        (apply_constraint m c aa)
+        (apply_constraint m c bb)
     (a_res, b_res) = helper constraints a_poly b_poly
   in zip_quantifiers a_res b_res cont
 
 main = do
-  let (e1, e2) = synchronize_quantifiers types_example_1 types_example_2
-  putStrLn $ show $ e1
-  putStrLn $ show $ e2
-  putStrLn $ show $ unpack_poly e1 e2
-  let (mono1, mono2, m, start_var) = unpack_poly e1 e2
-  putStrLn $ show $ m `mapping_int_to_var` 4
-  putStrLn $ show $ m `mapping_var_to_int` (Mono ZeroTV)
+  let (e1, e2) = synchronize_quantifiers type_example_4 type_example_3
+  print e1
+  print e2
+  print "----"
   let a = ZeroTV
   let b = SuccTV a
   let c = SuccTV b
@@ -221,8 +242,5 @@ main = do
   let e = SuccTV d
   let f = SuccTV e
   let g = SuccTV f
-  putStrLn $ show $ Mono f == Mono f
-  putStrLn $ show $ apply_constraint (VarMapping [(4, Mono a), (5, Mono b), (3, Mono c)])
-    (Constraint (Mono a) (Mono (ArrowTT (TypeVarTT c) (TypeVarTT c)))) e1
-  putStrLn $ show $ apply_constraint (VarMapping [(4, Mono a), (5, Mono b), (3, Mono c)])
-    (Constraint (Mono b) (Mono (ArrowTT IntTT (TypeVarTT a)))) e1
+  print $ unify type_of type_example_4 type_of type_example_3 (\a b -> MonoP $ Mono a)
+  print $ unify type_of type_example_4 type_of type_example_3 (\a b -> MonoP $ Mono b)
