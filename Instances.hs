@@ -68,6 +68,11 @@ instance Eq (Mono TypeVar) where
     Just bb -> a == bb
     Nothing -> False
 
+instance Ord (Mono TypeVar) where
+  Mono ZeroTV <= Mono _ = True
+  Mono (SuccTV a) <= Mono ZeroTV = False
+  Mono (SuccTV a) <= Mono (SuccTV b) = Mono a <= Mono b
+
 instance Show (Type a) where
   show ((a `ArrowTT` b) `ArrowTT` c) = "(" ++ show (a `ArrowTT` b) ++ ") -> " ++ show c
   show (a `ArrowTT` b) = show a ++ " -> " ++ show b
