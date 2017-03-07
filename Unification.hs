@@ -175,9 +175,23 @@ gen_constraints start_var a (TypeVarTT a') =
   gen_constraints start_var (TypeVarTT a') a
 gen_constraints _ _ _ = []
 
-unify :: forall t u. (forall a. Any a => t a -> Type a) -> Poly t
-  -> (forall a. Any a => t a -> Type a) -> Poly t
-  -> (forall a b. t a -> t b -> Poly u) -> Poly u
+zip_quantifiers :: forall t u. Poly t -> Poly t -> (forall a b. t a -> t b -> Poly u) -> Poly u
+zip_quantifiers (MonoP (Mono a)) (MonoP (Mono b)) cont = cont a b
+zip_quantifiers (ForallP num_a exists_poly_a) (ForallP num_b exists_poly_b) cont =
+  if num_a /= num_b then
+    error "zip_quantifiers: quantifiers id mismatch"
+  else
+    ForallP num_a $ helper exists_poly_a exists_poly_b
+  where
+    helper :: Any a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly u a
+    helper (ExistsPoly poly_a) (ExistsPoly poly_b) =
+      ExistsPoly $ zip_quantifiers poly_a poly_b cont
+zip_quantifiers _ _ _ = error "zip_quantifiers: quantifier list length mismatch"
+
+unify :: forall t u.
+  (forall a. Any a => t a -> Type a) -> Poly t ->
+  (forall a. Any a => t a -> Type a) -> Poly t ->
+  (forall a b. t a -> t b -> Poly u) -> Poly u
 unify f_a a_input f_b b_input cont =
   let (a_poly, b_poly) = synchronize_quantifiers a_input b_input in
   let (a_mono, b_mono, m, start_var) = unpack_poly a_poly b_poly in
@@ -190,7 +204,7 @@ unify f_a a_input f_b b_input cont =
     helper [] aa bb = (aa, bb)
     helper (c:cs) aa bb = helper cs (apply_constraint m c aa) (apply_constraint m c bb)
     (a_res, b_res) = helper constraints a_poly b_poly
-  in undefined
+  in zip_quantifiers a_res b_res cont
 
 main = do
   let (e1, e2) = synchronize_quantifiers types_example_1 types_example_2
