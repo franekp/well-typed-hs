@@ -52,3 +52,9 @@ data ExistsPoly :: (* -> *) -> * -> * where
 data Poly :: (* -> *) -> * where
   MonoP :: Mono t -> Poly t
   ForallP :: Int -> (forall a. Any a => ExistsPoly t a) -> Poly t
+
+polymap :: forall t u. (forall a. Any a => t a -> Poly u) -> Poly t -> Poly u
+polymap f (MonoP (Mono a)) = f a
+polymap f (ForallP num exists_poly) = ForallP num $ do_stuff exists_poly where
+  do_stuff :: forall a. ExistsPoly t a -> ExistsPoly u a
+  do_stuff (ExistsPoly poly) = ExistsPoly $ polymap f poly
