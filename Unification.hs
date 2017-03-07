@@ -209,16 +209,16 @@ zip_quantifiers (ForallP num_a exists_poly_a) (ForallP num_b exists_poly_b) cont
 zip_quantifiers _ _ _ = error "zip_quantifiers: quantifier list length mismatch"
 
 unify :: --forall t u. Show (Mono t) =>
-  (forall a. Any a => t a -> Type a) -> Poly t ->
-  (forall a. Any a => t a -> Type a) -> Poly t ->
+  (forall a. Any a => t a -> Mono Type) -> Poly t ->
+  (forall a. Any a => t a -> Mono Type) -> Poly t ->
   (forall a b. (Any a, Any b) => t a -> t b -> Poly u) -> Poly u
 unify f_a a_input f_b b_input cont =
   let (a_poly, b_poly) = synchronize_quantifiers a_input b_input in
   let (a_mono, b_mono, m, start_var) = unpack_poly a_poly b_poly in
   let
-    constraints = case a_mono of
-      Mono a -> case b_mono of
-        Mono b -> gen_constraints start_var (f_a a) (f_b b)
+    constraints = case (a_mono, b_mono) of
+      (Mono a, Mono b) -> case (f_a a, f_b b) of
+        (Mono a', Mono b') -> gen_constraints start_var a' b'
   in let
     helper :: [Constraint] -> Poly t -> Poly t -> (Poly t, Poly t)
     helper [] aa bb = (aa, bb)
@@ -242,5 +242,11 @@ main = do
   let e = SuccTV d
   let f = SuccTV e
   let g = SuccTV f
-  print $ unify type_of type_example_4 type_of type_example_3 (\a b -> MonoP $ Mono a)
-  print $ unify type_of type_example_4 type_of type_example_3 (\a b -> MonoP $ Mono b)
+  print $ unify
+    (Mono . type_of) type_example_4
+    (Mono . type_of) type_example_3
+    (\a b -> MonoP $ Mono a)
+  print $ unify
+    (Mono . type_of) type_example_4
+    (Mono . type_of) type_example_3
+    (\a b -> MonoP $ Mono b)
