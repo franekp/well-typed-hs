@@ -99,19 +99,36 @@ instance Show (Mono t) => Show (Poly t) where
       do_stuff :: (Name a, Show (Mono t)) => TypeVar a -> ExistsPoly t a -> String
       do_stuff tv (ExistsPoly x) = str (SuccTV tv) x
 
-types_example_1 = ForallP 4 (helper any_type)
-  where
-    helper :: forall a. Any a => (forall b. Any b => Type (a -> Int -> (a -> Int -> b) -> b)) -> ExistsPoly Type a
-    helper arg =
-      let
-        inner :: Any a => (forall b. Any b => ExistsPoly Type b) -> ExistsPoly Type a
-        inner polyast = ExistsPoly $ ForallP 5 polyast
-      in inner ( (ExistsPoly . MonoP . Mono :: Any b => Type (a -> Int -> (a -> Int -> b) -> b) -> ExistsPoly Type b) arg)
+type_example_1 =
+  ForallP 1 (ExistsPoly $
+  ForallP 2 (ExistsPoly $
+    MonoP $ Mono $ (any_type :: Type (a -> (a -> b) -> b))
+  :: forall b. Any b => ExistsPoly Type b)
+  :: forall a. Any a => ExistsPoly Type a)
 
-types_example_2 = ForallP 3 $
-    ((ExistsPoly . MonoP . Mono) :: Any a => Type ((a -> a) -> (a -> a) -> (a -> a)) -> ExistsPoly Type a)
-    any_type
+type_example_2 =
+  ForallP 3 (ExistsPoly $
+    MonoP $ Mono $ (any_type :: Type ((a -> a) -> (a -> a) -> a -> a))
+  :: forall a. Any a => ExistsPoly Type a)
+
+type_example_3 =
+  ForallP 4 (ExistsPoly $
+  ForallP 5 (ExistsPoly $
+  ForallP 6 (ExistsPoly $
+    MonoP $ Mono $ (any_type :: Type ((a -> b) -> (b -> c) -> a -> c))
+  :: forall c. Any c => ExistsPoly Type c)
+  :: forall b. Any b => ExistsPoly Type b)
+  :: forall a. Any a => ExistsPoly Type a)
+
+type_example_4 =
+  ForallP 7 (ExistsPoly $
+  ForallP 8 (ExistsPoly $
+    MonoP $ Mono $ (any_type :: Type ((a -> b) -> (b -> a) -> a -> a))
+  :: forall b. Any b => ExistsPoly Type b)
+  :: forall a. Any a => ExistsPoly Type a)
 
 main = do
-  putStrLn $ show $ types_example_1
-  putStrLn $ show $ types_example_2
+  putStrLn $ show $ type_example_1
+  putStrLn $ show $ type_example_2
+  putStrLn $ show $ type_example_3
+  putStrLn $ show $ type_example_4
