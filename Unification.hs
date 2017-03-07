@@ -112,6 +112,17 @@ substitute_var :: Mono Type -> Mono TypeVar -> Mono Type -> Mono Type
     if Mono a == var then replacement else Mono $ TypeVarTT a
   TypeHoleTT -> Mono TypeHoleTT
 
+map_vars :: (Mono TypeVar -> Mono Type) -> Mono Type -> Mono Type
+map_vars f (Mono t) = case t of
+  a `ArrowTT` b ->
+    let
+      a' = map_vars f (Mono a)
+      b' = map_vars f (Mono b)
+    in case (a', b') of
+      (Mono a'', Mono b'') -> Mono $ a'' `ArrowTT` b''
+  TypeVarTT tv -> f $ Mono tv
+  x -> Mono x
+
 apply_constraint :: forall t. Show (Mono t) => VarMapping -> Constraint -> Poly t -> Poly t
 apply_constraint var_map (Constraint var_to_replace replacement) input = result where
   duplicate_foralls_except_one_and_step_inside_them ::
