@@ -74,6 +74,7 @@ data Expr = AddE
   | AppE Expr Expr
   | LambdaE String PolyTypeExpr Expr
   | VarE String
+  | LetE String Expr Expr
 
 data MonoTypeExpr = IntMTE | ArrowMTE MonoTypeExpr MonoTypeExpr | VarMTE String
 data PolyTypeExpr = ForallPTE String PolyTypeExpr | MonoPTE MonoTypeExpr
@@ -155,6 +156,8 @@ typecheck te e (LambdaE var_name ty body) = (typecheck_polytype te ty helper :: 
       body_ast :: Poly (Ast (Cons a e))
       body_ast = typecheck te' (ConsEN var_name tt e) body
 typecheck te e (VarE name) = lookup_var e name
+typecheck te e (LetE name val expr) =
+  typecheck te (LetEN name (typecheck te e val) e) expr
 
 expr_1 =
   LambdaE "a" (ForallPTE "a" $ MonoPTE $ VarMTE "a") $
@@ -166,6 +169,10 @@ type_1 = polymap (MonoP . Mono . type_of) ast_1
 expr_2 = expr_1 `AppE` (LiteralE 5) `AppE` (AddE `AppE` (LiteralE 3))
 ast_2 = typecheck (TypeEnv []) NilEN expr_2
 type_2 = polymap (MonoP . Mono . type_of) ast_2
+
+expr_3 = LetE "app" expr_1 $ VarE "app" `AppE` (LiteralE 5) `AppE` (AddE `AppE` (LiteralE 3))
+ast_3 = typecheck (TypeEnv []) NilEN expr_3
+type_3 = polymap (MonoP . Mono . type_of) ast_3
 
 forcetype :: Any a => Poly (Ast Nil) -> Ast Nil a
 forcetype (ForallP _ exists_poly) =
@@ -181,6 +188,6 @@ eval_poly = eval NilS . forcetype
 main = do
   print $ type_1
   print $ ast_1
-  print $ type_2
-  print $ ast_2
-  print $ (eval_poly (ast_2) :: Int)
+  print $ type_3
+  print $ ast_3
+  print $ (eval_poly (ast_3) :: Int)
