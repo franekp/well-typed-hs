@@ -78,26 +78,35 @@ data Expr = AddE
 data MonoTypeExpr = IntMTE | ArrowMTE MonoTypeExpr MonoTypeExpr | VarMTE String
 data PolyTypeExpr = ForallPTE String PolyTypeExpr | MonoPTE MonoTypeExpr
 
-typecheck_monotype :: (String -> Mono Type) -> MonoTypeExpr -> Mono Type
-typecheck_monotype ctx IntMTE = Mono IntTT
-typecheck_monotype ctx (a `ArrowMTE` b) =
-  case (typecheck_monotype ctx a, typecheck_monotype ctx b) of
+newtype TypeEnv = TypeEnv [(String, Mono Type)]
+
+lookup_type :: TypeEnv -> String -> Mono Type
+lookup_type (TypeEnv []) var = error $ "unknown type variable: '" ++ var ++ "'"
+lookup_type (TypeEnv ((name, tt):t)) var =
+  if var == name then tt else lookup_type (TypeEnv t) var
+
+update_typeenv :: TypeEnv -> String -> Mono Type -> TypeEnv
+update_typeenv (TypeEnv li) name tt = TypeEnv $ (name, tt):li
+
+typecheck_monotype :: TypeEnv -> MonoTypeExpr -> Mono Type
+typecheck_monotype te IntMTE = Mono IntTT
+typecheck_monotype te (a `ArrowMTE` b) =
+  case (typecheck_monotype te a, typecheck_monotype te b) of
     (Mono a', Mono b') -> Mono $ a' `ArrowTT` b'
-typecheck_monotype ctx (VarMTE var) = ctx var
+typecheck_monotype te (VarMTE var) = te `lookup_type` var
 
 hash :: String -> Int
 hash = foldl' (\h c -> 33*h `xor` fromEnum c) 5381
 
 -- FIXME: this should be a monad generating unique ids, not hashes!
-typecheck_polytype' :: (String -> Mono Type) -> PolyTypeExpr -> Poly Type
-typecheck_polytype' ctx (MonoPTE monotype) = MonoP $ typecheck_monotype ctx monotype
-typecheck_polytype' ctx (ForallPTE var inner) = ForallP (hash var) (
-    ExistsPoly $ typecheck_polytype'
-      (\x -> if x == var then Mono (any_type :: Type a) else ctx x) inner
+typecheck_polytype' :: TypeEnv -> PolyTypeExpr -> Poly Type
+typecheck_polytype' te (MonoPTE monotype) = MonoP $ typecheck_monotype te monotype
+typecheck_polytype' te (ForallPTE var inner) = ForallP (hash var) (
+    ExistsPoly $ typecheck_polytype' (update_typeenv te var $ Mono (any_type :: Type a)) inner
     :: forall a. Any a => ExistsPoly Type a)
 
 typecheck_polytype :: PolyTypeExpr -> Poly Type
-typecheck_polytype = typecheck_polytype' (\_ -> error "not found")
+typecheck_polytype = typecheck_polytype' (TypeEnv [])
 
 lookup_var :: forall e. Env e -> String -> Poly (Ast e)
 lookup_var NilEN var = MonoP $ Mono
