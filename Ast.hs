@@ -36,8 +36,9 @@ data Store :: * -> * where
 deriving instance Typeable1 Store
 
 data Env :: * -> * where
-  NilE :: Env Nil
-  ConsE :: (Any h, Typeable t) => String -> Type h -> Env t -> Env (Cons h t)
+  NilEN :: Env Nil
+  ConsEN :: (Any h, Typeable t) => String -> Type h -> Env t -> Env (Cons h t)
+  LetEN :: String -> Poly (Ast e) -> Env e -> Env e
 
 deriving instance Typeable1 Env
 
@@ -98,12 +99,23 @@ typecheck_polytype' ctx (ForallPTE var inner) = ForallP (hash var) (
 typecheck_polytype :: PolyTypeExpr -> Poly Type
 typecheck_polytype = typecheck_polytype' (\_ -> error "not found")
 
-lookup_var :: forall e. Env e -> String -> Mono (Ast e)
-lookup_var NilE var = Mono (ErrorA $ "unknown variable: '" ++ var ++ "'" :: Ast e Void)
-lookup_var (ConsE name ty rest) var =
-  if var == name then Mono VarA else
-    case lookup_var rest var of
-      Mono res -> Mono $ LiftA res
+lookup_var :: forall e. Env e -> String -> Poly (Ast e)
+lookup_var NilEN var = MonoP $ Mono
+  (ErrorA $ "unknown variable: '" ++ var ++ "'" :: Ast e Void)
+lookup_var (ConsEN name ty rest) var =
+  if var == name then
+    MonoP $ Mono VarA
+  else
+    polymap (MonoP . Mono . LiftA) $ lookup_var rest var
+lookup_var (LetEN name val rest) var =
+  if var == name then
+    val
+    -- FIXME: here should be generating fresh ids for quantifiers inside val
+    -- so that stuff like "let id = \x -> x in id id" or
+    -- "let apply = \a f -> f a in apply apply (\app -> app 3 unary_minus)"
+    -- should work
+  else
+    lookup_var rest var
 
 -- TODO: add possibility of referencing type variables declared in outer scope!
 -- so typecheck will take the same (String -> Mono Type) = TypeEnv parameter
@@ -131,14 +143,14 @@ typecheck e (LambdaE var_name ty body) = polymap helper $ (typecheck_polytype ty
     )) body_ast
     where
       body_ast :: Poly (Ast (Cons a e))
-      body_ast = typecheck (ConsE var_name tt e) body
-typecheck e (VarE name) = MonoP $ lookup_var e name
+      body_ast = typecheck (ConsEN var_name tt e) body
+typecheck e (VarE name) = lookup_var e name
 
 expr_1 =
   LambdaE "a" (ForallPTE "a" $ MonoPTE $ VarMTE "a") $
   LambdaE "f" (ForallPTE "b" $ ForallPTE "c" $ MonoPTE $ VarMTE "b" `ArrowMTE` VarMTE "c") $
   VarE "f" `AppE` VarE "a"
-ast_1 = typecheck NilE expr_1
+ast_1 = typecheck NilEN expr_1
 type_1 = polymap (MonoP . Mono . type_of) ast_1
 
 main = do
