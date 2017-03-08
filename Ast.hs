@@ -99,14 +99,15 @@ hash :: String -> Int
 hash = foldl' (\h c -> 33*h `xor` fromEnum c) 5381
 
 -- FIXME: this should be a monad generating unique ids, not hashes!
-typecheck_polytype' :: TypeEnv -> PolyTypeExpr -> Poly Type
-typecheck_polytype' te (MonoPTE monotype) = MonoP $ typecheck_monotype te monotype
-typecheck_polytype' te (ForallPTE var inner) = ForallP (hash var) (
-    ExistsPoly $ typecheck_polytype' (update_typeenv te var $ Mono (any_type :: Type a)) inner
-    :: forall a. Any a => ExistsPoly Type a)
-
-typecheck_polytype :: PolyTypeExpr -> Poly Type
-typecheck_polytype = typecheck_polytype' (TypeEnv [])
+typecheck_polytype :: forall u. TypeEnv -> PolyTypeExpr
+  -> (forall a. Any a => TypeEnv -> Type a -> Poly u) -> Poly u
+typecheck_polytype te (MonoPTE monotype) cont =
+  case typecheck_monotype te monotype of
+    Mono a -> cont te a
+typecheck_polytype te (ForallPTE var inner) cont = ForallP (hash var) (
+    ExistsPoly $ typecheck_polytype
+      (update_typeenv te var $ Mono (any_type :: Type a)) inner cont
+    :: forall a. Any a => ExistsPoly u a)
 
 lookup_var :: forall e. Env e -> String -> Poly (Ast e)
 lookup_var NilEN var = MonoP $ Mono
@@ -130,11 +131,11 @@ lookup_var (LetEN name val rest) var =
 -- so typecheck will take the same (String -> Mono Type) = TypeEnv parameter
 -- as in typecheck_polytype' and typecheck_monotype
 
-typecheck :: forall e. Typeable e => Env e -> Expr -> Poly (Ast e)
-typecheck e AddE = MonoP $ Mono $ AddA
-typecheck e (LiteralE val) = MonoP $ Mono $ LiteralA val
-typecheck e (AppE fun arg) =
-  unify type_of_arg (typecheck e fun) (Mono . type_of) (typecheck e arg) cont
+typecheck :: forall e. Typeable e => TypeEnv -> Env e -> Expr -> Poly (Ast e)
+typecheck te e AddE = MonoP $ Mono $ AddA
+typecheck te e (LiteralE val) = MonoP $ Mono $ LiteralA val
+typecheck te e (AppE fun arg) =
+  unify type_of_arg (typecheck te e fun) (Mono . type_of) (typecheck te e arg) cont
   where
     type_of_arg :: Any a => Ast e a -> Mono Type
     type_of_arg fun = case type_of fun of
@@ -145,23 +146,41 @@ typecheck e (AppE fun arg) =
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
         Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast e Void)
       _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast e Void)
-typecheck e (LambdaE var_name ty body) = polymap helper $ (typecheck_polytype ty :: Poly Type) where
-  helper :: forall a. Any a => Type a -> Poly (Ast e)
-  helper tt = polymap (MonoP . Mono . (
+typecheck te e (LambdaE var_name ty body) = (typecheck_polytype te ty helper :: Poly (Ast e)) where
+  helper :: forall a. Any a => TypeEnv -> Type a -> Poly (Ast e)
+  helper te' tt = polymap (MonoP . Mono . (
       LambdaA :: forall b. Any b => Ast (Cons a e) b -> Ast e (a -> b)
     )) body_ast
     where
       body_ast :: Poly (Ast (Cons a e))
-      body_ast = typecheck (ConsEN var_name tt e) body
-typecheck e (VarE name) = lookup_var e name
+      body_ast = typecheck te' (ConsEN var_name tt e) body
+typecheck te e (VarE name) = lookup_var e name
 
 expr_1 =
   LambdaE "a" (ForallPTE "a" $ MonoPTE $ VarMTE "a") $
-  LambdaE "f" (ForallPTE "b" $ ForallPTE "c" $ MonoPTE $ VarMTE "b" `ArrowMTE` VarMTE "c") $
+  LambdaE "f" (ForallPTE "b" $ MonoPTE $ VarMTE "a" `ArrowMTE` VarMTE "b") $
   VarE "f" `AppE` VarE "a"
-ast_1 = typecheck NilEN expr_1
+ast_1 = typecheck (TypeEnv []) NilEN expr_1
 type_1 = polymap (MonoP . Mono . type_of) ast_1
+
+expr_2 = expr_1 `AppE` (LiteralE 5) `AppE` (AddE `AppE` (LiteralE 3))
+ast_2 = typecheck (TypeEnv []) NilEN expr_2
+type_2 = polymap (MonoP . Mono . type_of) ast_2
+
+forcetype :: Any a => Poly (Ast Nil) -> Ast Nil a
+forcetype (ForallP _ exists_poly) =
+  case exists_poly of
+    (ExistsPoly poly :: ExistsPoly (Ast Nil) TypeHole) -> forcetype poly
+forcetype (MonoP (Mono ast)) = case cast ast of
+  Just x -> x
+  Nothing -> ErrorA $ "wrong type of: " ++ show ast
+
+eval_poly :: Any a => Poly (Ast Nil) -> a
+eval_poly = eval NilS . forcetype
 
 main = do
   print $ type_1
   print $ ast_1
+  print $ type_2
+  print $ ast_2
+  print $ (eval_poly (ast_2) :: Int)
