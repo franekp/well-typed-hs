@@ -43,16 +43,26 @@ data Env :: * -> * where
 deriving instance Typeable1 Env
 
 data Ast :: * -> * -> * where
-  AddA :: Typeable e => Ast e (Int -> Int -> Int)
-  LiteralA :: Typeable e => Int -> Ast e Int
+  AddA :: Typeable e =>
+    Ast e (Int -> Int -> Int)
 
-  VarA :: (Any a, Typeable e) => Ast (Cons a e) a
-  LiftA :: (Any a, Any b, Typeable e) => Ast e a -> Ast (Cons b e) a
+  LiteralA :: Typeable e =>
+    Int -> Ast e Int
 
-  LambdaA :: (Any a, Any b, Typeable e) => Ast (Cons a e) b -> Ast e (a -> b)
+  VarA :: (Any a, Typeable e) =>
+    Ast (Cons a e) a
 
-  ErrorA :: (Any a, Typeable e) => String -> Ast e a
-  AppA :: (Any a, Any b, Typeable e) => Ast e (a -> b) -> Ast e a -> Ast e b
+  LiftA :: (Any a, Any b, Typeable e) =>
+    Ast e a -> Ast (Cons b e) a
+
+  LambdaA :: (Any a, Any b, Typeable e) =>
+    Ast (Cons a e) b -> Ast e (a -> b)
+
+  ErrorA :: (Any a, Typeable e) =>
+    String -> Ast e a
+
+  AppA :: (Any a, Any b, Typeable e) =>
+    Ast e (a -> b) -> Ast e a -> Ast e b
 
 deriving instance Typeable2 Ast
 deriving instance Show (Ast e a)
