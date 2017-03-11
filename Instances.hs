@@ -33,11 +33,8 @@ instance Name NameZero where
 instance Name a => Name (NameSucc a) where
   any_type_variable = SuccTV any_type_variable
 
-instance Any NameZero where
-  any_type = TypeVarTT $ ZeroTV
-
-instance Name a => Any (NameSucc a) where
-  any_type = TypeVarTT $ SuccTV any_type_variable
+instance Name a => Any a where
+  any_type = TypeVarTT any_type_variable
 
 instance (Any a, Any b) => Any (a -> b) where
   any_type = ArrowTT (any_type :: Type a) (any_type :: Type b)
