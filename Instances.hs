@@ -27,29 +27,32 @@ type_variable_name (SuccTV a) = case type_variable_name a of
   'z':t -> 'a':'\'':t
   c:t -> (:t) $ Data.Char.chr $ (+1) $ Data.Char.ord c
 
-instance Name NameZero where
-  any_type_variable = ZeroTV
+type instance T Type = Type
+type instance T TypeVar = TypeVar
 
-instance Name a => Name (NameSucc a) where
-  any_type_variable = SuccTV any_type_variable
+instance A TypeVar Zero where
+  anything = ZeroTV
 
-instance Name a => Any a where
-  any_type = TypeVarTT any_type_variable
+instance A TypeVar a => A TypeVar (Succ a) where
+  anything = SuccTV anything
 
-instance (Any a, Any b) => Any (a -> b) where
-  any_type = ArrowTT (any_type :: Type a) (any_type :: Type b)
+instance A TypeVar a => A Type a where
+  anything = TypeVarTT anything
 
-instance Any Int where
-  any_type = IntTT
+instance (A Type a, A Type b) => A Type (a -> b) where
+  anything = ArrowTT (anything :: Type a) (anything :: Type b)
 
-instance Any Void where
-  any_type = VoidTT
+instance A Type Int where
+  anything = IntTT
 
-instance Any TypeHole where
-  any_type = TypeHoleTT
+instance A Type Void where
+  anything = VoidTT
 
-type_of :: Any a => t a -> Type a
-type_of a = any_type
+instance A Type TypeHole where
+  anything = TypeHoleTT
+
+type_of :: A (T t) a => t a -> T t a
+type_of a = anything
 
 deriving instance Eq (Type a)
 deriving instance Typeable1 Type
@@ -88,41 +91,41 @@ instance Show (TypeVar a) where
 instance Show (Mono TypeVar) where
   show (Mono a) = show a
 
-instance Show (Mono t) => Show (Poly t) where
+instance (Show (Mono t), T t ~ Type) => Show (Poly t) where
   show qq = "forall" ++ str ZeroTV qq where
-    str :: (Name a, Show (Mono t)) => TypeVar a -> Poly t -> String
+    str :: (A TypeVar a, A Type a, Show (Mono t)) => TypeVar a -> Poly t -> String
     str last_tv (MonoP tp) = ". " ++ show tp
     str last_tv (ForallP ident poly) = " " ++ show last_tv ++ show ident ++ do_stuff last_tv poly where
-      do_stuff :: (Name a, Show (Mono t)) => TypeVar a -> ExistsPoly t a -> String
+      do_stuff :: (A TypeVar a, A Type a, Show (Mono t)) => TypeVar a -> ExistsPoly t a -> String
       do_stuff tv (ExistsPoly x) = str (SuccTV tv) x
 
 type_example_1 =
   ForallP 1 (ExistsPoly $
   ForallP 2 (ExistsPoly $
-    MonoP $ Mono $ (any_type :: Type (a -> (a -> b) -> b))
-  :: forall b. Any b => ExistsPoly Type b)
-  :: forall a. Any a => ExistsPoly Type a)
+    MonoP $ Mono $ (anything :: Type (a -> (a -> b) -> b))
+  :: forall b. A Type b => ExistsPoly Type b)
+  :: forall a. A Type a => ExistsPoly Type a)
 
 type_example_2 =
   ForallP 3 (ExistsPoly $
-    MonoP $ Mono $ (any_type :: Type ((a -> a) -> (a -> a) -> a -> a))
-  :: forall a. Any a => ExistsPoly Type a)
+    MonoP $ Mono $ (anything :: Type ((a -> a) -> (a -> a) -> a -> a))
+  :: forall a. A Type a => ExistsPoly Type a)
 
 type_example_3 =
   ForallP 4 (ExistsPoly $
   ForallP 5 (ExistsPoly $
   ForallP 6 (ExistsPoly $
-    MonoP $ Mono $ (any_type :: Type ((a -> b) -> (b -> c) -> a -> c))
-  :: forall c. Any c => ExistsPoly Type c)
-  :: forall b. Any b => ExistsPoly Type b)
-  :: forall a. Any a => ExistsPoly Type a)
+    MonoP $ Mono $ (anything :: Type ((a -> b) -> (b -> c) -> a -> c))
+  :: forall c. A Type c => ExistsPoly Type c)
+  :: forall b. A Type b => ExistsPoly Type b)
+  :: forall a. A Type a => ExistsPoly Type a)
 
 type_example_4 =
   ForallP 7 (ExistsPoly $
   ForallP 8 (ExistsPoly $
-    MonoP $ Mono $ (any_type :: Type ((a -> b) -> (b -> a) -> a -> a))
-  :: forall b. Any b => ExistsPoly Type b)
-  :: forall a. Any a => ExistsPoly Type a)
+    MonoP $ Mono $ (anything :: Type ((a -> b) -> (b -> a) -> a -> a))
+  :: forall b. A Type b => ExistsPoly Type b)
+  :: forall a. A Type a => ExistsPoly Type a)
 
 main = do
   putStrLn $ show $ type_example_1

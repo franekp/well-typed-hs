@@ -27,10 +27,10 @@ synchronize_quantifiers (MonoP a) b = (aa, bb) where
   (bb, aa) = synchronize_quantifiers b (MonoP a)
 synchronize_quantifiers (ForallP id_a a_) b_ =
   let
-    helper_left :: Any a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly t a
+    helper_left :: A (T t) a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly t a
     helper_left (ExistsPoly a_) (ExistsPoly b_) =
       let (aa, bb) = synchronize_quantifiers a_ b_ in ExistsPoly aa
-    helper_right :: Any a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly t a
+    helper_right :: A (T t) a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly t a
     helper_right (ExistsPoly a_) (ExistsPoly b_) =
       let (aa, bb) = synchronize_quantifiers a_ b_ in ExistsPoly bb
   in
@@ -78,9 +78,9 @@ typevar_max_plus_one li = helper li [] where
     Mono (SuccTV a) -> Mono $ SuccTV $ SuccTV a
     Mono ZeroTV -> Mono $ SuccTV $ ZeroTV
 
-dump_typevars :: Poly t -> [Mono TypeVar]
+dump_typevars :: forall t. T t ~ Type => Poly t -> [Mono TypeVar]
 dump_typevars (MonoP (Mono tt)) = do_stuff (type_of tt) [] where
-  do_stuff :: Any a => Type a -> [Mono TypeVar] -> [Mono TypeVar]
+  do_stuff :: A Type a => Type a -> [Mono TypeVar] -> [Mono TypeVar]
   do_stuff arg acc = case arg of
     a `ArrowTT` b -> do_stuff a $ do_stuff b $ acc
     TypeVarTT a -> Mono a:acc
@@ -89,14 +89,14 @@ dump_typevars (ForallP _ exists_poly) = result exists_poly where
   result :: ExistsPoly t TypeHole -> [Mono TypeVar]
   result (ExistsPoly poly) = dump_typevars poly
 
-unpack_poly :: Poly t -> Poly t -> (Mono t, Mono t, VarMapping, Mono TypeVar)
+unpack_poly :: forall t. T t ~ Type => Poly t -> Poly t -> (Mono t, Mono t, VarMapping, Mono TypeVar)
 unpack_poly a b =
   case start_var of
     Mono ZeroTV -> unpack_poly' ZeroTV a b $ VarMapping []
     Mono (SuccTV s) -> unpack_poly' (SuccTV s) a b $ VarMapping []
   where
     start_var = typevar_max_plus_one $ dump_typevars a ++ dump_typevars b
-    unpack_poly' :: forall a t. Name a => TypeVar a -> Poly t -> Poly t
+    unpack_poly' :: forall a. (A TypeVar a, A Type a) => TypeVar a -> Poly t -> Poly t
       -> VarMapping -> (Mono t, Mono t, VarMapping, Mono TypeVar)
     unpack_poly' last_tv (MonoP a) (MonoP b) m = (a, b, m, start_var)
     unpack_poly' last_tv
@@ -120,7 +120,7 @@ map_vars f (Mono t) = case t of
   TypeVarTT tv -> f $ Mono tv
   x -> Mono x
 
-apply_constraint :: forall t. VarMapping -> Constraint -> Poly t -> Poly t
+apply_constraint :: forall t. T t ~ Type => VarMapping -> Constraint -> Poly t -> Poly t
 apply_constraint var_map (Constraint var_to_replace replacement) input = result where
   duplicate_foralls_except_one_and_step_inside_them ::
     Int -> (TypeMapping -> Poly t -> Poly t) -> Poly t
@@ -131,7 +131,7 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
         ForallP num exists_poly ->
           let
             do_stuff :: forall a. ExistsPoly t a -> ExistsPoly t a
-            do_stuff (ExistsPoly poly) = ExistsPoly $ helper poly $ TypeMapping $ (num, Mono (any_type :: Type a)):m
+            do_stuff (ExistsPoly poly) = ExistsPoly $ helper poly $ TypeMapping $ (num, Mono (anything :: Type a)):m
           in
           if num == except_q then
             case exists_poly of
@@ -146,7 +146,7 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
   do_something_inside type_map (MonoP mono) = MonoP mono
   do_something_inside type_map (ForallP num exists_poly) =
     let
-      apply_type :: forall a. Any a => Type a -> (forall b. Any b => ExistsPoly t b) -> Poly t
+      apply_type :: forall a. A Type a => Type a -> (forall b. A Type b => ExistsPoly t b) -> Poly t
       apply_type _ (ExistsPoly poly :: ExistsPoly t a) = poly
     in if num /= (var_map `mapping_var_to_int` var_to_replace) then
       case type_map `mapping_int_to_type` num of
@@ -165,7 +165,7 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
         Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
 
 -- TODO add a check to detect infinite types
-gen_constraints :: (Any a, Any b) => Mono TypeVar -> Type a -> Type b -> [Constraint]
+gen_constraints :: (A Type a, A Type b) => Mono TypeVar -> Type a -> Type b -> [Constraint]
 gen_constraints start_var (a `ArrowTT` b) (a' `ArrowTT` b') =
   gen_constraints start_var a a' ++ gen_constraints start_var b b'
 gen_constraints start_var (TypeVarTT a) a' = if Mono a < start_var then [] else
@@ -194,8 +194,8 @@ apply_constraint_to_constraint_list start_var (Constraint var replacement) li =
         case (replacement, mapped_r) of
           (Mono a, Mono b) -> gen_constraints start_var a b
 
-zip_quantifiers :: forall t u. Poly t -> Poly t
-  -> (forall a b. (Any a, Any b) => t a -> t b -> Poly u) -> Poly u
+zip_quantifiers :: forall t u. T t ~ T u => Poly t -> Poly t
+  -> (forall a b. (A (T t) a, A (T t) b) => t a -> t b -> Poly u) -> Poly u
 zip_quantifiers (MonoP (Mono a)) (MonoP (Mono b)) cont = cont a b
 zip_quantifiers (ForallP num_a exists_poly_a) (ForallP num_b exists_poly_b) cont =
   if num_a /= num_b then
@@ -203,15 +203,15 @@ zip_quantifiers (ForallP num_a exists_poly_a) (ForallP num_b exists_poly_b) cont
   else
     ForallP num_a $ helper exists_poly_a exists_poly_b
   where
-    helper :: Any a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly u a
+    helper :: A (T t) a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly u a
     helper (ExistsPoly poly_a) (ExistsPoly poly_b) =
       ExistsPoly $ zip_quantifiers poly_a poly_b cont
 zip_quantifiers _ _ _ = error "zip_quantifiers: quantifier list length mismatch"
 
-unify :: --forall t u. Show (Mono t) =>
-  (forall a. Any a => t a -> Mono Type) -> Poly t ->
-  (forall a. Any a => t a -> Mono Type) -> Poly t ->
-  (forall a b. (Any a, Any b) => t a -> t b -> Poly u) -> Poly u
+unify :: forall t u. (T t ~ Type, T u ~ Type) =>
+  (forall a. A Type a => t a -> Mono Type) -> Poly t ->
+  (forall a. A Type a => t a -> Mono Type) -> Poly t ->
+  (forall a b. (A Type a, A Type b) => t a -> t b -> Poly u) -> Poly u
 unify f_a a_input f_b b_input cont =
   let (a_poly, b_poly) = synchronize_quantifiers a_input b_input in
   let (a_mono, b_mono, m, start_var) = unpack_poly a_poly b_poly in

@@ -22,42 +22,41 @@ data Nil :: *
   deriving Typeable
 data Cons :: * -> * -> *
   deriving Typeable
-data NameZero :: *
+data Zero :: *
   deriving Typeable
-data NameSucc :: * -> *
+data Succ :: * -> *
   deriving Typeable
 
 data TypeHole
   deriving Typeable
 
 data Type :: * -> * where
-  ArrowTT :: (Any a, Any b) => Type a -> Type b -> Type (a -> b)
+  ArrowTT :: (A Type a, A Type b) => Type a -> Type b -> Type (a -> b)
   IntTT :: Type Int
   VoidTT :: Type Void
-  TypeVarTT :: Typeable a => TypeVar a -> Type a
+  TypeVarTT :: A TypeVar a => TypeVar a -> Type a
   TypeHoleTT :: Type TypeHole
 
 data TypeVar :: * -> * where
-  ZeroTV :: TypeVar NameZero
-  SuccTV :: Name a => TypeVar a -> TypeVar (NameSucc a)
+  ZeroTV :: TypeVar Zero
+  SuccTV :: A TypeVar a => TypeVar a -> TypeVar (Succ a)
 
-class Typeable a => Any a where
-  any_type :: Any a => Type a
+class (Typeable a, Typeable1 t) => A t a where
+  anything :: t a
 
-class Any a => Name a where
-  any_type_variable :: TypeVar a
+type family T (t :: * -> *) :: * -> *
 
 data Mono :: (* -> *) -> * where
-  Mono :: (Typeable1 t, Any a) => t a -> Mono t
+  Mono :: A (T t) a => t a -> Mono t
 
 data ExistsPoly :: (* -> *) -> * -> * where
-  ExistsPoly :: Any a => Poly t -> ExistsPoly t a
+  ExistsPoly :: A (T t) a => Poly t -> ExistsPoly t a
 
 data Poly :: (* -> *) -> * where
   MonoP :: Mono t -> Poly t
-  ForallP :: Int -> (forall a. Any a => ExistsPoly t a) -> Poly t
+  ForallP :: Int -> (forall a. A (T t) a => ExistsPoly t a) -> Poly t
 
-polymap :: forall t u. (forall a. Any a => t a -> Poly u) -> Poly t -> Poly u
+polymap :: forall t u. T t ~ T u => (forall a. A (T t) a => t a -> Poly u) -> Poly t -> Poly u
 polymap f (MonoP (Mono a)) = f a
 polymap f (ForallP num exists_poly) = ForallP num $ do_stuff exists_poly where
   do_stuff :: forall a. ExistsPoly t a -> ExistsPoly u a
