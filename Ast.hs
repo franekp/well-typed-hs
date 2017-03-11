@@ -24,11 +24,6 @@ import Types
 import Instances hiding (main)
 import Unification
 
-data Nil :: *
-deriving instance Typeable Nil
-data Cons :: * -> * -> *
-deriving instance Typeable2 Cons
-
 data Store :: * -> * where
   NilS :: Store Nil
   ConsS :: (Any h, Typeable t) => h -> Store t -> Store (Cons h t)

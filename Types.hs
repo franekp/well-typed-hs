@@ -15,12 +15,16 @@
 
 module Types where
 
-import Data.Typeable (Typeable, Typeable1)
+import Data.Typeable (Typeable, Typeable1, Typeable2)
 import Data.Void (Void)
 
-data NameZero
+data Nil :: *
   deriving Typeable
-data NameSucc a
+data Cons :: * -> * -> *
+  deriving Typeable
+data NameZero :: *
+  deriving Typeable
+data NameSucc :: * -> *
   deriving Typeable
 
 data TypeHole
