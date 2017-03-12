@@ -6,12 +6,6 @@ module Instances (module Types, module Instances) where
 import Types
 import qualified Data.Char
 
-type_variable_name :: TypeVar a -> String
-type_variable_name ZeroTV = "a"
-type_variable_name (SuccTV a) = case type_variable_name a of
-  'z':t -> 'a':'\'':t
-  c:t -> (:t) $ Data.Char.chr $ (+1) $ Data.Char.ord c
-
 type instance T Type = Type
 type instance T TypeVar = TypeVar
 
@@ -63,15 +57,17 @@ instance Show (Type a) where
   show (a `ArrowTT` b) = show a ++ " -> " ++ show b
   show IntTT = "Int"
   show VoidTT = "Void"
-  show (TypeVarTT a) = type_variable_name a
+  show (TypeVarTT a) = show a
   show TypeHoleTT = "<type_hole>"
 
 instance Show (Mono Type) where
   show (Mono a) = show a
 
 instance Show (TypeVar a) where
-  show ZeroTV = type_variable_name ZeroTV
-  show (SuccTV a) = type_variable_name (SuccTV a)
+  show ZeroTV = "a"
+  show (SuccTV a) = case show a of
+    'z':t -> 'a':'\'':t
+    c:t -> (:t) $ Data.Char.chr $ (+1) $ Data.Char.ord c
 
 instance Show (Mono TypeVar) where
   show (Mono a) = show a
