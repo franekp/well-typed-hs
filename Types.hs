@@ -2,8 +2,8 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Types (module Base, module Types) where
-import Base
+module Types (module Pervasives, module Types) where
+import Pervasives
 
 data Type :: * -> * where
   ArrowTT :: (A Type a, A Type b) =>

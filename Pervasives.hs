@@ -2,7 +2,7 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Base (module Base, Typeable, Typeable1, Typeable2, Void, cast) where
+module Pervasives (module Pervasives, Typeable, Typeable1, Typeable2, Void, cast) where
 import Data.Typeable (Typeable, Typeable1, Typeable2, cast)
 import Data.Void (Void)
 
