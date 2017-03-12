@@ -1,11 +1,13 @@
 {-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, GADTs, RankNTypes, StandaloneDeriving, DeriveDataTypeable, ScopedTypeVariables,
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
-TypeFamilies #-}
+TypeFamilies #-} {-# OPTIONS_GHC -fwarn-incomplete-patterns -fwarn-incomplete-uni-patterns #-}
 
 module Main where
 import Base.Examples (testTypesImpl)
 import Semantics.Unify (testUnify)
 import Semantics.Typecheck (testTypecheck)
+
+f (Just a) = a
 
 testMain = all id [testTypesImpl, testUnify, testTypecheck]
 
