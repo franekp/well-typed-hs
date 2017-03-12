@@ -1,6 +1,5 @@
-{-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, GADTs, RankNTypes, StandaloneDeriving, DeriveDataTypeable, ScopedTypeVariables,
-FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
-TypeFamilies #-} {-# OPTIONS_GHC -fwarn-incomplete-patterns -fwarn-incomplete-uni-patterns -Werror #-}
+{-# LANGUAGE CPP #-}
+#include "../settings.hs"
 
 module Base.Examples where
 import Base.Pervasives
