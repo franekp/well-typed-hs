@@ -175,7 +175,7 @@ forcetype (MonoP (Mono ast)) = case cast ast of
 eval_poly :: A Type a => Poly (Ast Nil) -> a
 eval_poly = eval NilS . forcetype
 
-main = do
+main_Ast = do
   print $ type_1
   print $ ast_1
   print $ type_3

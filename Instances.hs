@@ -108,7 +108,7 @@ type_example_4 =
   :: forall b. A Type b => ExistsPoly Type b)
   :: forall a. A Type a => ExistsPoly Type a)
 
-main = do
+main_Instances = do
   putStrLn $ show $ type_example_1
   putStrLn $ show $ type_example_2
   putStrLn $ show $ type_example_3

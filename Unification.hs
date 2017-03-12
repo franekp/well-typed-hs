@@ -2,8 +2,8 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Unification (unify) where
-import Instances hiding (main)
+module Unification (unify, main_Unification) where
+import Instances
 
 synchronize_quantifiers :: Poly t -> Poly t -> (Poly t, Poly t)
 synchronize_quantifiers (MonoP a) (MonoP b) = (MonoP a, MonoP b)
@@ -214,7 +214,7 @@ unify f_a a_input f_b b_input cont =
     (a_res, b_res) = helper constraints a_poly b_poly
   in zip_quantifiers a_res b_res cont
 
-main = do
+main_Unification = do
   let (e1, e2) = synchronize_quantifiers type_example_4 type_example_3
   print e1
   print e2
