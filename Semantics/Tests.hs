@@ -3,6 +3,7 @@
 
 module Semantics.Tests where
 import Base
+import qualified Base.Letters as Letters
 import Semantics.Typecheck (typecheck, eval, typeof_polymap, eval_poly)
 import Semantics.Unify (test_unify)
 
@@ -47,4 +48,18 @@ test_eval =
   let f uast = (eval_poly $ typecheck uast :: Int) in
   map f uast_int_examples == [8, 8]
 
-tests = test_show_type && test_typecheck && test_eval && test_unify
+test_show_read_letter = all id [
+    show (Mono Letters.A_LL) == "a",
+    (read "a" :: Mono Letters.Letter) == Mono Letters.A_LL,
+    show (Mono Letters.F_LL) == "f",
+    (read "f" :: Mono Letters.Letter) == Mono Letters.F_LL,
+    show (Mono Letters.A_UL) == "A",
+    (read "A" :: Mono Letters.Letter) == Mono Letters.A_UL,
+    show (Mono Letters.F_UL) == "F",
+    (read "F" :: Mono Letters.Letter) == Mono Letters.F_UL
+  ]
+
+tests = all id [
+    test_show_type, test_typecheck, test_eval, test_unify,
+    test_show_read_letter
+  ]
