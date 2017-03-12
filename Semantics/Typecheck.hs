@@ -4,7 +4,7 @@ TypeFamilies #-}
 
 module Semantics.Typecheck where
 import Base
-import Semantics.Unification (unify)
+import Semantics.Unify (unify)
 import Data.List (foldl')
 import Data.Bits (xor)
 

@@ -2,7 +2,7 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Semantics.Unification (unify, testUnification) where
+module Semantics.Unify (unify, testUnify) where
 import Base
 
 synchronize_quantifiers :: Poly t -> Poly t -> (Poly t, Poly t)
@@ -214,7 +214,7 @@ unify f_a a_input f_b b_input cont =
     (a_res, b_res) = helper constraints a_poly b_poly
   in zip_quantifiers a_res b_res cont
 
-testUnificationDev =
+testUnifyDev =
   let
     (e1, e2) = synchronize_quantifiers type_example_4 type_example_3
     a = ZeroTV
@@ -239,7 +239,7 @@ testUnificationDev =
     ) == "forall a5 b6. (b -> a) -> (a -> b) -> b -> b"
   ]
 
-testUnificationRel =
+testUnifyRel =
   let
     (e1, e2) = synchronize_quantifiers type_example_4 type_example_3
     a = ZeroTV
@@ -264,4 +264,4 @@ testUnificationRel =
     ) == "forall a b. (b -> a) -> (a -> b) -> b -> b"
   ]
 
-testUnification = testUnificationDev || testUnificationRel
+testUnify = testUnifyDev || testUnifyRel

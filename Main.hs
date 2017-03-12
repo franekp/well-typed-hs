@@ -4,9 +4,9 @@ TypeFamilies #-}
 
 module Main where
 import Base.TypesImpl (testTypesImpl)
-import Semantics.Unification (testUnification)
+import Semantics.Unify (testUnify)
 import Semantics.Typecheck (testTypecheck)
 
-testMain = all id [testTypesImpl, testUnification, testTypecheck]
+testMain = all id [testTypesImpl, testUnify, testTypecheck]
 
 main = if testMain then putStrLn "OK" else putStrLn "FAIL"
