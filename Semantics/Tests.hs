@@ -59,7 +59,12 @@ test_show_read_letter = all id [
     (read "F" :: Mono Letters.Letter) == Mono Letters.F_UL
   ]
 
+test_show_read_symbol = all id [
+    show (Mono $ Letters.A_UL `ConsSYM` Letters.B_LL `ConsSYM` Letters.C_LL `ConsSYM` NilSYM) == "Abc",
+    (read "Abc" :: Mono Symbol) == (Mono $ Letters.A_UL `ConsSYM` Letters.B_LL `ConsSYM` Letters.C_LL `ConsSYM` NilSYM)
+  ]
+
 tests = all id [
     test_show_type, test_typecheck, test_eval, test_unify,
-    test_show_read_letter
+    test_show_read_letter, test_show_read_symbol
   ]

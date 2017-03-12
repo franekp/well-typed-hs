@@ -9,7 +9,8 @@ module Base (
   module Base.AstImpl,
   module Base.UAst,
   module Base.Examples,
-  module Base.Names,
+  module Base.Symbols,
+  module Base.SymbolsImpl,
   module Base.Letters,
 ) where
 
@@ -20,6 +21,7 @@ import Base.Ast
 import Base.AstImpl
 import Base.UAst
 import Base.Examples
-import Base.Names
+import Base.Symbols
+import Base.SymbolsImpl
 import qualified Base.Letters
 import Base.LettersImpl
