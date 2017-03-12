@@ -3,15 +3,10 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Ast where
-
-import Data.Void
-import Data.Typeable (Typeable, Typeable1, Typeable2, cast)
-import Data.List (foldl')
-import Data.Bits (xor)
-
-import Types
 import Instances hiding (main)
 import Unification
+import Data.List (foldl')
+import Data.Bits (xor)
 
 data Store :: * -> * where
   NilS ::

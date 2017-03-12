@@ -3,11 +3,6 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Unification (unify) where
-
-import Data.Typeable (Typeable, cast)
-import Debug.Trace
-
-import Types
 import Instances hiding (main)
 
 synchronize_quantifiers :: Poly t -> Poly t -> (Poly t, Poly t)

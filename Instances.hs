@@ -2,13 +2,9 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Instances where
-
-import Data.Void (Void)
-import Data.Typeable (Typeable1, cast)
-import qualified Data.Char
-
+module Instances (module Types, module Instances) where
 import Types
+import qualified Data.Char
 
 type_variable_name :: TypeVar a -> String
 type_variable_name ZeroTV = "a"
