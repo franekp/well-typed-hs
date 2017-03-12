@@ -133,9 +133,20 @@ forcetype (MonoP (Mono ast)) = case cast ast of
 eval_poly :: A Type a => Poly (Ast Nil) -> a
 eval_poly = eval NilS . forcetype
 
-main_Typecheck = do
-  print $ type_1
-  print $ ast_1
-  print $ type_3
-  print $ ast_3
-  print $ (eval_poly (ast_3) :: Int)
+testTypecheckDev = all id [
+    show type_1 == "forall a177604 b177607. a -> (a -> b) -> b",
+    show ast_1 == "forall a177604 b177607. LambdaA (LambdaA (AppA VarA (LiftA VarA)))",
+    show type_3 == "forall. Int",
+    show ast_3 == "forall. AppA (AppA (LambdaA (LambdaA (AppA VarA (LiftA VarA)))) (LiteralA 5)) (AppA AddA (LiteralA 3))",
+    show (eval_poly (ast_3) :: Int) == "8"
+  ]
+
+testTypecheckRel = all id [
+    show type_1 == "forall a b. a -> (a -> b) -> b",
+    show ast_1 == "forall a b. LambdaA (LambdaA (AppA VarA (LiftA VarA)))",
+    show type_3 == "forall. Int",
+    show ast_3 == "forall. AppA (AppA (LambdaA (LambdaA (AppA VarA (LiftA VarA)))) (LiteralA 5)) (AppA AddA (LiteralA 3))",
+    show (eval_poly (ast_3) :: Int) == "8"
+  ]
+
+testTypecheck = testTypecheckDev || testTypecheckRel

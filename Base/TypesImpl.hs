@@ -103,8 +103,18 @@ type_example_4 =
   :: forall b. A Type b => ExistsPoly Type b)
   :: forall a. A Type a => ExistsPoly Type a)
 
-main_TypesImpl = do
-  putStrLn $ show $ type_example_1
-  putStrLn $ show $ type_example_2
-  putStrLn $ show $ type_example_3
-  putStrLn $ show $ type_example_4
+testTypesImplDev = all id [
+    show type_example_1 == "forall a1 b2. a -> (a -> b) -> b",
+    show type_example_2 == "forall a3. (a -> a) -> (a -> a) -> a -> a",
+    show type_example_3 == "forall a4 b5 c6. (a -> b) -> (b -> c) -> a -> c",
+    show type_example_4 == "forall a7 b8. (a -> b) -> (b -> a) -> a -> a"
+  ]
+
+testTypesImplRel = all id [
+    show type_example_1 == "forall a b. a -> (a -> b) -> b",
+    show type_example_2 == "forall a. (a -> a) -> (a -> a) -> a -> a",
+    show type_example_3 == "forall a b c. (a -> b) -> (b -> c) -> a -> c",
+    show type_example_4 == "forall a b. (a -> b) -> (b -> a) -> a -> a"
+  ]
+
+testTypesImpl = testTypesImplDev || testTypesImplRel

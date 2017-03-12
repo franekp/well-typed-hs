@@ -2,7 +2,7 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Semantics.Unification (unify, main_Unification) where
+module Semantics.Unification (unify, testUnification) where
 import Base
 
 synchronize_quantifiers :: Poly t -> Poly t -> (Poly t, Poly t)
@@ -214,23 +214,54 @@ unify f_a a_input f_b b_input cont =
     (a_res, b_res) = helper constraints a_poly b_poly
   in zip_quantifiers a_res b_res cont
 
-main_Unification = do
-  let (e1, e2) = synchronize_quantifiers type_example_4 type_example_3
-  print e1
-  print e2
-  print "----"
-  let a = ZeroTV
-  let b = SuccTV a
-  let c = SuccTV b
-  let d = SuccTV c
-  let e = SuccTV d
-  let f = SuccTV e
-  let g = SuccTV f
-  print $ unify
-    (Mono . type_of) type_example_4
-    (Mono . type_of) type_example_3
-    (\a b -> MonoP $ Mono a)
-  print $ unify
-    (Mono . type_of) type_example_4
-    (Mono . type_of) type_example_3
-    (\a b -> MonoP $ Mono b)
+testUnificationDev =
+  let
+    (e1, e2) = synchronize_quantifiers type_example_4 type_example_3
+    a = ZeroTV
+    b = SuccTV a
+    c = SuccTV b
+    d = SuccTV c
+    e = SuccTV d
+    f = SuccTV e
+    g = SuccTV f
+  in all id [
+    show e1 == "forall a7 b8 c4 d5 e6. (a -> b) -> (b -> a) -> a -> a",
+    show e2 == "forall a7 b8 c4 d5 e6. (c -> d) -> (d -> e) -> c -> e",
+    show (unify
+      (Mono . type_of) type_example_4
+      (Mono . type_of) type_example_3
+      (\a b -> MonoP $ Mono a)
+    ) == "forall a5 b6. (b -> a) -> (a -> b) -> b -> b",
+    show (unify
+      (Mono . type_of) type_example_4
+      (Mono . type_of) type_example_3
+      (\a b -> MonoP $ Mono b)
+    ) == "forall a5 b6. (b -> a) -> (a -> b) -> b -> b"
+  ]
+
+testUnificationRel =
+  let
+    (e1, e2) = synchronize_quantifiers type_example_4 type_example_3
+    a = ZeroTV
+    b = SuccTV a
+    c = SuccTV b
+    d = SuccTV c
+    e = SuccTV d
+    f = SuccTV e
+    g = SuccTV f
+  in all id [
+    show e1 == "forall a b c d e. (a -> b) -> (b -> a) -> a -> a",
+    show e2 == "forall a b c d e. (c -> d) -> (d -> e) -> c -> e",
+    show (unify
+      (Mono . type_of) type_example_4
+      (Mono . type_of) type_example_3
+      (\a b -> MonoP $ Mono a)
+    ) == "forall a b. (b -> a) -> (a -> b) -> b -> b",
+    show (unify
+      (Mono . type_of) type_example_4
+      (Mono . type_of) type_example_3
+      (\a b -> MonoP $ Mono b)
+    ) == "forall a b. (b -> a) -> (a -> b) -> b -> b"
+  ]
+
+testUnification = testUnificationDev || testUnificationRel

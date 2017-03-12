@@ -3,13 +3,10 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Main where
-import Base.TypesImpl (main_TypesImpl)
-import Semantics.Unification (main_Unification)
-import Semantics.Typecheck (main_Typecheck)
+import Base.TypesImpl (testTypesImpl)
+import Semantics.Unification (testUnification)
+import Semantics.Typecheck (testTypecheck)
 
-main = do
-  main_TypesImpl
-  putStrLn "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~"
-  main_Unification
-  putStrLn "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~"
-  main_Typecheck
+testMain = all id [testTypesImpl, testUnification, testTypecheck]
+
+main = if testMain then putStrLn "OK" else putStrLn "FAIL"
