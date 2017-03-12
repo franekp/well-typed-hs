@@ -2,7 +2,7 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Base.Base (
+module Base (
   module Base.Pervasives,
   module Base.Types,
   module Base.TypesImpl,
