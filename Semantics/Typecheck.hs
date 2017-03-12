@@ -17,15 +17,15 @@ eval s (LambdaA body) = \arg -> eval (ConsS arg s) body
 eval s (ErrorA msg) = error msg
 eval s (AppA fun arg) = eval s fun $ eval s arg
 
-data Expr = AddE
-  | LiteralE Int
-  | AppE Expr Expr
-  | LambdaE String PolyTypeExpr Expr
-  | VarE String
-  | LetE String Expr Expr
+data UAst = AddUA
+  | LiteralUA Int
+  | AppUA UAst UAst
+  | LambdaUA String UPolyType UAst
+  | VarUA String
+  | LetUA String UAst UAst
 
-data MonoTypeExpr = IntMTE | ArrowMTE MonoTypeExpr MonoTypeExpr | VarMTE String
-data PolyTypeExpr = ForallPTE String PolyTypeExpr | MonoPTE MonoTypeExpr
+data UMonoType = IntUMT | ArrowUMT UMonoType UMonoType | VarUMT String
+data UPolyType = ForallUPT String UPolyType | MonoUPT UMonoType
 
 newtype TypeEnv = TypeEnv [(String, Mono Type)]
 
@@ -37,23 +37,23 @@ lookup_type (TypeEnv ((name, tt):t)) var =
 update_typeenv :: TypeEnv -> String -> Mono Type -> TypeEnv
 update_typeenv (TypeEnv li) name tt = TypeEnv $ (name, tt):li
 
-typecheck_monotype :: TypeEnv -> MonoTypeExpr -> Mono Type
-typecheck_monotype te IntMTE = Mono IntTT
-typecheck_monotype te (a `ArrowMTE` b) =
+typecheck_monotype :: TypeEnv -> UMonoType -> Mono Type
+typecheck_monotype te IntUMT = Mono IntTT
+typecheck_monotype te (a `ArrowUMT` b) =
   case (typecheck_monotype te a, typecheck_monotype te b) of
     (Mono a', Mono b') -> Mono $ a' `ArrowTT` b'
-typecheck_monotype te (VarMTE var) = te `lookup_type` var
+typecheck_monotype te (VarUMT var) = te `lookup_type` var
 
 hash :: String -> Int
 hash = foldl' (\h c -> 33*h `xor` fromEnum c) 5381
 
 -- FIXME: this should be a monad generating unique ids, not hashes!
-typecheck_polytype :: forall u. T u ~ Type => TypeEnv -> PolyTypeExpr
+typecheck_polytype :: forall u. T u ~ Type => TypeEnv -> UPolyType
   -> (forall a. A Type a => TypeEnv -> Type a -> Poly u) -> Poly u
-typecheck_polytype te (MonoPTE monotype) cont =
+typecheck_polytype te (MonoUPT monotype) cont =
   case typecheck_monotype te monotype of
     Mono a -> cont te a
-typecheck_polytype te (ForallPTE var inner) cont = ForallP (hash var) (
+typecheck_polytype te (ForallUPT var inner) cont = ForallP (hash var) (
     ExistsPoly $ typecheck_polytype
       (update_typeenv te var $ Mono (anything :: Type a)) inner cont
     :: forall a. A Type a => ExistsPoly u a)
@@ -80,10 +80,10 @@ lookup_var (LetEN name val rest) var =
 -- so typecheck will take the same (String -> Mono Type) = TypeEnv parameter
 -- as in typecheck_polytype' and typecheck_monotype
 
-typecheck :: forall e. Typeable e => TypeEnv -> Env e -> Expr -> Poly (Ast e)
-typecheck te e AddE = MonoP $ Mono $ AddA
-typecheck te e (LiteralE val) = MonoP $ Mono $ LiteralA val
-typecheck te e (AppE fun arg) =
+typecheck :: forall e. Typeable e => TypeEnv -> Env e -> UAst -> Poly (Ast e)
+typecheck te e AddUA = MonoP $ Mono $ AddA
+typecheck te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
+typecheck te e (AppUA fun arg) =
   unify type_of_arg (typecheck te e fun) (Mono . type_of) (typecheck te e arg) cont
   where
     type_of_arg :: A Type a => Ast e a -> Mono Type
@@ -95,7 +95,7 @@ typecheck te e (AppE fun arg) =
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
         Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast e Void)
       _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast e Void)
-typecheck te e (LambdaE var_name ty body) = (typecheck_polytype te ty helper :: Poly (Ast e)) where
+typecheck te e (LambdaUA var_name ty body) = (typecheck_polytype te ty helper :: Poly (Ast e)) where
   helper :: forall a. A Type a => TypeEnv -> Type a -> Poly (Ast e)
   helper te' tt = polymap (MonoP . Mono . (
       LambdaA :: forall b. A Type b => Ast (Cons a e) b -> Ast e (a -> b)
@@ -103,22 +103,22 @@ typecheck te e (LambdaE var_name ty body) = (typecheck_polytype te ty helper :: 
     where
       body_ast :: Poly (Ast (Cons a e))
       body_ast = typecheck te' (ConsEN var_name tt e) body
-typecheck te e (VarE name) = lookup_var e name
-typecheck te e (LetE name val expr) =
+typecheck te e (VarUA name) = lookup_var e name
+typecheck te e (LetUA name val expr) =
   typecheck te (LetEN name (typecheck te e val) e) expr
 
 expr_1 =
-  LambdaE "a" (ForallPTE "a" $ MonoPTE $ VarMTE "a") $
-  LambdaE "f" (ForallPTE "b" $ MonoPTE $ VarMTE "a" `ArrowMTE` VarMTE "b") $
-  VarE "f" `AppE` VarE "a"
+  LambdaUA "a" (ForallUPT "a" $ MonoUPT $ VarUMT "a") $
+  LambdaUA "f" (ForallUPT "b" $ MonoUPT $ VarUMT "a" `ArrowUMT` VarUMT "b") $
+  VarUA "f" `AppUA` VarUA "a"
 ast_1 = typecheck (TypeEnv []) NilEN expr_1
 type_1 = polymap (MonoP . Mono . type_of) ast_1
 
-expr_2 = expr_1 `AppE` (LiteralE 5) `AppE` (AddE `AppE` (LiteralE 3))
+expr_2 = expr_1 `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
 ast_2 = typecheck (TypeEnv []) NilEN expr_2
 type_2 = polymap (MonoP . Mono . type_of) ast_2
 
-expr_3 = LetE "app" expr_1 $ VarE "app" `AppE` (LiteralE 5) `AppE` (AddE `AppE` (LiteralE 3))
+expr_3 = LetUA "app" expr_1 $ VarUA "app" `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
 ast_3 = typecheck (TypeEnv []) NilEN expr_3
 type_3 = polymap (MonoP . Mono . type_of) ast_3
 
