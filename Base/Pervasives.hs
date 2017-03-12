@@ -1,8 +1,8 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Base.Pervasives (module Base.Pervasives, Typeable, Typeable1, Typeable2, Void, cast) where
-import Data.Typeable (Typeable, Typeable1, Typeable2, cast)
+module Base.Pervasives (module Base.Pervasives, Typeable, Void, cast) where
+import Data.Typeable (Typeable, cast)
 import Data.Void (Void)
 
 data Nil :: *
@@ -16,7 +16,7 @@ data Succ :: * -> *
 data Hole :: *
   deriving Typeable
 
-class (Typeable a, Typeable1 t) => A t a where
+class (Typeable a, Typeable t) => A t a where
   anything :: t a
 
 type family T (t :: * -> *) :: * -> *

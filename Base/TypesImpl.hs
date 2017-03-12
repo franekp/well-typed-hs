@@ -28,14 +28,14 @@ instance {-# OVERLAPPING #-} A Type Hole where
   anything = HoleTT
 
 deriving instance Eq (Type a)
-deriving instance Typeable1 Type
+deriving instance Typeable Type
 instance Eq (Mono Type) where
   Mono a == Mono b = case cast b of
     Just bb -> a == bb
     Nothing -> False
 
 deriving instance Eq (TypeVar a)
-deriving instance Typeable1 TypeVar
+deriving instance Typeable TypeVar
 instance Eq (Mono TypeVar) where
   Mono a == Mono b = case cast b of
     Just bb -> a == bb
