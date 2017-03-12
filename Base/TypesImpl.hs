@@ -12,19 +12,19 @@ instance A TypeVar Zero where
 instance A TypeVar a => A TypeVar (Succ a) where
   anything = SuccTV anything
 
-instance A TypeVar a => A Type a where
+instance {-# OVERLAPPING #-} A TypeVar a => A Type a where
   anything = TypeVarTT anything
 
-instance (A Type a, A Type b) => A Type (a -> b) where
+instance {-# OVERLAPPING #-} (A Type a, A Type b) => A Type (a -> b) where
   anything = ArrowTT (anything :: Type a) (anything :: Type b)
 
-instance A Type Int where
+instance {-# OVERLAPPING #-} A Type Int where
   anything = IntTT
 
-instance A Type Void where
+instance {-# OVERLAPPING #-} A Type Void where
   anything = VoidTT
 
-instance A Type Hole where
+instance {-# OVERLAPPING #-} A Type Hole where
   anything = HoleTT
 
 deriving instance Eq (Type a)
