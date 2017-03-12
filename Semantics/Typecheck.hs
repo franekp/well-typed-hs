@@ -2,9 +2,9 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Typecheck where
+module Semantics.Typecheck where
 import Base
-import Unification (unify)
+import Semantics.Unification (unify)
 import Data.List (foldl')
 import Data.Bits (xor)
 

@@ -2,7 +2,7 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Unification (unify, main_Unification) where
+module Semantics.Unification (unify, main_Unification) where
 import Base
 
 synchronize_quantifiers :: Poly t -> Poly t -> (Poly t, Poly t)

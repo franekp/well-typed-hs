@@ -4,8 +4,8 @@ TypeFamilies #-}
 
 module Main where
 import Base.TypesImpl (main_TypesImpl)
-import Unification (main_Unification)
-import Typecheck (main_Typecheck)
+import Semantics.Unification (main_Unification)
+import Semantics.Typecheck (main_Typecheck)
 
 main = do
   main_TypesImpl
