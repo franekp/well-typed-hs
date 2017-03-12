@@ -5,11 +5,11 @@ TypeFamilies #-}
 module Main where
 import Instances (main_Instances)
 import Unification (main_Unification)
-import Ast (main_Ast)
+import Typecheck (main_Typecheck)
 
 main = do
   main_Instances
   putStrLn "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~"
   main_Unification
   putStrLn "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~"
-  main_Ast
+  main_Typecheck
