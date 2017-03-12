@@ -11,11 +11,18 @@ import Data.Bits (xor)
 eval :: Ast Nil a -> a
 eval = eval' NilS
 
-eval' :: Store e -> Ast e a -> a
+eval' :: forall a e. Store e -> Ast e a -> a
 eval' s AddA = \x y -> x + y
 eval' s (LiteralA x) = x
-eval' (ConsS val _) VarA = val
-eval' (ConsS _ s) (LiftA a) = eval' s a
+eval' s VarA =
+  let
+    helper :: forall a e. Store (Cons a e) -> a
+    helper (ConsS val _) = val  -- workaround exhaustiveness check that sucks
+  in helper s
+eval' s (LiftA a) = let
+    helper :: forall a e. Store (Cons a e) -> Store e
+    helper (ConsS _ s') = s'  -- workaround exhaustiveness check that sucks
+  in eval' (helper s) a
 eval' s (LambdaA body) = \arg -> eval' (ConsS arg s) body
 eval' s (ErrorA msg) = error msg
 eval' s (AppA fun arg) = eval' s fun $ eval' s arg
@@ -81,6 +88,7 @@ typecheck' te e (AppUA fun arg) =
     type_of_arg :: A Type a => Ast e a -> Mono Type
     type_of_arg fun = case type_of fun of
       a `ArrowTT` b -> Mono a
+      _ -> error "_ is not a function"
     cont :: (A Type a, A Type b) => Ast e a -> Ast e b -> Poly (Ast e)
     cont fun arg = case type_of fun of
       a `ArrowTT` b -> case cast arg of

@@ -89,6 +89,7 @@ unpack_poly a b =
       (VarMapping m) =
         if num_a /= num_b then error "synchronize_quantifiers not called before unpack_poly!" else
         unpack_poly' (SuccTV last_tv) poly_a poly_b $ VarMapping $ (num_a, Mono last_tv):m
+    unpack_poly' _ _ _ _ = error "unreachable"
 
 data Constraint = Constraint (Mono TypeVar) (Mono Type)
   deriving Show

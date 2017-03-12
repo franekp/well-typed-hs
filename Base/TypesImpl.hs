@@ -63,6 +63,7 @@ instance Show (TypeVar a) where
   show (SuccTV a) = case show a of
     'z':t -> 'a':'\'':t
     c:t -> (:t) $ Data.Char.chr $ (+1) $ Data.Char.ord c
+    [] -> error "unreachable"
 
 instance Show (Mono TypeVar) where
   show (Mono a) = show a
