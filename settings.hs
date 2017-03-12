@@ -2,7 +2,7 @@
   EmptyDataDecls, MultiParamTypeClasses, GADTs, RankNTypes, StandaloneDeriving,
   DeriveDataTypeable, ScopedTypeVariables, FunctionalDependencies,
   FlexibleInstances, FlexibleContexts, ExistentialQuantification,
-  UndecidableInstances, TypeFamilies #-}
+  UndecidableInstances, TypeFamilies, EmptyCase #-}
 
 {-# OPTIONS_GHC
   -fwarn-incomplete-patterns
