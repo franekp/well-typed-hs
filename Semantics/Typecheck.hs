@@ -20,16 +20,6 @@ eval' s (LambdaA body) = \arg -> eval' (ConsS arg s) body
 eval' s (ErrorA msg) = error msg
 eval' s (AppA fun arg) = eval' s fun $ eval' s arg
 
-data UAst = AddUA
-  | LiteralUA Int
-  | AppUA UAst UAst
-  | LambdaUA String UPolyType UAst
-  | VarUA String
-  | LetUA String UAst UAst
-
-data UMonoType = IntUMT | ArrowUMT UMonoType UMonoType | VarUMT String
-data UPolyType = ForallUPT String UPolyType | MonoUPT UMonoType
-
 newtype TypeEnv = TypeEnv [(String, Mono Type)]
 
 lookup_type :: TypeEnv -> String -> Mono Type

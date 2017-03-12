@@ -6,10 +6,12 @@ module Base (
   module Base.Pervasives,
   module Base.Types,
   module Base.TypesImpl,
-  module Base.Ast
+  module Base.Ast,
+  module Base.UAst,
 ) where
 
 import Base.Pervasives
 import Base.Types
 import Base.TypesImpl
 import Base.Ast
+import Base.UAst
