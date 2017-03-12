@@ -14,8 +14,8 @@ data Type :: * -> * where
     Type Void
   TypeVarTT :: A TypeVar a =>
     TypeVar a -> Type a
-  TypeHoleTT ::
-    Type TypeHole
+  HoleTT ::
+    Type Hole
 
 type instance T Type = Type
 

@@ -25,8 +25,8 @@ instance A Type Int where
 instance A Type Void where
   anything = VoidTT
 
-instance A Type TypeHole where
-  anything = TypeHoleTT
+instance A Type Hole where
+  anything = HoleTT
 
 deriving instance Eq (Type a)
 deriving instance Typeable1 Type
@@ -53,7 +53,7 @@ instance Show (Type a) where
   show IntTT = "Int"
   show VoidTT = "Void"
   show (TypeVarTT a) = show a
-  show TypeHoleTT = "<type_hole>"
+  show HoleTT = "<type_hole>"
 
 instance Show (Mono Type) where
   show (Mono a) = show a

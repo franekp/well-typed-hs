@@ -14,7 +14,7 @@ data Zero :: *
   deriving Typeable
 data Succ :: * -> *
   deriving Typeable
-data TypeHole :: *
+data Hole :: *
   deriving Typeable
 
 class (Typeable a, Typeable1 t) => A t a where

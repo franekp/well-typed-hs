@@ -70,7 +70,7 @@ dump_typevars (MonoP (Mono tt)) = do_stuff (type_of tt) [] where
     TypeVarTT a -> Mono a:acc
     _ -> acc
 dump_typevars (ForallP _ exists_poly) = result exists_poly where
-  result :: ExistsPoly t TypeHole -> [Mono TypeVar]
+  result :: ExistsPoly t Hole -> [Mono TypeVar]
   result (ExistsPoly poly) = dump_typevars poly
 
 unpack_poly :: forall t. T t ~ Type => Poly t -> Poly t -> (Mono t, Mono t, VarMapping, Mono TypeVar)
@@ -119,7 +119,7 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
           in
           if num == except_q then
             case exists_poly of
-              (ExistsPoly poly :: ExistsPoly t TypeHole) -> helper poly (TypeMapping m)
+              (ExistsPoly poly :: ExistsPoly t Hole) -> helper poly (TypeMapping m)
           else
             ForallP num $ do_stuff exists_poly
   result :: Poly t

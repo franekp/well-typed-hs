@@ -117,7 +117,7 @@ type_3 = polymap (MonoP . Mono . type_of) ast_3
 forcetype :: A Type a => Poly (Ast Nil) -> Ast Nil a
 forcetype (ForallP _ exists_poly) =
   case exists_poly of
-    (ExistsPoly poly :: ExistsPoly (Ast Nil) TypeHole) -> forcetype poly
+    (ExistsPoly poly :: ExistsPoly (Ast Nil) Hole) -> forcetype poly
 forcetype (MonoP (Mono ast)) = case cast ast of
   Just x -> x
   Nothing -> ErrorA $ "wrong type of: " ++ show ast
