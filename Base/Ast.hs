@@ -12,8 +12,6 @@ data Store :: * -> * where
   ConsS :: (A Type h, Typeable t) =>
     h -> Store t -> Store (Cons h t)
 
-deriving instance Typeable1 Store
-
 data Env :: * -> * where
   NilEN ::
     Env Nil
@@ -21,8 +19,6 @@ data Env :: * -> * where
     String -> Type h -> Env t -> Env (Cons h t)
   LetEN ::
     String -> Poly (Ast e) -> Env e -> Env e
-
-deriving instance Typeable1 Env
 
 data Ast :: * -> * -> * where
   AddA :: Typeable e =>
@@ -41,9 +37,3 @@ data Ast :: * -> * -> * where
     Ast e (a -> b) -> Ast e a -> Ast e b
 
 type instance T (Ast e) = Type
-
-deriving instance Typeable2 Ast
-deriving instance Show (Ast e a)
-
-instance Show (Mono (Ast e)) where
-  show (Mono a) = show a

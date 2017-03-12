@@ -2,18 +2,15 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Base (
-  module Base.Pervasives,
-  module Base.Types,
-  module Base.TypesImpl,
-  module Base.Ast,
-  module Base.AstImpl,
-  module Base.UAst,
-) where
-
+module Base.AstImpl where
 import Base.Pervasives
 import Base.Types
-import Base.TypesImpl
 import Base.Ast
-import Base.AstImpl
-import Base.UAst
+
+deriving instance Typeable1 Store
+deriving instance Typeable1 Env
+deriving instance Typeable2 Ast
+deriving instance Show (Ast e a)
+
+instance Show (Mono (Ast e)) where
+  show (Mono a) = show a
