@@ -1,0 +1,5 @@
+AST processing pipeline:
+
+InputAst ---[Syntax]---> UAst (Maybe UPolyType) ---[TypeSystem]---> UAst UPolyType
+
+UAst UPolyType ---[Semantics.Typecheck]---> Ast Nil a ---[Semantics.Eval]---> a
