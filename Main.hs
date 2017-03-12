@@ -3,7 +3,7 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Main where
-import TypesImpl (main_TypesImpl)
+import Base.TypesImpl (main_TypesImpl)
 import Unification (main_Unification)
 import Typecheck (main_Typecheck)
 

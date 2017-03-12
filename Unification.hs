@@ -3,7 +3,7 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Unification (unify, main_Unification) where
-import Base
+import Base.Base
 
 synchronize_quantifiers :: Poly t -> Poly t -> (Poly t, Poly t)
 synchronize_quantifiers (MonoP a) (MonoP b) = (MonoP a, MonoP b)

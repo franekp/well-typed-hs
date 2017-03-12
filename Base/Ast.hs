@@ -2,9 +2,9 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Ast where
-import Pervasives
-import Types
+module Base.Ast where
+import Base.Pervasives
+import Base.Types
 
 data Store :: * -> * where
   NilS ::

@@ -2,9 +2,9 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module TypesImpl where
-import Pervasives
-import Types
+module Base.TypesImpl where
+import Base.Pervasives
+import Base.Types
 import qualified Data.Char
 
 instance A TypeVar Zero where

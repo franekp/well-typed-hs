@@ -3,7 +3,7 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Typecheck where
-import Base
+import Base.Base
 import Unification (unify)
 import Data.List (foldl')
 import Data.Bits (xor)

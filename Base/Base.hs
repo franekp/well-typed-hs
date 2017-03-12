@@ -2,11 +2,14 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Base (
-  module Pervasives, module Types, module TypesImpl, module Ast
+module Base.Base (
+  module Base.Pervasives,
+  module Base.Types,
+  module Base.TypesImpl,
+  module Base.Ast
 ) where
 
-import Pervasives
-import Types
-import TypesImpl
-import Ast
+import Base.Pervasives
+import Base.Types
+import Base.TypesImpl
+import Base.Ast
