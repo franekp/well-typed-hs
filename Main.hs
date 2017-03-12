@@ -3,7 +3,7 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Main where
-import Base.TypesImpl (testTypesImpl)
+import Base.Examples (testTypesImpl)
 import Semantics.Unify (testUnify)
 import Semantics.Typecheck (testTypecheck)
 

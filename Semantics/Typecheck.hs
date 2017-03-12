@@ -125,20 +125,36 @@ forcetype (MonoP (Mono ast)) = case cast ast of
 eval_poly :: A Type a => Poly (Ast Nil) -> a
 eval_poly = eval . forcetype
 
-testTypecheckDev = all id [
-    show type_1 == "forall a177604 b177607. a -> (a -> b) -> b",
-    show ast_1 == "forall a177604 b177607. LambdaA (LambdaA (AppA VarA (LiftA VarA)))",
-    show type_3 == "forall. Int",
-    show ast_3 == "forall. AppA (AppA (LambdaA (LambdaA (AppA VarA (LiftA VarA)))) (LiteralA 5)) (AppA AddA (LiteralA 3))",
-    show (eval_poly (ast_3) :: Int) == "8"
-  ]
+typeof_polymap :: Poly (Ast Nil) -> Poly Type
+typeof_polymap = polymap (MonoP . Mono . type_of)
 
-testTypecheckRel = all id [
-    show type_1 == "forall a b. a -> (a -> b) -> b",
-    show ast_1 == "forall a b. LambdaA (LambdaA (AppA VarA (LiftA VarA)))",
-    show type_3 == "forall. Int",
-    show ast_3 == "forall. AppA (AppA (LambdaA (LambdaA (AppA VarA (LiftA VarA)))) (LiteralA 5)) (AppA AddA (LiteralA 3))",
-    show (eval_poly (ast_3) :: Int) == "8"
-  ]
+remove_digits :: String -> String
+remove_digits [] = []
+remove_digits (h:t) =
+  let tt = remove_digits t in
+  if any (== h) "0123456789" then tt else h:tt
 
-testTypecheck = testTypecheckDev || testTypecheckRel
+testTypecheck_tc =
+  let
+    f uast =
+      let ast = typecheck uast in
+      (
+        remove_digits $ show ast,
+        remove_digits $ show $ typeof_polymap ast
+      )
+  in map f uast_func_examples == [(
+      "forall a b. LambdaA (LambdaA (AppA VarA (LiftA VarA)))",
+      "forall a b. a -> (a -> b) -> b"
+    ),(
+      "forall a b c. LambdaA (LambdaA (LambdaA (AppA (LiftA (LiftA VarA)) (AppA (LiftA VarA) VarA))))",
+      "forall a b c. (a -> b) -> (c -> a) -> c -> b"
+    ),(
+      "forall a b c. LambdaA (LambdaA (LambdaA (AppA (LiftA VarA) (AppA (LiftA (LiftA VarA)) VarA))))",
+      "forall a b c. (a -> b) -> (b -> c) -> a -> c"
+    )]
+
+testTypecheck_eval =
+  let f uast = (eval_poly $ typecheck uast :: Int) in
+  map f uast_int_examples == [8, 8]
+
+testTypecheck = testTypecheck_tc && testTypecheck_eval

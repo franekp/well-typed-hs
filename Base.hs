@@ -9,6 +9,7 @@ module Base (
   module Base.Ast,
   module Base.AstImpl,
   module Base.UAst,
+  module Base.Examples,
 ) where
 
 import Base.Pervasives
@@ -17,3 +18,4 @@ import Base.TypesImpl
 import Base.Ast
 import Base.AstImpl
 import Base.UAst
+import Base.Examples
