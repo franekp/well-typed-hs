@@ -8,14 +8,17 @@ import Semantics.Unify (unify)
 import Data.List (foldl')
 import Data.Bits (xor)
 
-eval :: Store e -> Ast e a -> a
-eval s AddA = \x y -> x + y
-eval s (LiteralA x) = x
-eval (ConsS val _) VarA = val
-eval (ConsS _ s) (LiftA a) = eval s a
-eval s (LambdaA body) = \arg -> eval (ConsS arg s) body
-eval s (ErrorA msg) = error msg
-eval s (AppA fun arg) = eval s fun $ eval s arg
+eval :: Ast Nil a -> a
+eval = eval' NilS
+
+eval' :: Store e -> Ast e a -> a
+eval' s AddA = \x y -> x + y
+eval' s (LiteralA x) = x
+eval' (ConsS val _) VarA = val
+eval' (ConsS _ s) (LiftA a) = eval' s a
+eval' s (LambdaA body) = \arg -> eval' (ConsS arg s) body
+eval' s (ErrorA msg) = error msg
+eval' s (AppA fun arg) = eval' s fun $ eval' s arg
 
 data UAst = AddUA
   | LiteralUA Int
@@ -76,15 +79,14 @@ lookup_var (LetEN name val rest) var =
   else
     lookup_var rest var
 
--- TODO: add possibility of referencing type variables declared in outer scope!
--- so typecheck will take the same (String -> Mono Type) = TypeEnv parameter
--- as in typecheck_polytype' and typecheck_monotype
+typecheck :: UAst -> Poly (Ast Nil)
+typecheck = typecheck' (TypeEnv []) NilEN
 
-typecheck :: forall e. Typeable e => TypeEnv -> Env e -> UAst -> Poly (Ast e)
-typecheck te e AddUA = MonoP $ Mono $ AddA
-typecheck te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
-typecheck te e (AppUA fun arg) =
-  unify type_of_arg (typecheck te e fun) (Mono . type_of) (typecheck te e arg) cont
+typecheck' :: forall e. Typeable e => TypeEnv -> Env e -> UAst -> Poly (Ast e)
+typecheck' te e AddUA = MonoP $ Mono $ AddA
+typecheck' te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
+typecheck' te e (AppUA fun arg) =
+  unify type_of_arg (typecheck' te e fun) (Mono . type_of) (typecheck' te e arg) cont
   where
     type_of_arg :: A Type a => Ast e a -> Mono Type
     type_of_arg fun = case type_of fun of
@@ -95,31 +97,31 @@ typecheck te e (AppUA fun arg) =
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
         Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast e Void)
       _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast e Void)
-typecheck te e (LambdaUA var_name ty body) = (typecheck_polytype te ty helper :: Poly (Ast e)) where
+typecheck' te e (LambdaUA var_name ty body) = (typecheck_polytype te ty helper :: Poly (Ast e)) where
   helper :: forall a. A Type a => TypeEnv -> Type a -> Poly (Ast e)
   helper te' tt = polymap (MonoP . Mono . (
       LambdaA :: forall b. A Type b => Ast (Cons a e) b -> Ast e (a -> b)
     )) body_ast
     where
       body_ast :: Poly (Ast (Cons a e))
-      body_ast = typecheck te' (ConsEN var_name tt e) body
-typecheck te e (VarUA name) = lookup_var e name
-typecheck te e (LetUA name val expr) =
-  typecheck te (LetEN name (typecheck te e val) e) expr
+      body_ast = typecheck' te' (ConsEN var_name tt e) body
+typecheck' te e (VarUA name) = lookup_var e name
+typecheck' te e (LetUA name val expr) =
+  typecheck' te (LetEN name (typecheck' te e val) e) expr
 
 expr_1 =
   LambdaUA "a" (ForallUPT "a" $ MonoUPT $ VarUMT "a") $
   LambdaUA "f" (ForallUPT "b" $ MonoUPT $ VarUMT "a" `ArrowUMT` VarUMT "b") $
   VarUA "f" `AppUA` VarUA "a"
-ast_1 = typecheck (TypeEnv []) NilEN expr_1
+ast_1 = typecheck expr_1
 type_1 = polymap (MonoP . Mono . type_of) ast_1
 
 expr_2 = expr_1 `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
-ast_2 = typecheck (TypeEnv []) NilEN expr_2
+ast_2 = typecheck expr_2
 type_2 = polymap (MonoP . Mono . type_of) ast_2
 
 expr_3 = LetUA "app" expr_1 $ VarUA "app" `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
-ast_3 = typecheck (TypeEnv []) NilEN expr_3
+ast_3 = typecheck expr_3
 type_3 = polymap (MonoP . Mono . type_of) ast_3
 
 forcetype :: A Type a => Poly (Ast Nil) -> Ast Nil a
@@ -131,7 +133,7 @@ forcetype (MonoP (Mono ast)) = case cast ast of
   Nothing -> ErrorA $ "wrong type of: " ++ show ast
 
 eval_poly :: A Type a => Poly (Ast Nil) -> a
-eval_poly = eval NilS . forcetype
+eval_poly = eval . forcetype
 
 testTypecheckDev = all id [
     show type_1 == "forall a177604 b177607. a -> (a -> b) -> b",
