@@ -2,7 +2,7 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Instances where
+module TypesImpl where
 import Pervasives
 import Types
 import qualified Data.Char
@@ -103,7 +103,7 @@ type_example_4 =
   :: forall b. A Type b => ExistsPoly Type b)
   :: forall a. A Type a => ExistsPoly Type a)
 
-main_Instances = do
+main_TypesImpl = do
   putStrLn $ show $ type_example_1
   putStrLn $ show $ type_example_2
   putStrLn $ show $ type_example_3

@@ -3,10 +3,10 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Base (
-  module Pervasives, module Types, module Instances, module Ast
+  module Pervasives, module Types, module TypesImpl, module Ast
 ) where
 
 import Pervasives
 import Types
-import Instances
+import TypesImpl
 import Ast

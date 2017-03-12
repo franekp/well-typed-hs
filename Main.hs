@@ -3,12 +3,12 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Main where
-import Instances (main_Instances)
+import TypesImpl (main_TypesImpl)
 import Unification (main_Unification)
 import Typecheck (main_Typecheck)
 
 main = do
-  main_Instances
+  main_TypesImpl
   putStrLn "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~"
   main_Unification
   putStrLn "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~"
