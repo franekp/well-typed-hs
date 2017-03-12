@@ -2,7 +2,8 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Instances (module Types, module Instances) where
+module Instances where
+import Pervasives
 import Types
 import qualified Data.Char
 

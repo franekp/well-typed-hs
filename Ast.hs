@@ -3,8 +3,8 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Ast where
-
-import Instances
+import Pervasives
+import Types
 
 data Store :: * -> * where
   NilS ::

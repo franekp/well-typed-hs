@@ -2,7 +2,7 @@
 FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
 TypeFamilies #-}
 
-module Types (module Pervasives, module Types) where
+module Types where
 import Pervasives
 
 data Type :: * -> * where
