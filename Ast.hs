@@ -1,17 +1,6 @@
-{-# LANGUAGE EmptyDataDecls,
- MultiParamTypeClasses,
- GADTs,
- RankNTypes,
- StandaloneDeriving,
- DeriveDataTypeable,
- ScopedTypeVariables,
- FunctionalDependencies,
- OverlappingInstances,
- FlexibleInstances,
- FlexibleContexts,
- ExistentialQuantification,
- UndecidableInstances,
- TypeFamilies #-}
+{-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, GADTs, RankNTypes, StandaloneDeriving, DeriveDataTypeable, ScopedTypeVariables,
+FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContexts, ExistentialQuantification, UndecidableInstances,
+TypeFamilies #-}
 
 module Ast where
 
