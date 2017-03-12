@@ -3,7 +3,7 @@ FunctionalDependencies, OverlappingInstances, FlexibleInstances, FlexibleContext
 TypeFamilies #-}
 
 module Ast where
-import Instances hiding (main)
+import Instances
 import Unification
 import Data.List (foldl')
 import Data.Bits (xor)

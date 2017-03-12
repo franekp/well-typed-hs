@@ -6,9 +6,6 @@ module Instances (module Types, module Instances) where
 import Types
 import qualified Data.Char
 
-type instance T Type = Type
-type instance T TypeVar = TypeVar
-
 instance A TypeVar Zero where
   anything = ZeroTV
 
@@ -29,9 +26,6 @@ instance A Type Void where
 
 instance A Type TypeHole where
   anything = TypeHoleTT
-
-type_of :: A (T t) a => t a -> T t a
-type_of a = anything
 
 deriving instance Eq (Type a)
 deriving instance Typeable1 Type

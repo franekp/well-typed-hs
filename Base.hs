@@ -22,6 +22,9 @@ class (Typeable a, Typeable1 t) => A t a where
 
 type family T (t :: * -> *) :: * -> *
 
+type_of :: A (T t) a => t a -> T t a
+type_of a = anything
+
 data Mono :: (* -> *) -> * where
   Mono :: A (T t) a => t a -> Mono t
 

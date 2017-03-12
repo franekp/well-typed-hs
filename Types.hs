@@ -17,8 +17,12 @@ data Type :: * -> * where
   TypeHoleTT ::
     Type TypeHole
 
+type instance T Type = Type
+
 data TypeVar :: * -> * where
   ZeroTV ::
     TypeVar Zero
   SuccTV :: A TypeVar a =>
     TypeVar a -> TypeVar (Succ a)
+
+type instance T TypeVar = TypeVar
