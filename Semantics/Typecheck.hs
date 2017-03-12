@@ -134,34 +134,3 @@ eval_poly = eval . forcetype
 
 typeof_polymap :: Poly (Ast Nil) -> Poly Type
 typeof_polymap = polymap (MonoP . Mono . type_of)
-
-remove_digits :: String -> String
-remove_digits [] = []
-remove_digits (h:t) =
-  let tt = remove_digits t in
-  if any (== h) "0123456789" then tt else h:tt
-
-testTypecheck_tc =
-  let
-    f uast =
-      let ast = typecheck uast in
-      (
-        remove_digits $ show ast,
-        remove_digits $ show $ typeof_polymap ast
-      )
-  in map f uast_func_examples == [(
-      "forall a b. LambdaA (LambdaA (AppA VarA (LiftA VarA)))",
-      "forall a b. a -> (a -> b) -> b"
-    ),(
-      "forall a b c. LambdaA (LambdaA (LambdaA (AppA (LiftA (LiftA VarA)) (AppA (LiftA VarA) VarA))))",
-      "forall a b c. (a -> b) -> (c -> a) -> c -> b"
-    ),(
-      "forall a b c. LambdaA (LambdaA (LambdaA (AppA (LiftA VarA) (AppA (LiftA (LiftA VarA)) VarA))))",
-      "forall a b c. (a -> b) -> (b -> c) -> a -> c"
-    )]
-
-testTypecheck_eval =
-  let f uast = (eval_poly $ typecheck uast :: Int) in
-  map f uast_int_examples == [8, 8]
-
-testTypecheck = testTypecheck_tc && testTypecheck_eval

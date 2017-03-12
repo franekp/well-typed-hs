@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Semantics.Unify (unify, testUnify) where
+module Semantics.Unify (unify, test_unify) where
 import Base
 
 synchronize_quantifiers :: Poly t -> Poly t -> (Poly t, Poly t)
@@ -214,20 +214,13 @@ unify f_a a_input f_b b_input cont =
     (a_res, b_res) = helper constraints a_poly b_poly
   in zip_quantifiers a_res b_res cont
 
-testUnifyDev =
+test_unify =
   let
     (e1, e2) =
       synchronize_quantifiers
         (polytype_examples !! 3)
         (polytype_examples !! 2)
-    a = ZeroTV
-    b = SuccTV a
-    c = SuccTV b
-    d = SuccTV c
-    e = SuccTV d
-    f = SuccTV e
-    g = SuccTV f
-  in all id [
+  in (all id [
     show e1 == "forall a7 b8 c4 d5 e6. (a -> b) -> (b -> a) -> a -> a",
     show e2 == "forall a7 b8 c4 d5 e6. (c -> d) -> (d -> e) -> c -> e",
     show (unify
@@ -240,22 +233,7 @@ testUnifyDev =
       (Mono . type_of) (polytype_examples !! 2)
       (\a b -> MonoP $ Mono b)
     ) == "forall a5 b6. (b -> a) -> (a -> b) -> b -> b"
-  ]
-
-testUnifyRel =
-  let
-    (e1, e2) =
-      synchronize_quantifiers
-        (polytype_examples !! 3)
-        (polytype_examples !! 2)
-    a = ZeroTV
-    b = SuccTV a
-    c = SuccTV b
-    d = SuccTV c
-    e = SuccTV d
-    f = SuccTV e
-    g = SuccTV f
-  in all id [
+  ]) || (all id [
     show e1 == "forall a b c d e. (a -> b) -> (b -> a) -> a -> a",
     show e2 == "forall a b c d e. (c -> d) -> (d -> e) -> c -> e",
     show (unify
@@ -268,6 +246,4 @@ testUnifyRel =
       (Mono . type_of) (polytype_examples !! 2)
       (\a b -> MonoP $ Mono b)
     ) == "forall a b. (b -> a) -> (a -> b) -> b -> b"
-  ]
-
-testUnify = testUnifyDev || testUnifyRel
+  ])

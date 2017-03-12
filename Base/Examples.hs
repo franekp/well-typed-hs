@@ -73,19 +73,3 @@ uast_int_examples = [
     LetUA "app" (uast_func_examples !! 0) $
       VarUA "app" `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
   ]
-
-testTypesImplDev = map show polytype_examples == [
-    "forall a1 b2. a -> (a -> b) -> b",
-    "forall a3. (a -> a) -> (a -> a) -> a -> a",
-    "forall a4 b5 c6. (a -> b) -> (b -> c) -> a -> c",
-    "forall a7 b8. (a -> b) -> (b -> a) -> a -> a"
-  ]
-
-testTypesImplRel = map show polytype_examples == [
-    "forall a b. a -> (a -> b) -> b",
-    "forall a. (a -> a) -> (a -> a) -> a -> a",
-    "forall a b c. (a -> b) -> (b -> c) -> a -> c",
-    "forall a b. (a -> b) -> (b -> a) -> a -> a"
-  ]
-
-testTypesImpl = testTypesImplDev || testTypesImplRel
