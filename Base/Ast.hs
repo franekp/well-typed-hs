@@ -5,13 +5,13 @@ module Base.Ast where
 import Base.Pervasives
 import Base.Types
 
-infixr `ConsS`
+infixr `ConsST`
 infixr `ConsEN`
 
 data Store :: [*] -> * where
-  NilS ::
+  NilST ::
     Store '[]
-  ConsS :: (A Type h, Typeable t) =>
+  ConsST :: (A Type h, Typeable t) =>
     h -> Store t -> Store (h ': t)
 
 data Env :: [*] -> * where

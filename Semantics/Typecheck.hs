@@ -8,7 +8,7 @@ import Data.List (foldl')
 import Data.Bits (xor)
 
 eval :: Ast '[] a -> a
-eval = eval' NilS
+eval = eval' NilST
 
 eval' :: forall a e. Store e -> Ast e a -> a
 eval' s AddA = \x y -> x + y
@@ -16,13 +16,13 @@ eval' s (LiteralA x) = x
 eval' s VarA =
   let
     helper :: forall a e. Store (a ': e) -> a
-    helper (ConsS val _) = val  -- workaround exhaustiveness check that sucks
+    helper (ConsST val _) = val  -- workaround exhaustiveness check that sucks
   in helper s
 eval' s (LiftA a) = let
     helper :: forall a e. Store (a ': e) -> Store e
-    helper (ConsS _ s') = s'  -- workaround exhaustiveness check that sucks
+    helper (ConsST _ s') = s'  -- workaround exhaustiveness check that sucks
   in eval' (helper s) a
-eval' s (LambdaA body) = \arg -> eval' (ConsS arg s) body
+eval' s (LambdaA body) = \arg -> eval' (ConsST arg s) body
 eval' s (ErrorA msg) = error msg
 eval' s (AppA fun arg) = eval' s fun $ eval' s arg
 
