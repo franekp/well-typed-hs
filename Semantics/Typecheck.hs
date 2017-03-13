@@ -16,13 +16,13 @@ eval' s (LiteralA x) = x
 eval' s VarA =
   let
     helper :: forall a e. Store (a ': e) -> a
-    helper (ConsST val _) = val  -- workaround exhaustiveness check that sucks
+    helper (val `ConsST` _) = val  -- workaround exhaustiveness check that sucks
   in helper s
 eval' s (LiftA a) = let
     helper :: forall a e. Store (a ': e) -> Store e
-    helper (ConsST _ s') = s'  -- workaround exhaustiveness check that sucks
+    helper (_ `ConsST` s') = s'  -- workaround exhaustiveness check that sucks
   in eval' (helper s) a
-eval' s (LambdaA body) = \arg -> eval' (ConsST arg s) body
+eval' s (LambdaA body) = \arg -> eval' (arg `ConsST` s) body
 eval' s (ErrorA msg) = error msg
 eval' s (AppA fun arg) = eval' s fun $ eval' s arg
 
@@ -60,12 +60,12 @@ typecheck_polytype te (ForallUPT var inner) cont = ForallP (hash var) (
 lookup_var :: forall e. Env e -> String -> Poly (Ast e)
 lookup_var NilEN var = MonoP $ Mono
   (ErrorA $ "unknown variable: '" ++ var ++ "'" :: Ast e Void)
-lookup_var (ConsEN name ty rest) var =
+lookup_var ((name, ty) `ConsEN` rest) var =
   if var == name then
     MonoP $ Mono VarA
   else
     polymap (MonoP . Mono . LiftA) $ lookup_var rest var
-lookup_var (LetEN name val rest) var =
+lookup_var ((name, val) `LetEN` rest) var =
   if var == name then
     val
     -- FIXME: here should be generating fresh ids for quantifiers inside val
@@ -94,32 +94,17 @@ typecheck' te e (AppUA fun arg) =
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
         Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast e Void)
       _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast e Void)
-typecheck' te e (LambdaUA var_name ty body) = (typecheck_polytype te ty helper :: Poly (Ast e)) where
+typecheck' te e ((var_name, ty) `LambdaUA` body) = (typecheck_polytype te ty helper :: Poly (Ast e)) where
   helper :: forall a. A Type a => TypeEnv -> Type a -> Poly (Ast e)
   helper te' tt = polymap (MonoP . Mono . (
       LambdaA :: forall b. A Type b => Ast (a ': e) b -> Ast e (a -> b)
     )) body_ast
     where
       body_ast :: Poly (Ast (a ': e))
-      body_ast = typecheck' te' (ConsEN var_name tt e) body
+      body_ast = typecheck' te' ((var_name, tt) `ConsEN` e) body
 typecheck' te e (VarUA name) = lookup_var e name
-typecheck' te e (LetUA name val expr) =
-  typecheck' te (LetEN name (typecheck' te e val) e) expr
-
-expr_1 =
-  LambdaUA "a" (ForallUPT "a" $ MonoUPT $ VarUMT "a") $
-  LambdaUA "f" (ForallUPT "b" $ MonoUPT $ VarUMT "a" `ArrowUMT` VarUMT "b") $
-  VarUA "f" `AppUA` VarUA "a"
-ast_1 = typecheck expr_1
-type_1 = polymap (MonoP . Mono . type_of) ast_1
-
-expr_2 = expr_1 `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
-ast_2 = typecheck expr_2
-type_2 = polymap (MonoP . Mono . type_of) ast_2
-
-expr_3 = LetUA "app" expr_1 $ VarUA "app" `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
-ast_3 = typecheck expr_3
-type_3 = polymap (MonoP . Mono . type_of) ast_3
+typecheck' te e ((name, val) `LetUA` expr) =
+  typecheck' te ((name, (typecheck' te e val)) `LetEN` e) expr
 
 forcetype :: A Type a => Poly (Ast '[]) -> Ast '[] a
 forcetype (ForallP _ exists_poly) =

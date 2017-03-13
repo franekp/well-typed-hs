@@ -18,9 +18,9 @@ data Env :: [*] -> * where
   NilEN ::
     Env '[]
   ConsEN :: (A Type h, Typeable t) =>
-    String -> Type h -> Env t -> Env (h ': t)
+    (String, Type h) -> Env t -> Env (h ': t)
   LetEN ::
-    String -> Poly (Ast e) -> Env e -> Env e
+    (String, Poly (Ast e)) -> Env e -> Env e
 
 data Ast :: [*] -> * -> * where
   AddA :: Typeable e =>

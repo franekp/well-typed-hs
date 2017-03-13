@@ -41,29 +41,29 @@ polytype_examples = [
 uast_func_examples :: [UAst]
 uast_func_examples = [
     -- (|>)
-    LambdaUA "a" (ForallUPT "a" $ MonoUPT $ VarUMT "a") $
-    LambdaUA "f" (ForallUPT "b" $ MonoUPT $ VarUMT "a" `ArrowUMT` VarUMT "b") $
+    LambdaUA ("a", ForallUPT "a" $ MonoUPT $ VarUMT "a") $
+    LambdaUA ("f", ForallUPT "b" $ MonoUPT $ VarUMT "a" `ArrowUMT` VarUMT "b") $
     VarUA "f" `AppUA` VarUA "a"
   ,
     -- (.)
-    LambdaUA "f" (
+    LambdaUA ("f",
       ForallUPT "b" $ ForallUPT "c" $ MonoUPT $
       VarUMT "b" `ArrowUMT` VarUMT "c"
-    ) $ LambdaUA "g" (
+    ) $ LambdaUA ("g",
       ForallUPT "a" $ MonoUPT $
       VarUMT "a" `ArrowUMT` VarUMT "b"
-    ) $ LambdaUA "x" (
+    ) $ LambdaUA ("x",
       MonoUPT $ VarUMT "a"
     ) $ VarUA "f" `AppUA` (VarUA "g" `AppUA` VarUA "x")
   ,
     -- (;)
-    LambdaUA "f" (
+    LambdaUA ("f",
       ForallUPT "a" $ ForallUPT "b" $ MonoUPT $
       VarUMT "a" `ArrowUMT` VarUMT "b"
-    ) $ LambdaUA "g" (
+    ) $ LambdaUA ("g",
       ForallUPT "c" $ MonoUPT $
       VarUMT "b" `ArrowUMT` VarUMT "c"
-    ) $ LambdaUA "x" (
+    ) $ LambdaUA ("x",
       MonoUPT $ VarUMT "a"
     ) $ VarUA "g" `AppUA` (VarUA "f" `AppUA` VarUA "x")
   ]
@@ -75,8 +75,9 @@ uast_int_examples = [
       `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
   ,
     -- 8
-    LetUA "app" (uast_func_examples !! 0) $
+    ("app", (uast_func_examples !! 0)) `LetUA` (
       VarUA "app" `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
+    )
   ]
 
 monorecordtype_examples :: [Mono RecordType]
