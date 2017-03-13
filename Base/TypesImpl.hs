@@ -15,7 +15,7 @@ instance A TypeVar a => A TypeVar (Succ a) where
   anything = SuccTV anything
 
 instance {-# OVERLAPPING #-} (A Type a, A Type b) => A Type (a -> b) where
-  anything = ArrowT (anything :: Type a) (anything :: Type b)
+  anything = anything :-> anything
 
 instance {-# OVERLAPPING #-} A Type Int where
   anything = IntT
@@ -49,8 +49,8 @@ instance Ord (Mono TypeVar) where
   Mono (SuccTV a) <= Mono (SuccTV b) = Mono a <= Mono b
 
 instance Show (Type a) where
-  show ((a `ArrowT` b) `ArrowT` c) = "(" ++ show (a `ArrowT` b) ++ ") -> " ++ show c
-  show (a `ArrowT` b) = show a ++ " -> " ++ show b
+  show ((a :-> b) :-> c) = "(" ++ show (a :-> b) ++ ") -> " ++ show c
+  show (a :-> b) = show a ++ " -> " ++ show b
   show IntT = "Int"
   show VoidT = "Void"
   show (TypeVarT a) = show a
@@ -125,7 +125,7 @@ instance Show (Record r) where
   show = ("{" ++) . (++ "}") . inner where
     shw :: forall a. A Type a => a -> String
     shw a = case (anything :: Type a) of
-      _ `ArrowT` _ -> "<func>"
+      _ :-> _ -> "<func>"
       IntT -> show (a :: Int)
       VoidT -> "<void>"
       TypeVarT v -> "(undefined :: " ++ show v ++ ")"

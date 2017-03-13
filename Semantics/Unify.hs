@@ -65,7 +65,7 @@ dump_typevars :: forall t. T t ~ Type => Poly t -> [Mono TypeVar]
 dump_typevars (MonoP (Mono tt)) = do_stuff (type_of tt) [] where
   do_stuff :: A Type a => Type a -> [Mono TypeVar] -> [Mono TypeVar]
   do_stuff arg acc = case arg of
-    a `ArrowT` b -> do_stuff a $ do_stuff b $ acc
+    a :-> b -> do_stuff a $ do_stuff b $ acc
     TypeVarT a -> Mono a:acc
     _ -> acc
 dump_typevars (ForallP _ exists_poly) = result exists_poly where
@@ -95,12 +95,12 @@ data Constraint = Constraint (Mono TypeVar) (Mono Type)
 
 map_vars :: (Mono TypeVar -> Mono Type) -> Mono Type -> Mono Type
 map_vars f (Mono t) = case t of
-  a `ArrowT` b ->
+  a :-> b ->
     let
       a' = map_vars f (Mono a)
       b' = map_vars f (Mono b)
     in case (a', b') of
-      (Mono a'', Mono b'') -> Mono $ a'' `ArrowT` b''
+      (Mono a'', Mono b'') -> Mono $ a'' :-> b''
   TypeVarT tv -> f $ Mono tv
   x -> Mono x
 
@@ -150,7 +150,7 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
 
 -- TODO add a check to detect infinite types
 gen_constraints :: (A Type a, A Type b) => Mono TypeVar -> Type a -> Type b -> [Constraint]
-gen_constraints start_var (a `ArrowT` b) (a' `ArrowT` b') =
+gen_constraints start_var (a :-> b) (a' :-> b') =
   gen_constraints start_var a a' ++ gen_constraints start_var b b'
 gen_constraints start_var (TypeVarT a) a' = if Mono a < start_var then [] else
   case a' of

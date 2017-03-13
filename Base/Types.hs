@@ -7,9 +7,10 @@ import Base.Symbol
 
 infixr `ConsRT`
 infixr `ConsRC`
+infixr :->
 
 data Type :: * -> * where
-  ArrowT :: (A Type a, A Type b) =>
+  (:->) :: (A Type a, A Type b) =>
     Type a -> Type b -> Type (a -> b)
   IntT ::
     Type Int

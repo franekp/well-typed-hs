@@ -91,7 +91,7 @@ monorecordtype_examples =
       `ConsSYM` S_LL `ConsSYM` T_LL `ConsSYM` NilSYM
   in [
     Mono $ (a, IntT) `ConsRT` (b, IntT)
-      `ConsRT` (fun, IntT `ArrowT` IntT) `ConsRT` NilRT,
+      `ConsRT` (fun, IntT :-> IntT) `ConsRT` NilRT,
     (
       case monorecordtype_examples !! 0 of
         Mono inner -> Mono $
