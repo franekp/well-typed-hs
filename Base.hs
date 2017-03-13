@@ -11,8 +11,8 @@ module Base (
   module Base.Examples,
   module Base.Symbol,
   module Base.SymbolImpl,
-  module Base.Chr,
-  module Base.ChrImpl,
+  module Base.ChrRep,
+  module Base.ChrRepImpl,
 ) where
 
 import Base.Pervasives
@@ -24,5 +24,5 @@ import Base.UAst
 import Base.Examples
 import Base.Symbol
 import Base.SymbolImpl
-import Base.Chr (Chr, ChrRep(..))
-import Base.ChrImpl
+import Base.ChrRep (Chr, ChrRep(..))
+import Base.ChrRepImpl

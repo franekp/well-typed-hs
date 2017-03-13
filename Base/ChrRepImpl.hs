@@ -1,9 +1,9 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Base.ChrImpl where
+module Base.ChrRepImpl where
 import Base.Pervasives
-import Base.Chr
+import Base.ChrRep
 
 instance A ChrRep CapA_ where
   anything = A_UL

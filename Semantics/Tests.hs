@@ -3,7 +3,7 @@
 
 module Semantics.Tests where
 import Base
-import qualified Base.Chr as Chr
+import Base.ChrRep
 import Semantics.Typecheck (typecheck, eval, typeof_polymap, eval_poly)
 import Semantics.Unify (test_unify)
 
@@ -49,24 +49,24 @@ test_eval =
   map f uast_int_examples == [8, 8]
 
 test_show_read_letter = all id [
-    show (Mono Chr.A_LL) == "a",
-    (read "a" :: Mono Chr.ChrRep) == Mono Chr.A_LL,
-    show (Mono Chr.F_LL) == "f",
-    (read "f" :: Mono Chr.ChrRep) == Mono Chr.F_LL,
-    show (Mono Chr.A_UL) == "A",
-    (read "A" :: Mono Chr.ChrRep) == Mono Chr.A_UL,
-    show (Mono Chr.F_UL) == "F",
-    (read "F" :: Mono Chr.ChrRep) == Mono Chr.F_UL
+    show (Mono A_LL) == "a",
+    (read "a" :: Mono ChrRep) == Mono A_LL,
+    show (Mono F_LL) == "f",
+    (read "f" :: Mono ChrRep) == Mono F_LL,
+    show (Mono A_UL) == "A",
+    (read "A" :: Mono ChrRep) == Mono A_UL,
+    show (Mono F_UL) == "F",
+    (read "F" :: Mono ChrRep) == Mono F_UL
   ]
 
 test_show_read_symbol = all id [
-    show (Mono $ Chr.A_UL `ConsSYM` Chr.B_LL `ConsSYM` Chr.C_LL `ConsSYM` NilSYM) == "Abc",
-    (read "Abc" :: Mono Symbol) == (Mono $ Chr.A_UL `ConsSYM` Chr.B_LL `ConsSYM` Chr.C_LL `ConsSYM` NilSYM)
+    show (Mono $ A_UL `ConsSYM` B_LL `ConsSYM` C_LL `ConsSYM` NilSYM) == "Abc",
+    (read "Abc" :: Mono Symbol) == (Mono $ A_UL `ConsSYM` B_LL `ConsSYM` C_LL `ConsSYM` NilSYM)
   ]
 
 test_show_read_fieldname = all id [
-    show (Mono $ FieldName $ Chr.A_UL `ConsSYM` Chr.B_LL `ConsSYM` Chr.C_LL `ConsSYM` NilSYM) == "Abc",
-    (read "Abc" :: Mono FieldName) == (Mono $ FieldName $ Chr.A_UL `ConsSYM` Chr.B_LL `ConsSYM` Chr.C_LL `ConsSYM` NilSYM)
+    show (Mono $ FieldName $ A_UL `ConsSYM` B_LL `ConsSYM` C_LL `ConsSYM` NilSYM) == "Abc",
+    (read "Abc" :: Mono FieldName) == (Mono $ FieldName $ A_UL `ConsSYM` B_LL `ConsSYM` C_LL `ConsSYM` NilSYM)
   ]
 
 test_show_record_type = map show monorecordtype_examples == [

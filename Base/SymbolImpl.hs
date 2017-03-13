@@ -4,8 +4,8 @@
 module Base.SymbolImpl where
 import Base.Pervasives
 import Base.Symbol
-import Base.Chr (ChrRep)
-import Base.ChrImpl
+import Base.ChrRep (ChrRep)
+import Base.ChrRepImpl
 
 instance Show (Symbol a) where
   show NilSYM = ""
