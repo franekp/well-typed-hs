@@ -3,7 +3,7 @@
 
 module Base.Types where
 import Base.Pervasives
-import Base.Symbols
+import Base.Symbol
 
 infixr `ConsRT`
 infixr `ConsRC`

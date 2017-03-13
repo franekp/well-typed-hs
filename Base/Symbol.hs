@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Base.Symbols where
+module Base.Symbol where
 import Base.Pervasives
 import Base.Letters (Letter)
 

@@ -4,8 +4,8 @@
 module Base.TypesImpl where
 import Base.Pervasives
 import Base.Types
-import Base.Symbols
-import Base.SymbolsImpl
+import Base.Symbol
+import Base.SymbolImpl
 import qualified Data.Char
 
 instance A TypeVar Zero where

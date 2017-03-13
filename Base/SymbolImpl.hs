@@ -1,9 +1,9 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Base.SymbolsImpl where
+module Base.SymbolImpl where
 import Base.Pervasives
-import Base.Symbols
+import Base.Symbol
 import Base.Letters (Letter)
 import Base.LettersImpl
 

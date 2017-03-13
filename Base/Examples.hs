@@ -8,8 +8,8 @@ import qualified Base.Letters as Letters
 import Base.LettersImpl
 import Base.Types
 import Base.TypesImpl
-import Base.Symbols
-import Base.SymbolsImpl
+import Base.Symbol
+import Base.SymbolImpl
 
 polytype_examples :: [Poly Type]
 polytype_examples = [
