@@ -4,8 +4,12 @@
 module Base.Examples where
 import Base.Pervasives
 import Base.UAst
+import qualified Base.Letters as Letters
+import Base.LettersImpl
 import Base.Types
 import Base.TypesImpl
+import Base.Symbols
+import Base.SymbolsImpl
 
 polytype_examples :: [Poly Type]
 polytype_examples = [
@@ -64,6 +68,7 @@ uast_func_examples = [
     ) $ VarUA "g" `AppUA` (VarUA "f" `AppUA` VarUA "x")
   ]
 
+uast_int_examples :: [UAst]
 uast_int_examples = [
     -- 8
     (uast_func_examples !! 0)
@@ -72,4 +77,44 @@ uast_int_examples = [
     -- 8
     LetUA "app" (uast_func_examples !! 0) $
       VarUA "app" `AppUA` (LiteralUA 5) `AppUA` (AddUA `AppUA` (LiteralUA 3))
+  ]
+
+monorecordtype_examples :: [Mono RecordType]
+monorecordtype_examples =
+  let
+    a = FieldName $ Letters.A_UL `ConsSYM` NilSYM
+    b = FieldName $ Letters.B_LL `ConsSYM` NilSYM
+    fun = FieldName $ Letters.F_LL `ConsSYM` Letters.U_LL
+      `ConsSYM` Letters.N_LL `ConsSYM` NilSYM
+    nest = FieldName $ Letters.N_LL `ConsSYM` Letters.E_LL
+      `ConsSYM` Letters.S_LL `ConsSYM` Letters.T_LL `ConsSYM` NilSYM
+  in [
+    Mono $ (a, IntT) `ConsRT` (b, IntT)
+      `ConsRT` (fun, IntT `ArrowT` IntT) `ConsRT` NilRT,
+    (
+      case monorecordtype_examples !! 0 of
+        Mono inner -> Mono $
+          (nest, RecordT inner) `ConsRT` (a, IntT) `ConsRT` NilRT
+    ),
+    Mono $ NilRT
+  ]
+
+monorecord_examples :: [Mono Record]
+monorecord_examples =
+  let
+    a = FieldName $ Letters.A_UL `ConsSYM` NilSYM
+    b = FieldName $ Letters.B_LL `ConsSYM` NilSYM
+    fun = FieldName $ Letters.F_LL `ConsSYM` Letters.U_LL
+      `ConsSYM` Letters.N_LL `ConsSYM` NilSYM
+    nest = FieldName $ Letters.N_LL `ConsSYM` Letters.E_LL
+      `ConsSYM` Letters.S_LL `ConsSYM` Letters.T_LL `ConsSYM` NilSYM
+  in [
+    Mono $ (a, 5::Int) `ConsRC` (b, 2::Int)
+      `ConsRC` (fun, (+3) :: Int -> Int) `ConsRC` NilRC,
+    (
+      case monorecord_examples !! 0 of
+        Mono inner -> Mono $
+          (nest, inner) `ConsRC` (a, 5::Int) `ConsRC` NilRC
+    ),
+    Mono $ NilRC
   ]

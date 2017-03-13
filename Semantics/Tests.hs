@@ -64,7 +64,25 @@ test_show_read_symbol = all id [
     (read "Abc" :: Mono Symbol) == (Mono $ Letters.A_UL `ConsSYM` Letters.B_LL `ConsSYM` Letters.C_LL `ConsSYM` NilSYM)
   ]
 
+test_show_read_fieldname = all id [
+    show (Mono $ FieldName $ Letters.A_UL `ConsSYM` Letters.B_LL `ConsSYM` Letters.C_LL `ConsSYM` NilSYM) == "Abc",
+    (read "Abc" :: Mono FieldName) == (Mono $ FieldName $ Letters.A_UL `ConsSYM` Letters.B_LL `ConsSYM` Letters.C_LL `ConsSYM` NilSYM)
+  ]
+
+test_show_record_type = map show monorecordtype_examples == [
+    "{A :: Int, b :: Int, fun :: Int -> Int}",
+    "{nest :: {A :: Int, b :: Int, fun :: Int -> Int}, A :: Int}",
+    "{::}"
+  ]
+
+test_show_record = map show monorecord_examples == [
+    "{A = 5, b = 2, fun = <func>}",
+    "{nest = {A = 5, b = 2, fun = <func>}, A = 5}",
+    "{}"
+  ]
+
 tests = all id [
     test_show_type, test_typecheck, test_eval, test_unify,
-    test_show_read_letter, test_show_read_symbol
+    test_show_read_letter, test_show_read_symbol, test_show_read_fieldname,
+    test_show_record_type, test_show_record
   ]
