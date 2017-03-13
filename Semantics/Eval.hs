@@ -32,6 +32,12 @@ eval' s ((f, h) `RecordConsA` t) = (f, eval' s h) `ConsRC` eval' s t
 eval_poly :: A Type a => Poly (Ast '[]) -> a
 eval_poly = eval . forcetype
 
+makemono :: Poly (Ast '[]) -> Mono (Ast '[])
+makemono (ForallP _ exists_poly) =
+  case exists_poly of
+    (ExistsPoly poly :: ExistsPoly (Ast '[]) Void) -> makemono poly
+makemono (MonoP res) = res
+
 forcetype :: A Type a => Poly (Ast '[]) -> Ast '[] a
 forcetype (ForallP _ exists_poly) =
   case exists_poly of

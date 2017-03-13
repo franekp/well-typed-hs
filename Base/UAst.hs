@@ -5,6 +5,7 @@ module Base.UAst where
 
 infixr `LambdaUA`
 infixr `LetUA`
+infixr `RecordConsUA`
 
 data UAst = AddUA
   | LiteralUA Int

@@ -44,9 +44,38 @@ test_typecheck =
       "forall a b c. (a -> b) -> (b -> c) -> a -> c"
     )]
 
+test_typecheck_records =
+  let
+    f :: UAst -> String
+    f uast = case makemono $ typecheck uast of
+        Mono ast -> show $ type_of ast
+  in map f uast_record_examples == [
+    "{A :: Int, b :: Int, fun :: Int -> Int}",
+    "{nest :: {A :: Int, b :: Int, fun :: Int -> Int}, A :: Int}",
+    "{::}"
+  ]
+
 test_eval =
   let f uast = (eval_poly $ typecheck uast :: Int) in
   map f uast_int_examples == [8, 8]
+
+test_eval_records =
+  let
+    f :: UAst -> String
+    f uast = case makemono $ typecheck uast of
+        Mono ast -> show_value $ eval ast
+  in map f uast_record_examples == [
+    "{A = 5, b = 2, fun = <func>}",
+    "{nest = {A = 5, b = 2, fun = <func>}, A = 5}",
+    "{}"
+  ]
+
+main =
+  let
+    f :: UAst -> String
+    f uast = case makemono $ typecheck uast of
+        Mono ast -> show_value $ eval ast
+  in print $ map f uast_record_examples
 
 test_show_read_letter = all id [
     show (Mono A_LL) == "a",
@@ -82,7 +111,8 @@ test_show_record = map show monorecord_examples == [
   ]
 
 tests = all id [
-    test_show_type, test_typecheck, test_eval, test_unify,
-    test_show_read_letter, test_show_read_symbol, test_show_read_fieldname,
+    test_show_type, test_typecheck, test_typecheck_records,
+    test_eval, test_eval_records, test_unify, test_show_read_letter,
+    test_show_read_symbol, test_show_read_fieldname,
     test_show_record_type, test_show_record
   ]

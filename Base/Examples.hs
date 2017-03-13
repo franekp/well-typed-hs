@@ -80,6 +80,15 @@ uast_int_examples = [
     )
   ]
 
+uast_record_examples :: [UAst]
+uast_record_examples = [
+    ("A", LiteralUA 5) `RecordConsUA` ("b", LiteralUA 2) `RecordConsUA`
+    ("fun", AddUA `AppUA` LiteralUA 3) `RecordConsUA` RecordNilUA,
+    ("nest", uast_record_examples !! 0) `RecordConsUA` ("A", LiteralUA 5)
+    `RecordConsUA` RecordNilUA,
+    RecordNilUA
+  ]
+
 monorecordtype_examples :: [Mono RecordType]
 monorecordtype_examples =
   let
