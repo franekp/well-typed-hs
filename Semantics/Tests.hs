@@ -50,13 +50,13 @@ test_eval =
 
 test_show_read_letter = all id [
     show (Mono Chr.A_LL) == "a",
-    (read "a" :: Mono Chr.Letter) == Mono Chr.A_LL,
+    (read "a" :: Mono Chr.ChrRep) == Mono Chr.A_LL,
     show (Mono Chr.F_LL) == "f",
-    (read "f" :: Mono Chr.Letter) == Mono Chr.F_LL,
+    (read "f" :: Mono Chr.ChrRep) == Mono Chr.F_LL,
     show (Mono Chr.A_UL) == "A",
-    (read "A" :: Mono Chr.Letter) == Mono Chr.A_UL,
+    (read "A" :: Mono Chr.ChrRep) == Mono Chr.A_UL,
     show (Mono Chr.F_UL) == "F",
-    (read "F" :: Mono Chr.Letter) == Mono Chr.F_UL
+    (read "F" :: Mono Chr.ChrRep) == Mono Chr.F_UL
   ]
 
 test_show_read_symbol = all id [

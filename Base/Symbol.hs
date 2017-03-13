@@ -3,14 +3,19 @@
 
 module Base.Symbol where
 import Base.Pervasives
-import Base.Chr (Letter)
+import Base.Chr (Chr, ChrRep)
 
 infixr `ConsSYM`
 
-data Symbol :: [*] -> * where
+#undef Sym
+-- this #define in settings.hs is a workaround because GHC doesn't yet support
+-- kind synonyms; the declaration below is only for readability
+type Sym = [Chr]
+
+data Symbol :: [Chr] -> * where
   NilSYM ::
     Symbol '[]
-  ConsSYM :: (A Letter a, A Symbol s) =>
-    Letter a -> Symbol s -> Symbol (a ': s)
+  ConsSYM :: (A ChrRep a, A Symbol s) =>
+    ChrRep a -> Symbol s -> Symbol (a ': s)
 
 type instance T Symbol = Symbol

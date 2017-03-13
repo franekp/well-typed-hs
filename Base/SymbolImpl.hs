@@ -4,7 +4,7 @@
 module Base.SymbolImpl where
 import Base.Pervasives
 import Base.Symbol
-import Base.Chr (Letter)
+import Base.Chr (ChrRep)
 import Base.ChrImpl
 
 instance Show (Symbol a) where
@@ -16,7 +16,7 @@ instance Show (Mono Symbol) where
 
 instance Read (Mono Symbol) where
   readsPrec _ "" = [(Mono NilSYM, "")]
-  readsPrec prec (h:t) = case read [h] :: Mono Letter of
+  readsPrec prec (h:t) = case read [h] :: Mono ChrRep of
     Mono h' -> do
       (ww, rest) <- (readsPrec prec :: ReadS (Mono Symbol)) t
       case ww of
@@ -25,7 +25,7 @@ instance Read (Mono Symbol) where
 instance A Symbol '[] where
   anything = NilSYM
 
-instance (A Letter a, A Symbol s) => A Symbol (a ': s) where
+instance (A ChrRep a, A Symbol s) => A Symbol (a ': s) where
   anything = ConsSYM anything anything
 
 deriving instance Eq (Symbol a)

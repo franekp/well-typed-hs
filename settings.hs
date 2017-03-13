@@ -9,3 +9,6 @@
   -fwarn-incomplete-patterns
   -fwarn-incomplete-uni-patterns
 #-}
+
+-- See Base/Symbol.hs for details
+#define Sym [Chr]

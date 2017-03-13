@@ -4,88 +4,65 @@
 module Base.Chr where
 import Base.Pervasives
 
-data A_
-data B_
-data C_
-data D_
-data E_
-data F_
-data G_
-data H_
-data I_
-data J_
-data K_
-data L_
-data M_
-data N_
-data O_
-data P_
-data Q_
-data R_
-data S_
-data T_
-data U_
-data V_
-data W_
-data X_
-data Y_
-data Z_
+data Chr = A_ | B_ | C_ | D_ | E_ | F_ | G_ | H_ | I_ | J_ | K_ | L_ | M_
+  | N_ | O_ | P_ | Q_ | R_ | S_ | T_ | U_ | V_ | W_ | X_ | Y_ | Z_ | CapA_
+  | CapB_ | CapC_ | CapD_ | CapE_ | CapF_ | CapG_ | CapH_ | CapI_ | CapJ_
+  | CapK_ | CapL_ | CapM_ | CapN_ | CapO_ | CapP_ | CapQ_ | CapR_ | CapS_
+  | CapT_ | CapU_ | CapV_ | CapW_ | CapX_ | CapY_ | CapZ_
 
-data Cap :: * -> *
+type instance T ChrRep = ChrRep
 
-type instance T Letter = Letter
+data ChrRep :: Chr -> * where
+  A_UL :: ChrRep CapA_
+  B_UL :: ChrRep CapB_
+  C_UL :: ChrRep CapC_
+  D_UL :: ChrRep CapD_
+  E_UL :: ChrRep CapE_
+  F_UL :: ChrRep CapF_
+  G_UL :: ChrRep CapG_
+  H_UL :: ChrRep CapH_
+  I_UL :: ChrRep CapI_
+  J_UL :: ChrRep CapJ_
+  K_UL :: ChrRep CapK_
+  L_UL :: ChrRep CapL_
+  M_UL :: ChrRep CapM_
+  N_UL :: ChrRep CapN_
+  O_UL :: ChrRep CapO_
+  P_UL :: ChrRep CapP_
+  Q_UL :: ChrRep CapQ_
+  R_UL :: ChrRep CapR_
+  S_UL :: ChrRep CapS_
+  T_UL :: ChrRep CapT_
+  U_UL :: ChrRep CapU_
+  V_UL :: ChrRep CapV_
+  W_UL :: ChrRep CapW_
+  X_UL :: ChrRep CapX_
+  Y_UL :: ChrRep CapY_
+  Z_UL :: ChrRep CapZ_
 
-data Letter :: * -> * where
-  A_UL :: Letter (Cap A_)
-  B_UL :: Letter (Cap B_)
-  C_UL :: Letter (Cap C_)
-  D_UL :: Letter (Cap D_)
-  E_UL :: Letter (Cap E_)
-  F_UL :: Letter (Cap F_)
-  G_UL :: Letter (Cap G_)
-  H_UL :: Letter (Cap H_)
-  I_UL :: Letter (Cap I_)
-  J_UL :: Letter (Cap J_)
-  K_UL :: Letter (Cap K_)
-  L_UL :: Letter (Cap L_)
-  M_UL :: Letter (Cap M_)
-  N_UL :: Letter (Cap N_)
-  O_UL :: Letter (Cap O_)
-  P_UL :: Letter (Cap P_)
-  Q_UL :: Letter (Cap Q_)
-  R_UL :: Letter (Cap R_)
-  S_UL :: Letter (Cap S_)
-  T_UL :: Letter (Cap T_)
-  U_UL :: Letter (Cap U_)
-  V_UL :: Letter (Cap V_)
-  W_UL :: Letter (Cap W_)
-  X_UL :: Letter (Cap X_)
-  Y_UL :: Letter (Cap Y_)
-  Z_UL :: Letter (Cap Z_)
-
-  A_LL :: Letter A_
-  B_LL :: Letter B_
-  C_LL :: Letter C_
-  D_LL :: Letter D_
-  E_LL :: Letter E_
-  F_LL :: Letter F_
-  G_LL :: Letter G_
-  H_LL :: Letter H_
-  I_LL :: Letter I_
-  J_LL :: Letter J_
-  K_LL :: Letter K_
-  L_LL :: Letter L_
-  M_LL :: Letter M_
-  N_LL :: Letter N_
-  O_LL :: Letter O_
-  P_LL :: Letter P_
-  Q_LL :: Letter Q_
-  R_LL :: Letter R_
-  S_LL :: Letter S_
-  T_LL :: Letter T_
-  U_LL :: Letter U_
-  V_LL :: Letter V_
-  W_LL :: Letter W_
-  X_LL :: Letter X_
-  Y_LL :: Letter Y_
-  Z_LL :: Letter Z_
+  A_LL :: ChrRep A_
+  B_LL :: ChrRep B_
+  C_LL :: ChrRep C_
+  D_LL :: ChrRep D_
+  E_LL :: ChrRep E_
+  F_LL :: ChrRep F_
+  G_LL :: ChrRep G_
+  H_LL :: ChrRep H_
+  I_LL :: ChrRep I_
+  J_LL :: ChrRep J_
+  K_LL :: ChrRep K_
+  L_LL :: ChrRep L_
+  M_LL :: ChrRep M_
+  N_LL :: ChrRep N_
+  O_LL :: ChrRep O_
+  P_LL :: ChrRep P_
+  Q_LL :: ChrRep Q_
+  R_LL :: ChrRep R_
+  S_LL :: ChrRep S_
+  T_LL :: ChrRep T_
+  U_LL :: ChrRep U_
+  V_LL :: ChrRep V_
+  W_LL :: ChrRep W_
+  X_LL :: ChrRep X_
+  Y_LL :: ChrRep Y_
+  Z_LL :: ChrRep Z_

@@ -3,6 +3,7 @@
 
 module Base.Types where
 import Base.Pervasives
+import Base.Chr (Chr, ChrRep)
 import Base.Symbol
 
 infixr `ConsRT`
@@ -32,13 +33,13 @@ data TypeVar :: * -> * where
 
 type instance T TypeVar = TypeVar
 
-data FieldName :: [*] -> * where
+data FieldName :: Sym -> * where
   FieldName :: A Symbol f =>
     Symbol f -> FieldName f
 
 type instance T FieldName = FieldName
 
-data RecordType :: [([*], *)] -> * where
+data RecordType :: [(Sym, *)] -> * where
   NilRT ::
     RecordType '[]
   ConsRT :: (A FieldName f, A Type a, A RecordType r) =>
@@ -46,7 +47,7 @@ data RecordType :: [([*], *)] -> * where
 
 type instance T RecordType = RecordType
 
-data Record :: [([*], *)] -> * where
+data Record :: [(Sym, *)] -> * where
   NilRC ::
     Record '[]
   ConsRC :: (A FieldName f, A Type a, A RecordType r) =>

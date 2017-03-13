@@ -2,116 +2,116 @@
 #include "../settings.hs"
 
 module Base.ChrImpl where
-import Base.Chr
 import Base.Pervasives
+import Base.Chr
 
-instance A Letter (Cap A_) where
+instance A ChrRep CapA_ where
   anything = A_UL
-instance A Letter (Cap B_) where
+instance A ChrRep CapB_ where
   anything = B_UL
-instance A Letter (Cap C_) where
+instance A ChrRep CapC_ where
   anything = C_UL
-instance A Letter (Cap D_) where
+instance A ChrRep CapD_ where
   anything = D_UL
-instance A Letter (Cap E_) where
+instance A ChrRep CapE_ where
   anything = E_UL
-instance A Letter (Cap F_) where
+instance A ChrRep CapF_ where
   anything = F_UL
-instance A Letter (Cap G_) where
+instance A ChrRep CapG_ where
   anything = G_UL
-instance A Letter (Cap H_) where
+instance A ChrRep CapH_ where
   anything = H_UL
-instance A Letter (Cap I_) where
+instance A ChrRep CapI_ where
   anything = I_UL
-instance A Letter (Cap J_) where
+instance A ChrRep CapJ_ where
   anything = J_UL
-instance A Letter (Cap K_) where
+instance A ChrRep CapK_ where
   anything = K_UL
-instance A Letter (Cap L_) where
+instance A ChrRep CapL_ where
   anything = L_UL
-instance A Letter (Cap M_) where
+instance A ChrRep CapM_ where
   anything = M_UL
-instance A Letter (Cap N_) where
+instance A ChrRep CapN_ where
   anything = N_UL
-instance A Letter (Cap O_) where
+instance A ChrRep CapO_ where
   anything = O_UL
-instance A Letter (Cap P_) where
+instance A ChrRep CapP_ where
   anything = P_UL
-instance A Letter (Cap Q_) where
+instance A ChrRep CapQ_ where
   anything = Q_UL
-instance A Letter (Cap R_) where
+instance A ChrRep CapR_ where
   anything = R_UL
-instance A Letter (Cap S_) where
+instance A ChrRep CapS_ where
   anything = S_UL
-instance A Letter (Cap T_) where
+instance A ChrRep CapT_ where
   anything = T_UL
-instance A Letter (Cap U_) where
+instance A ChrRep CapU_ where
   anything = U_UL
-instance A Letter (Cap V_) where
+instance A ChrRep CapV_ where
   anything = V_UL
-instance A Letter (Cap W_) where
+instance A ChrRep CapW_ where
   anything = W_UL
-instance A Letter (Cap X_) where
+instance A ChrRep CapX_ where
   anything = X_UL
-instance A Letter (Cap Y_) where
+instance A ChrRep CapY_ where
   anything = Y_UL
-instance A Letter (Cap Z_) where
+instance A ChrRep CapZ_ where
   anything = Z_UL
 
-instance A Letter A_ where
+instance A ChrRep A_ where
   anything = A_LL
-instance A Letter B_ where
+instance A ChrRep B_ where
   anything = B_LL
-instance A Letter C_ where
+instance A ChrRep C_ where
   anything = C_LL
-instance A Letter D_ where
+instance A ChrRep D_ where
   anything = D_LL
-instance A Letter E_ where
+instance A ChrRep E_ where
   anything = E_LL
-instance A Letter F_ where
+instance A ChrRep F_ where
   anything = F_LL
-instance A Letter G_ where
+instance A ChrRep G_ where
   anything = G_LL
-instance A Letter H_ where
+instance A ChrRep H_ where
   anything = H_LL
-instance A Letter I_ where
+instance A ChrRep I_ where
   anything = I_LL
-instance A Letter J_ where
+instance A ChrRep J_ where
   anything = J_LL
-instance A Letter K_ where
+instance A ChrRep K_ where
   anything = K_LL
-instance A Letter L_ where
+instance A ChrRep L_ where
   anything = L_LL
-instance A Letter M_ where
+instance A ChrRep M_ where
   anything = M_LL
-instance A Letter N_ where
+instance A ChrRep N_ where
   anything = N_LL
-instance A Letter O_ where
+instance A ChrRep O_ where
   anything = O_LL
-instance A Letter P_ where
+instance A ChrRep P_ where
   anything = P_LL
-instance A Letter Q_ where
+instance A ChrRep Q_ where
   anything = Q_LL
-instance A Letter R_ where
+instance A ChrRep R_ where
   anything = R_LL
-instance A Letter S_ where
+instance A ChrRep S_ where
   anything = S_LL
-instance A Letter T_ where
+instance A ChrRep T_ where
   anything = T_LL
-instance A Letter U_ where
+instance A ChrRep U_ where
   anything = U_LL
-instance A Letter V_ where
+instance A ChrRep V_ where
   anything = V_LL
-instance A Letter W_ where
+instance A ChrRep W_ where
   anything = W_LL
-instance A Letter X_ where
+instance A ChrRep X_ where
   anything = X_LL
-instance A Letter Y_ where
+instance A ChrRep Y_ where
   anything = Y_LL
-instance A Letter Z_ where
+instance A ChrRep Z_ where
   anything = Z_LL
 
-instance Show (Letter a) where
+instance Show (ChrRep a) where
   show A_UL = "A"
   show B_UL = "B"
   show C_UL = "C"
@@ -166,10 +166,10 @@ instance Show (Letter a) where
   show Y_LL = "y"
   show Z_LL = "z"
 
-instance Show (Mono Letter) where
+instance Show (Mono ChrRep) where
   show (Mono a) = show a
 
-instance Read (Mono Letter) where
+instance Read (Mono ChrRep) where
   readsPrec _ ('A':rest) = [(Mono A_UL, rest)]
   readsPrec _ ('B':rest) = [(Mono B_UL, rest)]
   readsPrec _ ('C':rest) = [(Mono C_UL, rest)]
@@ -226,14 +226,13 @@ instance Read (Mono Letter) where
 
   readsPrec _ _ = []
 
-instance Eq (Mono Letter) where
+instance Eq (Mono ChrRep) where
   Mono a == Mono b = case cast b of
     Just bb -> a == bb
     Nothing -> False
 
-deriving instance Eq (Letter a)
-deriving instance Typeable Letter
-deriving instance Typeable Cap
+deriving instance Eq (ChrRep a)
+deriving instance Typeable ChrRep
 
 deriving instance Typeable A_
 deriving instance Typeable B_
@@ -261,3 +260,30 @@ deriving instance Typeable W_
 deriving instance Typeable X_
 deriving instance Typeable Y_
 deriving instance Typeable Z_
+
+deriving instance Typeable CapA_
+deriving instance Typeable CapB_
+deriving instance Typeable CapC_
+deriving instance Typeable CapD_
+deriving instance Typeable CapE_
+deriving instance Typeable CapF_
+deriving instance Typeable CapG_
+deriving instance Typeable CapH_
+deriving instance Typeable CapI_
+deriving instance Typeable CapJ_
+deriving instance Typeable CapK_
+deriving instance Typeable CapL_
+deriving instance Typeable CapM_
+deriving instance Typeable CapN_
+deriving instance Typeable CapO_
+deriving instance Typeable CapP_
+deriving instance Typeable CapQ_
+deriving instance Typeable CapR_
+deriving instance Typeable CapS_
+deriving instance Typeable CapT_
+deriving instance Typeable CapU_
+deriving instance Typeable CapV_
+deriving instance Typeable CapW_
+deriving instance Typeable CapX_
+deriving instance Typeable CapY_
+deriving instance Typeable CapZ_
