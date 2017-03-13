@@ -13,19 +13,19 @@ instance A TypeVar a => A TypeVar (Succ a) where
   anything = SuccTV anything
 
 instance {-# OVERLAPPING #-} A TypeVar a => A Type a where
-  anything = TypeVarTT anything
+  anything = TypeVarT anything
 
 instance {-# OVERLAPPING #-} (A Type a, A Type b) => A Type (a -> b) where
-  anything = ArrowTT (anything :: Type a) (anything :: Type b)
+  anything = ArrowT (anything :: Type a) (anything :: Type b)
 
 instance {-# OVERLAPPING #-} A Type Int where
-  anything = IntTT
+  anything = IntT
 
 instance {-# OVERLAPPING #-} A Type Void where
-  anything = VoidTT
+  anything = VoidT
 
 instance {-# OVERLAPPING #-} A Type Hole where
-  anything = HoleTT
+  anything = HoleT
 
 deriving instance Eq (Type a)
 deriving instance Typeable Type
@@ -47,12 +47,12 @@ instance Ord (Mono TypeVar) where
   Mono (SuccTV a) <= Mono (SuccTV b) = Mono a <= Mono b
 
 instance Show (Type a) where
-  show ((a `ArrowTT` b) `ArrowTT` c) = "(" ++ show (a `ArrowTT` b) ++ ") -> " ++ show c
-  show (a `ArrowTT` b) = show a ++ " -> " ++ show b
-  show IntTT = "Int"
-  show VoidTT = "Void"
-  show (TypeVarTT a) = show a
-  show HoleTT = "<type_hole>"
+  show ((a `ArrowT` b) `ArrowT` c) = "(" ++ show (a `ArrowT` b) ++ ") -> " ++ show c
+  show (a `ArrowT` b) = show a ++ " -> " ++ show b
+  show IntT = "Int"
+  show VoidT = "Void"
+  show (TypeVarT a) = show a
+  show HoleT = "<type_hole>"
 
 instance Show (Mono Type) where
   show (Mono a) = show a

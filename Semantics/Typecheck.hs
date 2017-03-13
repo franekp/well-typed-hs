@@ -37,10 +37,10 @@ update_typeenv :: TypeEnv -> String -> Mono Type -> TypeEnv
 update_typeenv (TypeEnv li) name tt = TypeEnv $ (name, tt):li
 
 typecheck_monotype :: TypeEnv -> UMonoType -> Mono Type
-typecheck_monotype te IntUMT = Mono IntTT
+typecheck_monotype te IntUMT = Mono IntT
 typecheck_monotype te (a `ArrowUMT` b) =
   case (typecheck_monotype te a, typecheck_monotype te b) of
-    (Mono a', Mono b') -> Mono $ a' `ArrowTT` b'
+    (Mono a', Mono b') -> Mono $ a' `ArrowT` b'
 typecheck_monotype te (VarUMT var) = te `lookup_type` var
 
 hash :: String -> Int
@@ -86,11 +86,11 @@ typecheck' te e (AppUA fun arg) =
   where
     type_of_arg :: A Type a => Ast e a -> Mono Type
     type_of_arg fun = case type_of fun of
-      a `ArrowTT` b -> Mono a
+      a `ArrowT` b -> Mono a
       _ -> error "_ is not a function"
     cont :: (A Type a, A Type b) => Ast e a -> Ast e b -> Poly (Ast e)
     cont fun arg = case type_of fun of
-      a `ArrowTT` b -> case cast arg of
+      a `ArrowT` b -> case cast arg of
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
         Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast e Void)
       _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast e Void)

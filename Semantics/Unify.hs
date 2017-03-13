@@ -65,8 +65,8 @@ dump_typevars :: forall t. T t ~ Type => Poly t -> [Mono TypeVar]
 dump_typevars (MonoP (Mono tt)) = do_stuff (type_of tt) [] where
   do_stuff :: A Type a => Type a -> [Mono TypeVar] -> [Mono TypeVar]
   do_stuff arg acc = case arg of
-    a `ArrowTT` b -> do_stuff a $ do_stuff b $ acc
-    TypeVarTT a -> Mono a:acc
+    a `ArrowT` b -> do_stuff a $ do_stuff b $ acc
+    TypeVarT a -> Mono a:acc
     _ -> acc
 dump_typevars (ForallP _ exists_poly) = result exists_poly where
   result :: ExistsPoly t Hole -> [Mono TypeVar]
@@ -95,13 +95,13 @@ data Constraint = Constraint (Mono TypeVar) (Mono Type)
 
 map_vars :: (Mono TypeVar -> Mono Type) -> Mono Type -> Mono Type
 map_vars f (Mono t) = case t of
-  a `ArrowTT` b ->
+  a `ArrowT` b ->
     let
       a' = map_vars f (Mono a)
       b' = map_vars f (Mono b)
     in case (a', b') of
-      (Mono a'', Mono b'') -> Mono $ a'' `ArrowTT` b''
-  TypeVarTT tv -> f $ Mono tv
+      (Mono a'', Mono b'') -> Mono $ a'' `ArrowT` b''
+  TypeVarT tv -> f $ Mono tv
   x -> Mono x
 
 apply_constraint :: forall t. T t ~ Type => VarMapping -> Constraint -> Poly t -> Poly t
@@ -144,26 +144,26 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
           helper tv = if var_map `mapping_contains_var` tv
             then type_map `mapping_int_to_type` (var_map `mapping_var_to_int` tv)
             else case tv of
-              Mono vv -> Mono $ TypeVarTT vv
+              Mono vv -> Mono $ TypeVarT vv
       in case true_replacement of
         Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
 
 -- TODO add a check to detect infinite types
 gen_constraints :: (A Type a, A Type b) => Mono TypeVar -> Type a -> Type b -> [Constraint]
-gen_constraints start_var (a `ArrowTT` b) (a' `ArrowTT` b') =
+gen_constraints start_var (a `ArrowT` b) (a' `ArrowT` b') =
   gen_constraints start_var a a' ++ gen_constraints start_var b b'
-gen_constraints start_var (TypeVarTT a) a' = if Mono a < start_var then [] else
+gen_constraints start_var (TypeVarT a) a' = if Mono a < start_var then [] else
   case a' of
-    TypeVarTT a'' ->
+    TypeVarT a'' ->
       if Mono a == Mono a'' then [] else
       [Constraint (Mono a) (Mono a')]
     _ -> [Constraint (Mono a) (Mono a')]
-gen_constraints start_var a (TypeVarTT a') =
-  gen_constraints start_var (TypeVarTT a') a
+gen_constraints start_var a (TypeVarT a') =
+  gen_constraints start_var (TypeVarT a') a
 gen_constraints _ _ _ = []
 
 var_to_type :: Mono TypeVar -> Mono Type
-var_to_type (Mono a) = Mono $ TypeVarTT a
+var_to_type (Mono a) = Mono $ TypeVarT a
 
 apply_constraint_to_constraint_list ::
   Mono TypeVar -> Constraint -> [Constraint] -> [Constraint]

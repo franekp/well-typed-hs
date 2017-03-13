@@ -5,15 +5,15 @@ module Base.Types where
 import Base.Pervasives
 
 data Type :: * -> * where
-  ArrowTT :: (A Type a, A Type b) =>
+  ArrowT :: (A Type a, A Type b) =>
     Type a -> Type b -> Type (a -> b)
-  IntTT ::
+  IntT ::
     Type Int
-  VoidTT ::
+  VoidT ::
     Type Void
-  TypeVarTT :: A TypeVar a =>
+  TypeVarT :: A TypeVar a =>
     TypeVar a -> Type a
-  HoleTT ::
+  HoleT ::
     Type Hole
 
 type instance T Type = Type
