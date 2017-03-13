@@ -7,6 +7,7 @@ import Base.Types
 
 infixr `ConsST`
 infixr `ConsEN`
+infixr `RecordConsA`
 
 data Store :: [*] -> * where
   NilST ::
@@ -37,5 +38,13 @@ data Ast :: [*] -> * -> * where
     String -> Ast e a
   AppA :: (A Type a, A Type b, Typeable e) =>
     Ast e (a -> b) -> Ast e a -> Ast e b
+  RecordHeadA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
+    Ast e (Record ('(f, a) ': t)) -> Ast e a
+  RecordTailA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
+    Ast e (Record ('(f, a) ': t)) -> Ast e (Record t)
+  RecordNilA :: Typeable e =>
+    Ast e (Record '[])
+  RecordConsA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
+    (FieldName f, Ast e a) -> Ast e (Record t) -> Ast e (Record ('(f, a) ': t))
 
 type instance T (Ast e) = Type

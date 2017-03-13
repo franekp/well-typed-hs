@@ -4,6 +4,7 @@
 module Base.AstImpl where
 import Base.Pervasives
 import Base.Types
+import Base.TypesImpl
 import Base.Ast
 
 deriving instance Typeable Store

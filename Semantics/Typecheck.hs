@@ -25,6 +25,12 @@ eval' s (LiftA a) = let
 eval' s (LambdaA body) = \arg -> eval' (arg `ConsST` s) body
 eval' s (ErrorA msg) = error msg
 eval' s (AppA fun arg) = eval' s fun $ eval' s arg
+eval' s (RecordHeadA r) = case eval' s r of
+  (name, val) `ConsRC` rest -> val
+eval' s (RecordTailA r) = case eval' s r of
+  (name, val) `ConsRC` rest -> rest
+eval' s RecordNilA = NilRC
+eval' s ((f, h) `RecordConsA` t) = (f, eval' s h) `ConsRC` eval' s t
 
 newtype TypeEnv = TypeEnv [(String, Mono Type)]
 
