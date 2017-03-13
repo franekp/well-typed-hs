@@ -86,3 +86,16 @@ typecheck' te e ((var_name, ty) `LambdaUA` body) = (typecheck_polytype te ty hel
 typecheck' te e (VarUA name) = lookup_var e name
 typecheck' te e ((name, val) `LetUA` expr) =
   typecheck' te ((name, (typecheck' te e val)) `LetEN` e) expr
+typecheck' te e RecordNilUA = MonoP $ Mono $ RecordNilA
+typecheck' te e ((fu, au) `RecordConsUA` restu) = result where
+  restp = typecheck' te e restu
+  fm = (read fu :: Mono FieldName)
+  ap = typecheck' te e au
+  result = polymap cont_a ap
+  cont_a :: forall a. A Type a => Ast e a -> Poly (Ast e)
+  cont_a a = polymap cont_rest restp where
+    cont_rest :: forall a. A Type a => Ast e a -> Poly (Ast e)
+    cont_rest rest = case fm of
+      Mono f -> case type_of rest of
+        RecordT _ -> MonoP $ Mono $ (f, a) `RecordConsA` rest
+        _ -> error "RecordCons with non-record tail."
