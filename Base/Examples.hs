@@ -4,8 +4,8 @@
 module Base.Examples where
 import Base.Pervasives
 import Base.UAst
-import qualified Base.Letters as Letters
-import Base.LettersImpl
+import qualified Base.Chr as Chr
+import Base.ChrImpl
 import Base.Types
 import Base.TypesImpl
 import Base.Symbol
@@ -82,12 +82,12 @@ uast_int_examples = [
 monorecordtype_examples :: [Mono RecordType]
 monorecordtype_examples =
   let
-    a = FieldName $ Letters.A_UL `ConsSYM` NilSYM
-    b = FieldName $ Letters.B_LL `ConsSYM` NilSYM
-    fun = FieldName $ Letters.F_LL `ConsSYM` Letters.U_LL
-      `ConsSYM` Letters.N_LL `ConsSYM` NilSYM
-    nest = FieldName $ Letters.N_LL `ConsSYM` Letters.E_LL
-      `ConsSYM` Letters.S_LL `ConsSYM` Letters.T_LL `ConsSYM` NilSYM
+    a = FieldName $ Chr.A_UL `ConsSYM` NilSYM
+    b = FieldName $ Chr.B_LL `ConsSYM` NilSYM
+    fun = FieldName $ Chr.F_LL `ConsSYM` Chr.U_LL
+      `ConsSYM` Chr.N_LL `ConsSYM` NilSYM
+    nest = FieldName $ Chr.N_LL `ConsSYM` Chr.E_LL
+      `ConsSYM` Chr.S_LL `ConsSYM` Chr.T_LL `ConsSYM` NilSYM
   in [
     Mono $ (a, IntT) `ConsRT` (b, IntT)
       `ConsRT` (fun, IntT `ArrowT` IntT) `ConsRT` NilRT,
@@ -102,12 +102,12 @@ monorecordtype_examples =
 monorecord_examples :: [Mono Record]
 monorecord_examples =
   let
-    a = FieldName $ Letters.A_UL `ConsSYM` NilSYM
-    b = FieldName $ Letters.B_LL `ConsSYM` NilSYM
-    fun = FieldName $ Letters.F_LL `ConsSYM` Letters.U_LL
-      `ConsSYM` Letters.N_LL `ConsSYM` NilSYM
-    nest = FieldName $ Letters.N_LL `ConsSYM` Letters.E_LL
-      `ConsSYM` Letters.S_LL `ConsSYM` Letters.T_LL `ConsSYM` NilSYM
+    a = FieldName $ Chr.A_UL `ConsSYM` NilSYM
+    b = FieldName $ Chr.B_LL `ConsSYM` NilSYM
+    fun = FieldName $ Chr.F_LL `ConsSYM` Chr.U_LL
+      `ConsSYM` Chr.N_LL `ConsSYM` NilSYM
+    nest = FieldName $ Chr.N_LL `ConsSYM` Chr.E_LL
+      `ConsSYM` Chr.S_LL `ConsSYM` Chr.T_LL `ConsSYM` NilSYM
   in [
     Mono $ (a, 5::Int) `ConsRC` (b, 2::Int)
       `ConsRC` (fun, (+3) :: Int -> Int) `ConsRC` NilRC,

@@ -3,7 +3,7 @@
 
 module Base.Symbol where
 import Base.Pervasives
-import Base.Letters (Letter)
+import Base.Chr (Letter)
 
 infixr `ConsSYM`
 

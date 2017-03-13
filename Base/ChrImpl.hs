@@ -1,8 +1,8 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Base.LettersImpl where
-import Base.Letters
+module Base.ChrImpl where
+import Base.Chr
 import Base.Pervasives
 
 instance A Letter (Cap A_) where

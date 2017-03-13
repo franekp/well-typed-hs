@@ -11,7 +11,7 @@ module Base (
   module Base.Examples,
   module Base.Symbol,
   module Base.SymbolImpl,
-  module Base.Letters,
+  module Base.Chr,
 ) where
 
 import Base.Pervasives
@@ -23,5 +23,5 @@ import Base.UAst
 import Base.Examples
 import Base.Symbol
 import Base.SymbolImpl
-import qualified Base.Letters
-import Base.LettersImpl
+import qualified Base.Chr
+import Base.ChrImpl

@@ -3,7 +3,7 @@
 
 module Semantics.Tests where
 import Base
-import qualified Base.Letters as Letters
+import qualified Base.Chr as Chr
 import Semantics.Typecheck (typecheck, eval, typeof_polymap, eval_poly)
 import Semantics.Unify (test_unify)
 
@@ -49,24 +49,24 @@ test_eval =
   map f uast_int_examples == [8, 8]
 
 test_show_read_letter = all id [
-    show (Mono Letters.A_LL) == "a",
-    (read "a" :: Mono Letters.Letter) == Mono Letters.A_LL,
-    show (Mono Letters.F_LL) == "f",
-    (read "f" :: Mono Letters.Letter) == Mono Letters.F_LL,
-    show (Mono Letters.A_UL) == "A",
-    (read "A" :: Mono Letters.Letter) == Mono Letters.A_UL,
-    show (Mono Letters.F_UL) == "F",
-    (read "F" :: Mono Letters.Letter) == Mono Letters.F_UL
+    show (Mono Chr.A_LL) == "a",
+    (read "a" :: Mono Chr.Letter) == Mono Chr.A_LL,
+    show (Mono Chr.F_LL) == "f",
+    (read "f" :: Mono Chr.Letter) == Mono Chr.F_LL,
+    show (Mono Chr.A_UL) == "A",
+    (read "A" :: Mono Chr.Letter) == Mono Chr.A_UL,
+    show (Mono Chr.F_UL) == "F",
+    (read "F" :: Mono Chr.Letter) == Mono Chr.F_UL
   ]
 
 test_show_read_symbol = all id [
-    show (Mono $ Letters.A_UL `ConsSYM` Letters.B_LL `ConsSYM` Letters.C_LL `ConsSYM` NilSYM) == "Abc",
-    (read "Abc" :: Mono Symbol) == (Mono $ Letters.A_UL `ConsSYM` Letters.B_LL `ConsSYM` Letters.C_LL `ConsSYM` NilSYM)
+    show (Mono $ Chr.A_UL `ConsSYM` Chr.B_LL `ConsSYM` Chr.C_LL `ConsSYM` NilSYM) == "Abc",
+    (read "Abc" :: Mono Symbol) == (Mono $ Chr.A_UL `ConsSYM` Chr.B_LL `ConsSYM` Chr.C_LL `ConsSYM` NilSYM)
   ]
 
 test_show_read_fieldname = all id [
-    show (Mono $ FieldName $ Letters.A_UL `ConsSYM` Letters.B_LL `ConsSYM` Letters.C_LL `ConsSYM` NilSYM) == "Abc",
-    (read "Abc" :: Mono FieldName) == (Mono $ FieldName $ Letters.A_UL `ConsSYM` Letters.B_LL `ConsSYM` Letters.C_LL `ConsSYM` NilSYM)
+    show (Mono $ FieldName $ Chr.A_UL `ConsSYM` Chr.B_LL `ConsSYM` Chr.C_LL `ConsSYM` NilSYM) == "Abc",
+    (read "Abc" :: Mono FieldName) == (Mono $ FieldName $ Chr.A_UL `ConsSYM` Chr.B_LL `ConsSYM` Chr.C_LL `ConsSYM` NilSYM)
   ]
 
 test_show_record_type = map show monorecordtype_examples == [

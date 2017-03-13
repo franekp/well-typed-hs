@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Base.Letters where
+module Base.Chr where
 import Base.Pervasives
 
 data A_
