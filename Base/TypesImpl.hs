@@ -8,6 +8,14 @@ import Base.Symbol
 import Base.SymbolImpl
 import qualified Data.Char
 
+show_value :: forall a. A Type a => a -> String
+show_value a = case (anything :: Type a) of
+  _ :-> _ -> "<func>"
+  IntT -> show (a :: Int)
+  VoidT -> "<void>"
+  TypeVarT v -> "(undefined :: " ++ show v ++ ")"
+  RecordT r -> show a
+
 instance A TypeVar Zero where
   anything = ZeroTV
 
@@ -123,17 +131,10 @@ instance Show (Mono RecordType) where
 
 instance Show (Record r) where
   show = ("{" ++) . (++ "}") . inner where
-    shw :: forall a. A Type a => a -> String
-    shw a = case (anything :: Type a) of
-      _ :-> _ -> "<func>"
-      IntT -> show (a :: Int)
-      VoidT -> "<void>"
-      TypeVarT v -> "(undefined :: " ++ show v ++ ")"
-      RecordT r -> show a
     inner :: Record a -> String
     inner NilRC = ""
-    inner ((f, t) `ConsRC` NilRC) = show f ++ " = " ++ shw t
-    inner ((f, t) `ConsRC` rest) = show f ++ " = " ++ shw t ++ ", " ++ inner rest
+    inner ((f, t) `ConsRC` NilRC) = show f ++ " = " ++ show_value t
+    inner ((f, t) `ConsRC` rest) = show f ++ " = " ++ show_value t ++ ", " ++ inner rest
 
 instance Show (Mono Record) where
   show (Mono a) = show a
