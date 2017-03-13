@@ -7,7 +7,7 @@ module Base.Pervasives (
 ) where
 import Data.Typeable (Typeable, cast)
 import Data.Void (Void)
-import Base.ChrSym (Chr {- , Sym -})
+import Base.Kinds (Chr {- , Sym -})
 
 data Zero :: *
   deriving Typeable

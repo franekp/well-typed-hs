@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Base.ChrSym where
+module Base.Kinds where
 
 -- NOTE: this is a kind
 data Chr = A_ | B_ | C_ | D_ | E_ | F_ | G_ | H_ | I_ | J_ | K_ | L_ | M_

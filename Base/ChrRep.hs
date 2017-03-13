@@ -3,7 +3,7 @@
 
 module Base.ChrRep where
 import Base.Pervasives
-import Base.ChrSym
+import Base.Kinds
 
 type instance T ChrRep = ChrRep
 
