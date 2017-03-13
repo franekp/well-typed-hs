@@ -1,7 +1,10 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Base.Pervasives (module Base.Pervasives, Typeable, Void, cast) where
+module Base.Pervasives (
+  Zero, Succ, Hole, T, A, anything, type_of, Mono(..), ExistsPoly(..), Poly(..),
+  polymap, Typeable, Void, cast,
+) where
 import Data.Typeable (Typeable, cast)
 import Data.Void (Void)
 
