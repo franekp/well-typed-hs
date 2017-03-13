@@ -17,8 +17,6 @@ data Type :: * -> * where
     Type Void
   TypeVarT :: A TypeVar a =>
     TypeVar a -> Type (RuntimeTypeVar a)
-  HoleT ::
-    Type Hole
   RecordT :: A RecordType a =>
     RecordType a -> Type (Record a)
 

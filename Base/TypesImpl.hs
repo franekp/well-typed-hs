@@ -26,9 +26,6 @@ instance {-# OVERLAPPING #-} A Type Void where
 instance {-# OVERLAPPING #-} A TypeVar a => A Type (RuntimeTypeVar a) where
   anything = TypeVarT anything
 
-instance {-# OVERLAPPING #-} A Type Hole where
-  anything = HoleT
-
 instance {-# OVERLAPPING #-} A RecordType a => A Type (Record a) where
   anything = RecordT anything
 
@@ -57,7 +54,6 @@ instance Show (Type a) where
   show IntT = "Int"
   show VoidT = "Void"
   show (TypeVarT a) = show a
-  show HoleT = "<type_hole>"
   show (RecordT r) = show r
 
 instance Show (Mono Type) where
@@ -133,7 +129,6 @@ instance Show (Record r) where
       IntT -> show (a :: Int)
       VoidT -> "<void>"
       TypeVarT v -> "(undefined :: " ++ show v ++ ")"
-      HoleT -> "<hole>"
       RecordT r -> show a
     inner :: Record a -> String
     inner NilRC = ""
