@@ -2,7 +2,8 @@
   EmptyDataDecls, MultiParamTypeClasses, GADTs, RankNTypes, StandaloneDeriving,
   DeriveDataTypeable, ScopedTypeVariables, FunctionalDependencies,
   FlexibleInstances, FlexibleContexts, ExistentialQuantification,
-  UndecidableInstances, TypeFamilies, EmptyCase #-}
+  UndecidableInstances, TypeFamilies, EmptyCase, TypeOperators, KindSignatures,
+  LambdaCase, DataKinds, ConstraintKinds, PolyKinds #-}
 
 {-# OPTIONS_GHC
   -fwarn-incomplete-patterns

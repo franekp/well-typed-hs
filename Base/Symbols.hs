@@ -7,10 +7,10 @@ import Base.Letters (Letter)
 
 infixr `ConsSYM`
 
-data Symbol :: * -> * where
+data Symbol :: [*] -> * where
   NilSYM ::
-    Symbol Nil
+    Symbol '[]
   ConsSYM :: (A Letter a, A Symbol s) =>
-    Letter a -> Symbol s -> Symbol (Cons a s)
+    Letter a -> Symbol s -> Symbol (a ': s)
 
 type instance T Symbol = Symbol

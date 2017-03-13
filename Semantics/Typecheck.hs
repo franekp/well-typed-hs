@@ -7,7 +7,7 @@ import Semantics.Unify (unify)
 import Data.List (foldl')
 import Data.Bits (xor)
 
-eval :: Ast Nil a -> a
+eval :: Ast '[] a -> a
 eval = eval' NilS
 
 eval' :: forall a e. Store e -> Ast e a -> a
@@ -15,11 +15,11 @@ eval' s AddA = \x y -> x + y
 eval' s (LiteralA x) = x
 eval' s VarA =
   let
-    helper :: forall a e. Store (Cons a e) -> a
+    helper :: forall a e. Store (a ': e) -> a
     helper (ConsS val _) = val  -- workaround exhaustiveness check that sucks
   in helper s
 eval' s (LiftA a) = let
-    helper :: forall a e. Store (Cons a e) -> Store e
+    helper :: forall a e. Store (a ': e) -> Store e
     helper (ConsS _ s') = s'  -- workaround exhaustiveness check that sucks
   in eval' (helper s) a
 eval' s (LambdaA body) = \arg -> eval' (ConsS arg s) body
@@ -75,7 +75,7 @@ lookup_var (LetEN name val rest) var =
   else
     lookup_var rest var
 
-typecheck :: UAst -> Poly (Ast Nil)
+typecheck :: UAst -> Poly (Ast '[])
 typecheck = typecheck' (TypeEnv []) NilEN
 
 typecheck' :: forall e. Typeable e => TypeEnv -> Env e -> UAst -> Poly (Ast e)
@@ -97,10 +97,10 @@ typecheck' te e (AppUA fun arg) =
 typecheck' te e (LambdaUA var_name ty body) = (typecheck_polytype te ty helper :: Poly (Ast e)) where
   helper :: forall a. A Type a => TypeEnv -> Type a -> Poly (Ast e)
   helper te' tt = polymap (MonoP . Mono . (
-      LambdaA :: forall b. A Type b => Ast (Cons a e) b -> Ast e (a -> b)
+      LambdaA :: forall b. A Type b => Ast (a ': e) b -> Ast e (a -> b)
     )) body_ast
     where
-      body_ast :: Poly (Ast (Cons a e))
+      body_ast :: Poly (Ast (a ': e))
       body_ast = typecheck' te' (ConsEN var_name tt e) body
 typecheck' te e (VarUA name) = lookup_var e name
 typecheck' te e (LetUA name val expr) =
@@ -121,16 +121,16 @@ expr_3 = LetUA "app" expr_1 $ VarUA "app" `AppUA` (LiteralUA 5) `AppUA` (AddUA `
 ast_3 = typecheck expr_3
 type_3 = polymap (MonoP . Mono . type_of) ast_3
 
-forcetype :: A Type a => Poly (Ast Nil) -> Ast Nil a
+forcetype :: A Type a => Poly (Ast '[]) -> Ast '[] a
 forcetype (ForallP _ exists_poly) =
   case exists_poly of
-    (ExistsPoly poly :: ExistsPoly (Ast Nil) Hole) -> forcetype poly
+    (ExistsPoly poly :: ExistsPoly (Ast '[]) Hole) -> forcetype poly
 forcetype (MonoP (Mono ast)) = case cast ast of
   Just x -> x
   Nothing -> ErrorA $ "wrong type of: " ++ show ast
 
-eval_poly :: A Type a => Poly (Ast Nil) -> a
+eval_poly :: A Type a => Poly (Ast '[]) -> a
 eval_poly = eval . forcetype
 
-typeof_polymap :: Poly (Ast Nil) -> Poly Type
+typeof_polymap :: Poly (Ast '[]) -> Poly Type
 typeof_polymap = polymap (MonoP . Mono . type_of)

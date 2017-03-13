@@ -22,10 +22,10 @@ instance Read (Mono Symbol) where
       case ww of
         Mono w -> return (Mono (ConsSYM h' w), rest)
 
-instance A Symbol Nil where
+instance A Symbol '[] where
   anything = NilSYM
 
-instance (A Letter a, A Symbol s) => A Symbol (Cons a s) where
+instance (A Letter a, A Symbol s) => A Symbol (a ': s) where
   anything = ConsSYM anything anything
 
 deriving instance Eq (Symbol a)
