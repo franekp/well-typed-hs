@@ -14,19 +14,19 @@ instance A TypeVar Zero where
 instance A TypeVar a => A TypeVar (Succ a) where
   anything = SuccTV anything
 
-instance {-# OVERLAPPING #-} (A Type a, A Type b) => A Type (a -> b) where
+instance (A Type a, A Type b) => A Type (a -> b) where
   anything = anything :-> anything
 
-instance {-# OVERLAPPING #-} A Type Int where
+instance A Type Int where
   anything = IntT
 
-instance {-# OVERLAPPING #-} A Type Void where
+instance A Type Void where
   anything = VoidT
 
-instance {-# OVERLAPPING #-} A TypeVar a => A Type (RuntimeTypeVar a) where
+instance A TypeVar a => A Type (RuntimeTypeVar a) where
   anything = TypeVarT anything
 
-instance {-# OVERLAPPING #-} A RecordType a => A Type (Record a) where
+instance A RecordType a => A Type (Record a) where
   anything = RecordT anything
 
 deriving instance Eq (Type a)
