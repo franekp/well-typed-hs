@@ -4,7 +4,7 @@
 module Base.SymbolImpl where
 import Base.Pervasives
 import Base.Symbol
-import Base.ChrRep (ChrRep)
+import Base.ChrRep
 import Base.ChrRepImpl
 
 instance Show (Symbol a) where

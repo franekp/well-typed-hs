@@ -24,5 +24,5 @@ import Base.UAst
 import Base.Examples
 import Base.Symbol
 import Base.SymbolImpl
-import Base.ChrRep (Chr, ChrRep(..))
+import Base.ChrRep
 import Base.ChrRepImpl

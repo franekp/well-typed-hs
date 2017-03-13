@@ -3,7 +3,6 @@
 
 module Semantics.Tests where
 import Base
-import Base.ChrRep
 import Semantics.Typecheck (typecheck, eval, typeof_polymap, eval_poly)
 import Semantics.Unify (test_unify)
 

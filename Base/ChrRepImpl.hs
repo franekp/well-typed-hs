@@ -4,6 +4,7 @@
 module Base.ChrRepImpl where
 import Base.Pervasives
 import Base.ChrRep
+import Base.ChrSym
 
 instance A ChrRep CapA_ where
   anything = A_UL

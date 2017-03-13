@@ -2,11 +2,12 @@
 #include "../settings.hs"
 
 module Base.Pervasives (
-  Zero, Succ, Hole, T, A, anything, type_of, Mono(..), ExistsPoly(..), Poly(..),
+  Chr, Zero, Succ, Hole, T, A, anything, type_of, Mono(..), ExistsPoly(..), Poly(..),
   polymap, Typeable, Void, cast,
 ) where
 import Data.Typeable (Typeable, cast)
 import Data.Void (Void)
+import Base.ChrSym (Chr {- , Sym -})
 
 data Zero :: *
   deriving Typeable

@@ -10,5 +10,5 @@
   -fwarn-incomplete-uni-patterns
 #-}
 
--- See Base/Symbol.hs for details
+-- See Base/ChrSym.hs for details
 #define Sym [Chr]
