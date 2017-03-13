@@ -3,7 +3,8 @@
 
 module Semantics.Tests where
 import Base
-import Semantics.Typecheck (typecheck, eval, typeof_polymap, eval_poly)
+import Semantics.Typecheck
+import Semantics.Eval
 import Semantics.Unify (test_unify)
 
 test_show_type = (map show polytype_examples == [
