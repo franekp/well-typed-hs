@@ -16,7 +16,7 @@ data Type :: * -> * where
   VoidT ::
     Type Void
   TypeVarT :: A TypeVar a =>
-    TypeVar a -> Type a
+    TypeVar a -> Type (RuntimeTypeVar a)
   HoleT ::
     Type Hole
   RecordT :: A RecordType a =>
@@ -24,7 +24,11 @@ data Type :: * -> * where
 
 type instance T Type = Type
 
-data TypeVar :: * -> * where
+data RuntimeTypeVar :: Nat -> *
+
+type instance T RuntimeTypeVar = TypeVar
+
+data TypeVar :: Nat -> * where
   ZeroTV ::
     TypeVar Zero
   SuccTV :: A TypeVar a =>

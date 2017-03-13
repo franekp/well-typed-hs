@@ -23,7 +23,7 @@ instance {-# OVERLAPPING #-} A Type Int where
 instance {-# OVERLAPPING #-} A Type Void where
   anything = VoidT
 
-instance {-# OVERLAPPING #-} A TypeVar a => A Type a where
+instance {-# OVERLAPPING #-} A TypeVar a => A Type (RuntimeTypeVar a) where
   anything = TypeVarT anything
 
 instance {-# OVERLAPPING #-} A Type Hole where
@@ -75,10 +75,10 @@ instance Show (Mono TypeVar) where
 
 instance (Show (Mono t), T t ~ Type) => Show (Poly t) where
   show qq = "forall" ++ str ZeroTV qq where
-    str :: (A TypeVar a, A Type a, Show (Mono t)) => TypeVar a -> Poly t -> String
+    str :: (A TypeVar a, Show (Mono t)) => TypeVar a -> Poly t -> String
     str last_tv (MonoP tp) = ". " ++ show tp
     str last_tv (ForallP ident poly) = " " ++ show last_tv ++ show ident ++ do_stuff last_tv poly where
-      do_stuff :: (A TypeVar a, A Type a, Show (Mono t)) => TypeVar a -> ExistsPoly t a -> String
+      do_stuff :: (A TypeVar a, Show (Mono t)) => TypeVar a -> ExistsPoly t (RuntimeTypeVar a) -> String
       do_stuff tv (ExistsPoly x) = str (SuccTV tv) x
 
 instance A Symbol f => A FieldName f where

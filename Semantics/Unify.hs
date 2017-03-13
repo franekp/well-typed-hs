@@ -79,12 +79,12 @@ unpack_poly a b =
     Mono (SuccTV s) -> unpack_poly' (SuccTV s) a b $ VarMapping []
   where
     start_var = typevar_max_plus_one $ dump_typevars a ++ dump_typevars b
-    unpack_poly' :: forall a. (A TypeVar a, A Type a) => TypeVar a -> Poly t -> Poly t
+    unpack_poly' :: forall a. A TypeVar a => TypeVar a -> Poly t -> Poly t
       -> VarMapping -> (Mono t, Mono t, VarMapping, Mono TypeVar)
     unpack_poly' last_tv (MonoP a) (MonoP b) m = (a, b, m, start_var)
     unpack_poly' last_tv
-      (ForallP num_a (ExistsPoly poly_a :: ExistsPoly t a))
-      (ForallP num_b (ExistsPoly poly_b :: ExistsPoly t a ))
+      (ForallP num_a (ExistsPoly poly_a :: ExistsPoly t (RuntimeTypeVar a)))
+      (ForallP num_b (ExistsPoly poly_b :: ExistsPoly t (RuntimeTypeVar a)))
       (VarMapping m) =
         if num_a /= num_b then error "synchronize_quantifiers not called before unpack_poly!" else
         unpack_poly' (SuccTV last_tv) poly_a poly_b $ VarMapping $ (num_a, Mono last_tv):m

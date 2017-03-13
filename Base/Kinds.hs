@@ -3,7 +3,6 @@
 
 module Base.Kinds where
 
--- NOTE: this is a kind
 data Chr = A_ | B_ | C_ | D_ | E_ | F_ | G_ | H_ | I_ | J_ | K_ | L_ | M_
   | N_ | O_ | P_ | Q_ | R_ | S_ | T_ | U_ | V_ | W_ | X_ | Y_ | Z_ | CapA_
   | CapB_ | CapC_ | CapD_ | CapE_ | CapF_ | CapG_ | CapH_ | CapI_ | CapJ_
@@ -14,5 +13,6 @@ data Chr = A_ | B_ | C_ | D_ | E_ | F_ | G_ | H_ | I_ | J_ | K_ | L_ | M_
 -- kind synonyms; the declaration below is only for readability
 #undef Sym
 
--- NOTE: this is a kind synonym
 type Sym = [Chr]
+
+data Nat = Zero | Succ Nat

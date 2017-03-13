@@ -2,17 +2,13 @@
 #include "../settings.hs"
 
 module Base.Pervasives (
-  Chr, Zero, Succ, Hole, T, A, anything, type_of, Mono(..), ExistsPoly(..), Poly(..),
-  polymap, Typeable, Void, cast,
+  Chr, Nat(Zero, Succ), Hole, T, A, anything, type_of, Mono(..),
+  ExistsPoly(..), Poly(..), polymap, Typeable, Void, cast,
 ) where
 import Data.Typeable (Typeable, cast)
 import Data.Void (Void)
-import Base.Kinds (Chr {- , Sym -})
+import Base.Kinds (Chr {- , Sym -}, Nat(Zero, Succ))
 
-data Zero :: *
-  deriving Typeable
-data Succ :: * -> *
-  deriving Typeable
 data Hole :: *
   deriving Typeable
 
