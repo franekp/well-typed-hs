@@ -148,10 +148,24 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
       in case true_replacement of
         Mono tt -> do_something_inside type_map $ apply_type tt exists_poly
 
+gen_constraints_assert_has_field :: (A Type a, A Type b, A FieldName f) =>
+  Mono TypeVar -> FieldName f -> Type a -> Type b -> [Constraint]
+gen_constraints_assert_has_field start_var f a ((f', a') `HasFieldT` b) =
+  (if Mono f == Mono f' then gen_constraints start_var a a' else [])
+  ++ gen_constraints_assert_has_field start_var f a b
+gen_constraints_assert_has_field start_var f a (RecordT ((f', a') `ConsRT` b)) =
+  (if Mono f == Mono f' then gen_constraints start_var a a' else [])
+  ++ gen_constraints_assert_has_field start_var f a (RecordT b)
+gen_constraints_assert_has_field start_var _ _ _ = []
+
 -- TODO add a check to detect infinite types
 gen_constraints :: (A Type a, A Type b) => Mono TypeVar -> Type a -> Type b -> [Constraint]
 gen_constraints start_var (a :-> b) (a' :-> b') =
   gen_constraints start_var a a' ++ gen_constraints start_var b b'
+gen_constraints start_var ((f, t) `HasFieldT` rest) a =
+  gen_constraints_assert_has_field start_var f t a ++ gen_constraints start_var rest a
+gen_constraints start_var a ((f, t) `HasFieldT` rest) =
+  gen_constraints start_var ((f, t) `HasFieldT` rest) a
 gen_constraints start_var (TypeVarT a) a' = if Mono a < start_var then [] else
   case a' of
     TypeVarT a'' ->
