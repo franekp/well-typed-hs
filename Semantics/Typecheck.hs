@@ -59,7 +59,7 @@ lookup_var ((name, val) `LetEN` rest) var =
 typecheck :: UAst -> Poly (Ast Hi '[])
 typecheck = typecheck' (TypeEnv []) NilEN
 
-typecheck' :: forall e l. Typeable e => TypeEnv -> Env e -> UAst -> Poly (Ast Hi e)
+typecheck' :: forall e. Typeable e => TypeEnv -> Env e -> UAst -> Poly (Ast Hi e)
 typecheck' te e AddUA = MonoP $ Mono $ AddA
 typecheck' te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
 typecheck' te e (AppUA fun arg) =
@@ -99,3 +99,11 @@ typecheck' te e ((fu, au) `RecordConsUA` restu) = result where
       Mono f -> case type_of rest of
         RecordT _ -> MonoP $ Mono $ (f, a) `RecordConsA` rest
         _ -> error "RecordCons with non-record tail."
+typecheck' te e (RecordGetUA f) =
+  case (read f :: Mono FieldName) of
+    Mono (ff :: FieldName f) ->
+      ForallP (hash (f ++ "1")) (ExistsPoly $
+      ForallP (hash (f ++ "2")) (ExistsPoly $
+        MonoP $ Mono $ (RecordGetA ff :: Ast Hi e (HasField '(f, a) r -> a))
+      :: forall r. A Type r => ExistsPoly (Ast Hi e) r)
+      :: forall a. A Type a => ExistsPoly (Ast Hi e) a)

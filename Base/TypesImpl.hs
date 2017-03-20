@@ -37,6 +37,9 @@ instance A TypeVar a => A Type (RuntimeTypeVar a) where
 instance A RecordType a => A Type (Record a) where
   anything = RecordT anything
 
+instance (A Type rest, A Type a, A FieldName f) => A Type (HasField '(f, a) rest) where
+  anything = HasFieldT (anything, anything) anything
+
 deriving instance Eq (Type a)
 deriving instance Typeable Type
 instance Eq (Mono Type) where
