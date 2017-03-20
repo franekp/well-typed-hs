@@ -9,6 +9,8 @@ infixr `ConsRT`
 infixr `ConsRC`
 infixr :->
 
+data HasField :: (Sym, *) -> * -> *
+
 data Type :: * -> * where
   (:->) :: (A Type a, A Type b) =>
     Type a -> Type b -> Type (a -> b)
@@ -20,6 +22,8 @@ data Type :: * -> * where
     TypeVar a -> Type (RuntimeTypeVar a)
   RecordT :: A RecordType a =>
     RecordType a -> Type (Record a)
+  HasFieldT :: (A FieldName f, A Type a, A Type r) =>
+    (FieldName f, Type a) -> Type r -> Type (HasField '(f, a) r)
 
 type instance T Type = Type
 

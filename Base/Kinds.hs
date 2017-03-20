@@ -2,6 +2,7 @@
 #include "../settings.hs"
 
 module Base.Kinds where
+import Data.Typeable (Typeable)
 
 data Chr = A_ | B_ | C_ | D_ | E_ | F_ | G_ | H_ | I_ | J_ | K_ | L_ | M_
   | N_ | O_ | P_ | Q_ | R_ | S_ | T_ | U_ | V_ | W_ | X_ | Y_ | Z_ | CapA_
@@ -16,3 +17,8 @@ data Chr = A_ | B_ | C_ | D_ | E_ | F_ | G_ | H_ | I_ | J_ | K_ | L_ | M_
 type Sym = [Chr]
 
 data Nat = Zero | Succ Nat
+
+data AstLevel = Hi | Lo
+
+deriving instance Typeable Hi
+deriving instance Typeable Lo

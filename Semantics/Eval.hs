@@ -4,10 +4,10 @@
 module Semantics.Eval where
 import Base
 
-eval :: Ast '[] a -> a
+eval :: Ast l '[] a -> a
 eval = eval' NilST
 
-eval' :: forall a e. Store e -> Ast e a -> a
+eval' :: forall a e l. Store e -> Ast l e a -> a
 eval' s AddA = \x y -> x + y
 eval' s (LiteralA x) = x
 eval' s VarA =
@@ -29,22 +29,22 @@ eval' s (RecordTailA r) = case eval' s r of
 eval' s RecordNilA = NilRC
 eval' s ((f, h) `RecordConsA` t) = (f, eval' s h) `ConsRC` eval' s t
 
-eval_poly :: A Type a => Poly (Ast '[]) -> a
+eval_poly :: A Type a => Poly (Ast Hi '[]) -> a
 eval_poly = eval . forcetype
 
-makemono :: Poly (Ast '[]) -> Mono (Ast '[])
+makemono :: Poly (Ast l '[]) -> Mono (Ast l '[])
 makemono (ForallP _ exists_poly) =
   case exists_poly of
-    (ExistsPoly poly :: ExistsPoly (Ast '[]) Void) -> makemono poly
+    (ExistsPoly poly :: ExistsPoly (Ast l '[]) Void) -> makemono poly
 makemono (MonoP res) = res
 
-forcetype :: A Type a => Poly (Ast '[]) -> Ast '[] a
+forcetype :: A Type a => Poly (Ast Hi '[]) -> Ast Hi '[] a
 forcetype (ForallP _ exists_poly) =
   case exists_poly of
-    (ExistsPoly poly :: ExistsPoly (Ast '[]) Void) -> forcetype poly
+    (ExistsPoly poly :: ExistsPoly (Ast Hi '[]) Void) -> forcetype poly
 forcetype (MonoP (Mono ast)) = case cast ast of
   Just x -> x
   Nothing -> ErrorA $ "wrong type of: " ++ show ast
 
-typeof_polymap :: Poly (Ast '[]) -> Poly Type
+typeof_polymap :: Poly (Ast Hi '[]) -> Poly Type
 typeof_polymap = polymap (MonoP . Mono . type_of)

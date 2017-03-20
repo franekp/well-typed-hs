@@ -10,7 +10,7 @@ import Base.Ast
 deriving instance Typeable Store
 deriving instance Typeable Env
 deriving instance Typeable Ast
-deriving instance Show (Ast e a)
+deriving instance Show (Ast l e a)
 
-instance Show (Mono (Ast e)) where
+instance Show (Mono (Ast l e)) where
   show (Mono a) = show a

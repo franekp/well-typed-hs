@@ -21,30 +21,32 @@ data Env :: [*] -> * where
   ConsEN :: (A Type h, Typeable t) =>
     (String, Type h) -> Env t -> Env (h ': t)
   LetEN ::
-    (String, Poly (Ast e)) -> Env e -> Env e
+    (String, Poly (Ast Hi e)) -> Env e -> Env e
 
-data Ast :: [*] -> * -> * where
+data Ast :: AstLevel -> [*] -> * -> * where
   AddA :: Typeable e =>
-    Ast e (Int -> Int -> Int)
+    Ast l e (Int -> Int -> Int)
   LiteralA :: Typeable e =>
-    Int -> Ast e Int
+    Int -> Ast l e Int
   VarA :: (A Type a, Typeable e) =>
-    Ast (a ': e) a
+    Ast l (a ': e) a
   LiftA :: (A Type a, A Type b, Typeable e) =>
-    Ast e a -> Ast (b ': e) a
+    Ast l e a -> Ast l (b ': e) a
   LambdaA :: (A Type a, A Type b, Typeable e) =>
-    Ast (a ': e) b -> Ast e (a -> b)
+    Ast l (a ': e) b -> Ast l e (a -> b)
   ErrorA :: (A Type a, Typeable e) =>
-    String -> Ast e a
+    String -> Ast l e a
   AppA :: (A Type a, A Type b, Typeable e) =>
-    Ast e (a -> b) -> Ast e a -> Ast e b
+    Ast l e (a -> b) -> Ast l e a -> Ast l e b
   RecordHeadA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
-    Ast e (Record ('(f, a) ': t)) -> Ast e a
+    Ast l e (Record ('(f, a) ': t)) -> Ast l e a
   RecordTailA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
-    Ast e (Record ('(f, a) ': t)) -> Ast e (Record t)
+    Ast l e (Record ('(f, a) ': t)) -> Ast l e (Record t)
   RecordNilA :: Typeable e =>
-    Ast e (Record '[])
+    Ast l e (Record '[])
   RecordConsA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
-    (FieldName f, Ast e a) -> Ast e (Record t) -> Ast e (Record ('(f, a) ': t))
+    (FieldName f, Ast l e a) -> Ast l e (Record t) -> Ast l e (Record ('(f, a) ': t))
+  RecordGetA :: (A Type a, A FieldName f, A Type r, Typeable e) =>
+    Ast l e (HasField '(f, a) r) -> FieldName f -> Ast l e a
 
-type instance T (Ast e) = Type
+type instance T (Ast l e) = Type

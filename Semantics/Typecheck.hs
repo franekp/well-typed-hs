@@ -38,9 +38,9 @@ typecheck_polytype te (ForallUPT var inner) cont = ForallP (hash var) (
       (update_typeenv te var $ Mono (anything :: Type a)) inner cont
     :: forall a. A Type a => ExistsPoly u a)
 
-lookup_var :: forall e. Env e -> String -> Poly (Ast e)
+lookup_var :: forall e l. Env e -> String -> Poly (Ast Hi e)
 lookup_var NilEN var = MonoP $ Mono
-  (ErrorA $ "unknown variable: '" ++ var ++ "'" :: Ast e Void)
+  (ErrorA $ "unknown variable: '" ++ var ++ "'" :: Ast Hi e Void)
 lookup_var ((name, ty) `ConsEN` rest) var =
   if var == name then
     MonoP $ Mono VarA
@@ -56,32 +56,32 @@ lookup_var ((name, val) `LetEN` rest) var =
   else
     lookup_var rest var
 
-typecheck :: UAst -> Poly (Ast '[])
+typecheck :: UAst -> Poly (Ast Hi '[])
 typecheck = typecheck' (TypeEnv []) NilEN
 
-typecheck' :: forall e. Typeable e => TypeEnv -> Env e -> UAst -> Poly (Ast e)
+typecheck' :: forall e l. Typeable e => TypeEnv -> Env e -> UAst -> Poly (Ast Hi e)
 typecheck' te e AddUA = MonoP $ Mono $ AddA
 typecheck' te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
 typecheck' te e (AppUA fun arg) =
   unify type_of_arg (typecheck' te e fun) (Mono . type_of) (typecheck' te e arg) cont
   where
-    type_of_arg :: A Type a => Ast e a -> Mono Type
+    type_of_arg :: A Type a => Ast Hi e a -> Mono Type
     type_of_arg fun = case type_of fun of
       a :-> b -> Mono a
       _ -> error "_ is not a function"
-    cont :: (A Type a, A Type b) => Ast e a -> Ast e b -> Poly (Ast e)
+    cont :: (A Type a, A Type b) => Ast Hi e a -> Ast Hi e b -> Poly (Ast Hi e)
     cont fun arg = case type_of fun of
       a :-> b -> case cast arg of
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
-        Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast e Void)
-      _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast e Void)
-typecheck' te e ((var_name, ty) `LambdaUA` body) = (typecheck_polytype te ty helper :: Poly (Ast e)) where
-  helper :: forall a. A Type a => TypeEnv -> Type a -> Poly (Ast e)
+        Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast Hi e Void)
+      _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast Hi e Void)
+typecheck' te e ((var_name, ty) `LambdaUA` body) = (typecheck_polytype te ty helper :: Poly (Ast Hi e)) where
+  helper :: forall a l. A Type a => TypeEnv -> Type a -> Poly (Ast Hi e)
   helper te' tt = polymap (MonoP . Mono . (
-      LambdaA :: forall b. A Type b => Ast (a ': e) b -> Ast e (a -> b)
+      LambdaA :: forall b l. A Type b => Ast Hi (a ': e) b -> Ast Hi e (a -> b)
     )) body_ast
     where
-      body_ast :: Poly (Ast (a ': e))
+      body_ast :: Poly (Ast Hi (a ': e))
       body_ast = typecheck' te' ((var_name, tt) `ConsEN` e) body
 typecheck' te e (VarUA name) = lookup_var e name
 typecheck' te e ((name, val) `LetUA` expr) =
@@ -92,9 +92,9 @@ typecheck' te e ((fu, au) `RecordConsUA` restu) = result where
   fm = (read fu :: Mono FieldName)
   ap = typecheck' te e au
   result = polymap cont_a ap
-  cont_a :: forall a. A Type a => Ast e a -> Poly (Ast e)
+  cont_a :: forall a. A Type a => Ast Hi e a -> Poly (Ast Hi e)
   cont_a a = polymap cont_rest restp where
-    cont_rest :: forall a. A Type a => Ast e a -> Poly (Ast e)
+    cont_rest :: forall a. A Type a => Ast Hi e a -> Poly (Ast Hi e)
     cont_rest rest = case fm of
       Mono f -> case type_of rest of
         RecordT _ -> MonoP $ Mono $ (f, a) `RecordConsA` rest
