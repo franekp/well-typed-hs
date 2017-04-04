@@ -4,6 +4,7 @@
 module Semantics.Typecheck (typecheck, typecheck') where
 import Base
 import Semantics.Unify (unify)
+import Semantics.CastModulo (cast_modulo)
 import Data.List (foldl')
 import Data.Bits (xor)
 
@@ -71,7 +72,7 @@ typecheck' te e (AppUA fun arg) =
       _ -> error "_ is not a function"
     cont :: (A Type a, A Type b) => Ast Hi e a -> Ast Hi e b -> Poly (Ast Hi e)
     cont fun arg = case type_of fun of
-      a :-> b -> case cast arg of
+      a :-> b -> case cast_modulo arg of
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
         Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast Hi e Void)
       _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast Hi e Void)

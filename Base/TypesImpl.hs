@@ -41,11 +41,16 @@ instance (A Type rest, A Type a, A FieldName f) => A Type (HasField '(f, a) rest
   anything = HasFieldT (anything, anything) anything
 
 deriving instance Eq (Type a)
-deriving instance Typeable Type
+--deriving instance Typeable Type
 instance Eq (Mono Type) where
-  Mono a == Mono b = case cast b of
-    Just bb -> a == bb
-    Nothing -> False
+  Mono (a :-> b) == Mono (a' :-> b') = Mono a == Mono a' && Mono b == Mono b'
+  Mono IntT == Mono IntT = True
+  Mono VoidT == Mono VoidT = True
+  Mono (TypeVarT a) == Mono (TypeVarT a') = Mono a == Mono a'
+  Mono (RecordT a) == Mono (RecordT a') = Mono a == Mono a'
+  Mono (HasFieldT (f, a) rest) == Mono rest' = Mono rest == Mono rest'
+  Mono rest == Mono (HasFieldT (f', a') rest') = Mono rest == Mono rest'
+  _ == _ = False
 
 deriving instance Eq (TypeVar a)
 deriving instance Typeable TypeVar
@@ -120,7 +125,10 @@ deriving instance Eq (RecordType r)
 deriving instance Typeable RecordType
 
 instance Eq (Mono RecordType) where
-  (==) = undefined  -- TODO
+  Mono NilRT == Mono NilRT = True
+  Mono (ConsRT (f, a) rest) == Mono (ConsRT (f', a') rest') =
+    Mono f == Mono f' && Mono a == Mono a' && Mono rest == Mono rest'
+  _ == _ = False
 
 instance Show (RecordType r) where
   show = ("{" ++) . (++ "}") . inner where
