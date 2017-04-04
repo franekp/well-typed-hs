@@ -4,47 +4,51 @@
 module Semantics.Eval where
 import Base
 
-eval :: Ast l '[] a -> a
-eval = eval' NilST
+eval_ast :: Ast l '[] a -> a
+eval_ast = eval_ast' NilST
 
-eval' :: forall a e l. Store e -> Ast l e a -> a
-eval' s AddA = \x y -> x + y
-eval' s (LiteralA x) = x
-eval' s VarA =
+eval_ast' :: forall a e l. Store e -> Ast l e a -> a
+eval_ast' s AddA = \x y -> x + y
+eval_ast' s (LiteralA x) = x
+eval_ast' s VarA =
   let
     helper :: forall a e. Store (a ': e) -> a
     helper (val `ConsST` _) = val  -- workaround exhaustiveness check that sucks
   in helper s
-eval' s (LiftA a) = let
+eval_ast' s (LiftA a) = let
     helper :: forall a e. Store (a ': e) -> Store e
     helper (_ `ConsST` s') = s'  -- workaround exhaustiveness check that sucks
-  in eval' (helper s) a
-eval' s (LambdaA body) = \arg -> eval' (arg `ConsST` s) body
-eval' s (ErrorA msg) = error msg
-eval' s (AppA fun arg) = eval' s fun $ eval' s arg
-eval' s (RecordHeadA r) = case eval' s r of
+  in eval_ast' (helper s) a
+eval_ast' s (LambdaA body) = \arg -> eval_ast' (arg `ConsST` s) body
+eval_ast' s (ErrorA msg) = error msg
+eval_ast' s (AppA fun arg) = eval_ast' s fun $ eval_ast' s arg
+eval_ast' s (RecordHeadA r) = case eval_ast' s r of
   (name, val) `ConsRC` rest -> val
-eval' s (RecordTailA r) = case eval' s r of
+eval_ast' s (RecordTailA r) = case eval_ast' s r of
   (name, val) `ConsRC` rest -> rest
-eval' s RecordNilA = NilRC
-eval' s ((f, h) `RecordConsA` t) = (f, eval' s h) `ConsRC` eval' s t
+eval_ast' s RecordNilA = NilRC
+eval_ast' s ((f, h) `RecordConsA` t) = (f, eval_ast' s h) `ConsRC` eval_ast' s t
 
-eval_poly :: A Type a => Poly (Ast Hi '[]) -> a
-eval_poly = eval . forcetype
+eval_monoast :: (A Type a, Typeable l) => Mono (Ast l '[]) -> a
+eval_monoast = eval_ast . forcetype_monoast
 
-makemono :: Poly (Ast l '[]) -> Mono (Ast l '[])
-makemono (ForallP _ exists_poly) =
+eval_polyast :: (A Type a, Typeable l) => Poly (Ast l '[]) -> a
+eval_polyast = eval_ast . forcetype_polyast
+
+polyast_to_monoast :: Poly (Ast l '[]) -> Mono (Ast l '[])
+polyast_to_monoast (ForallP _ exists_poly) =
   case exists_poly of
-    (ExistsPoly poly :: ExistsPoly (Ast l '[]) Void) -> makemono poly
-makemono (MonoP res) = res
+    (ExistsPoly poly :: ExistsPoly (Ast l '[]) Void) ->
+      polyast_to_monoast poly
+polyast_to_monoast (MonoP res) = res
 
-forcetype :: A Type a => Poly (Ast Hi '[]) -> Ast Hi '[] a
-forcetype (ForallP _ exists_poly) =
-  case exists_poly of
-    (ExistsPoly poly :: ExistsPoly (Ast Hi '[]) Void) -> forcetype poly
-forcetype (MonoP (Mono ast)) = case cast ast of
+forcetype_monoast :: (A Type a, Typeable l) => Mono (Ast l '[]) -> Ast l '[] a
+forcetype_monoast (Mono ast) = case cast ast of
   Just x -> x
   Nothing -> ErrorA $ "wrong type of: " ++ show ast
 
-typeof_polymap :: Poly (Ast Hi '[]) -> Poly Type
+forcetype_polyast :: (A Type a, Typeable l) => Poly (Ast l '[]) -> Ast l '[] a
+forcetype_polyast = forcetype_monoast . polyast_to_monoast
+
+typeof_polymap :: Poly (Ast l '[]) -> Poly Type
 typeof_polymap = polymap (MonoP . Mono . type_of)

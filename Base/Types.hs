@@ -9,7 +9,7 @@ infixr `ConsRT`
 infixr `ConsRC`
 infixr :->
 
-data HasField :: (Sym, *) -> * -> *
+newtype HasField (c :: (Sym, *)) (x :: *) = HasField x
 
 data Type :: * -> * where
   (:->) :: (A Type a, A Type b) =>

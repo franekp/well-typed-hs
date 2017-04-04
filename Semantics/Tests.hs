@@ -47,7 +47,7 @@ test_typecheck =
 test_typecheck_records =
   let
     f :: UAst -> String
-    f uast = case makemono $ typecheck uast of
+    f uast = case polyast_to_monoast $ typecheck uast of
         Mono ast -> show $ type_of ast
   in map f uast_record_examples == [
     "{A :: Int, b :: Int, fun :: Int -> Int}",
@@ -56,14 +56,14 @@ test_typecheck_records =
   ]
 
 test_eval =
-  let f uast = (eval_poly $ typecheck uast :: Int) in
+  let f uast = (eval_polyast $ typecheck uast :: Int) in
   map f uast_int_examples == [8, 8]
 
 test_eval_records =
   let
     f :: UAst -> String
-    f uast = case makemono $ typecheck uast of
-        Mono ast -> show_value $ eval ast
+    f uast = case polyast_to_monoast $ typecheck uast of
+        Mono ast -> show_value $ eval_ast ast
   in map f uast_record_examples == [
     "{A = 5, b = 2, fun = <func>}",
     "{nest = {A = 5, b = 2, fun = <func>}, A = 5}",
@@ -73,8 +73,8 @@ test_eval_records =
 main =
   let
     f :: UAst -> String
-    f uast = case makemono $ typecheck uast of
-        Mono ast -> show_value $ eval ast
+    f uast = case polyast_to_monoast $ typecheck uast of
+        Mono ast -> show_value $ eval_ast ast
   in print $ map f uast_record_examples
 
 test_show_read_letter = all id [
