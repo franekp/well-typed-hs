@@ -6,6 +6,7 @@ import Base
 import Semantics.Typecheck
 import Semantics.Eval
 import Semantics.Unify (test_unify)
+import Semantics.Records
 
 test_show_type = (map show polytype_examples == [
     "forall a1 b2. a -> (a -> b) -> b",

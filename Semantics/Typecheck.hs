@@ -100,11 +100,16 @@ typecheck' te e ((fu, au) `RecordConsUA` restu) = result where
       Mono f -> case type_of rest of
         RecordT _ -> MonoP $ Mono $ (f, a) `RecordConsA` rest
         _ -> error "RecordCons with non-record tail."
-typecheck' te e (RecordGetUA f) =
-  case (read f :: Mono FieldName) of
-    Mono (ff :: FieldName f) ->
-      ForallP (hash (f ++ "1")) (ExistsPoly $
-      ForallP (hash (f ++ "2")) (ExistsPoly $
-        MonoP $ Mono $ (RecordGetA ff :: Ast Hi e (HasField '(f, a) r -> a))
-      :: forall r. A Type r => ExistsPoly (Ast Hi e) r)
-      :: forall a. A Type a => ExistsPoly (Ast Hi e) a)
+typecheck' te e (RecordGetUA f r) = polymap cont $ typecheck' te e r where
+  cont :: forall r. A Type r => Ast Hi e r -> Poly (Ast Hi e)
+  cont r_ast = case type_of r_ast of
+    HasFieldT ((f' :: FieldName f'), (_ :: Type a)) (_ :: Type r') ->
+      case (read f :: Mono FieldName) of
+        Mono (f :: FieldName f) -> case cast f of
+          Just f ->
+            if f == f' then
+              MonoP $ Mono $ (RecordGetA f' :: Ast Hi e (HasField '(f', a) r') -> Ast Hi e a) r_ast
+            else
+              error "field name mismatch"
+          Nothing ->
+            error "field name mismatch"

@@ -1,5 +1,15 @@
 AST processing pipeline:
 
-InputAst ---[Syntax]---> UAst (Maybe UPolyType) ---[TypeSystem]---> UAst UPolyType
-
-UAst UPolyType ---[Semantics.Typecheck]---> Ast Nil a ---[Semantics.Eval]---> a
+InputAst
+---[Syntax.prepare]--->
+UAst (Maybe UPolyType)
+---[TypeSystem.infer]--->
+UAst UPolyType
+---[Semantics.Typecheck.typecheck]--->
+Poly (Ast Hi '[])
+---[Semantics.Eval.polyast_to_monoast]
+Mono (Ast Hi '[])
+---[Semantics.Records.resolve_field_lookups]--->
+Mono (Ast Lo '[])
+---[Semantics.Eval.eval_monoast]--->
+A Type a => a

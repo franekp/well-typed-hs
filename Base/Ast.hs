@@ -47,6 +47,6 @@ data Ast :: AstLevel -> [*] -> * -> * where
   RecordConsA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
     (FieldName f, Ast l e a) -> Ast l e (Record t) -> Ast l e (Record ('(f, a) ': t))
   RecordGetA :: (A Type a, A FieldName f, A Type r, Typeable e) =>
-    FieldName f -> Ast Hi e (HasField '(f, a) r -> a)
+    FieldName f -> Ast Hi e (HasField '(f, a) r) -> Ast Hi e a
 
 type instance T (Ast l e) = Type
