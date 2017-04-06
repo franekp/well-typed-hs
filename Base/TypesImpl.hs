@@ -15,6 +15,7 @@ show_value a = case (anything :: Type a) of
   VoidT -> "<void>"
   TypeVarT v -> "(undefined :: " ++ show v ++ ")"
   RecordT r -> show a
+  HasFieldT _ _ -> error "this code should be unreachable"
 
 instance A TypeVar Zero where
   anything = ZeroTV
@@ -71,6 +72,7 @@ instance Show (Type a) where
   show VoidT = "Void"
   show (TypeVarT a) = show a
   show (RecordT r) = show r
+  show (HasFieldT (f, a) r) = "HasField(" ++ show f ++ ":" ++ show a ++ ") " ++ show r
 
 instance Show (Mono Type) where
   show (Mono a) = show a
