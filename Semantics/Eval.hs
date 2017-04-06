@@ -5,10 +5,10 @@ module Semantics.Eval where
 import Base
 import Semantics.CastModulo (cast_modulo)
 
-eval_ast :: Ast l '[] a -> a
+eval_ast :: Ast Lo '[] a -> a
 eval_ast = eval_ast' NilST
 
-eval_ast' :: forall a e l. Store e -> Ast l e a -> a
+eval_ast' :: forall a e. Store e -> Ast Lo e a -> a
 eval_ast' s AddA = \x y -> x + y
 eval_ast' s (LiteralA x) = x
 eval_ast' s VarA =
@@ -30,17 +30,17 @@ eval_ast' s (RecordTailA r) = case eval_ast' s r of
 eval_ast' s RecordNilA = NilRC
 eval_ast' s ((f, h) `RecordConsA` t) = (f, eval_ast' s h) `ConsRC` eval_ast' s t
 
-eval_monoast :: (A Type a, Typeable l) => Mono (Ast l '[]) -> a
+eval_monoast :: A Type a => Mono (Ast Lo '[]) -> a
 eval_monoast = eval_ast . forcetype_monoast
 
-polyast_to_monoast :: Poly (Ast l '[]) -> Mono (Ast l '[])
+polyast_to_monoast :: Poly (Ast Hi '[]) -> Mono (Ast Hi '[])
 polyast_to_monoast (ForallP _ exists_poly) =
   case exists_poly of
-    (ExistsPoly poly :: ExistsPoly (Ast l '[]) Void) ->
+    (ExistsPoly poly :: ExistsPoly (Ast Hi '[]) Void) ->
       polyast_to_monoast poly
 polyast_to_monoast (MonoP res) = res
 
-forcetype_monoast :: A Type a => Mono (Ast l '[]) -> Ast l '[] a
+forcetype_monoast :: A Type a => Mono (Ast Lo '[]) -> Ast Lo '[] a
 forcetype_monoast (Mono ast) = case cast_modulo ast of
   Just x -> x
   Nothing -> ErrorA $ "wrong type of: " ++ show ast

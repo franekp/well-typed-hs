@@ -6,7 +6,7 @@ import Base
 import Semantics.Typecheck
 import Semantics.Eval
 import Semantics.Unify (test_unify)
-import Semantics.Records
+import Semantics.Records (resolve_field_lookups)
 
 test_show_type = (map show polytype_examples == [
     "forall a1 b2. a -> (a -> b) -> b",
@@ -48,7 +48,7 @@ test_typecheck =
 test_typecheck_records =
   let
     f :: UAst -> String
-    f uast = case polyast_to_monoast $ typecheck uast of
+    f uast = case resolve_field_lookups $ polyast_to_monoast $ typecheck uast of
         Mono ast -> show $ type_of ast
   in map f uast_record_examples == [
     "{A :: Int, b :: Int, fun :: Int -> Int}",
@@ -57,13 +57,18 @@ test_typecheck_records =
   ]
 
 test_eval =
-  let f uast = (eval_monoast $ polyast_to_monoast $ typecheck uast :: Int) in
+  let
+    f uast = (eval_monoast
+      $ resolve_field_lookups
+      $ polyast_to_monoast
+      $ typecheck uast :: Int)
+  in
   map f uast_int_examples == [8, 8]
 
 test_eval_records =
   let
     f :: UAst -> String
-    f uast = case polyast_to_monoast $ typecheck uast of
+    f uast = case resolve_field_lookups $ polyast_to_monoast $ typecheck uast of
         Mono ast -> show_value $ eval_ast ast
   in map f uast_record_examples == [
     "{A = 5, b = 2, fun = <func>}",
@@ -74,7 +79,7 @@ test_eval_records =
 main =
   let
     f :: UAst -> String
-    f uast = case polyast_to_monoast $ typecheck uast of
+    f uast = case resolve_field_lookups $ polyast_to_monoast $ typecheck uast of
         Mono ast -> show_value $ eval_ast ast
   in print $ map f uast_record_examples
 
