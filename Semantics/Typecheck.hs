@@ -60,7 +60,7 @@ lookup_var ((name, val) `LetEN` rest) var =
 typecheck :: UAst -> Poly (Ast Hi '[])
 typecheck = typecheck' (TypeEnv []) NilEN
 
-typecheck' :: forall e. Typeable e => TypeEnv -> Env e -> UAst -> Poly (Ast Hi e)
+typecheck' :: forall e. TypeEnv -> Env e -> UAst -> Poly (Ast Hi e)
 typecheck' te e AddUA = MonoP $ Mono $ AddA
 typecheck' te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
 typecheck' te e (AppUA fun arg) =

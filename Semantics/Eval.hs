@@ -3,6 +3,7 @@
 
 module Semantics.Eval where
 import Base
+import Semantics.CastModulo (cast_modulo)
 
 eval_ast :: Ast l '[] a -> a
 eval_ast = eval_ast' NilST
@@ -39,13 +40,10 @@ polyast_to_monoast (ForallP _ exists_poly) =
       polyast_to_monoast poly
 polyast_to_monoast (MonoP res) = res
 
-forcetype_monoast :: (A Type a, Typeable l) => Mono (Ast l '[]) -> Ast l '[] a
-forcetype_monoast (Mono ast) = case cast ast of
+forcetype_monoast :: A Type a => Mono (Ast l '[]) -> Ast l '[] a
+forcetype_monoast (Mono ast) = case cast_modulo ast of
   Just x -> x
   Nothing -> ErrorA $ "wrong type of: " ++ show ast
-
-forcetype_polyast :: (A Type a, Typeable l) => Poly (Ast l '[]) -> Ast l '[] a
-forcetype_polyast = forcetype_monoast . polyast_to_monoast
 
 typeof_polymap :: Poly (Ast l '[]) -> Poly Type
 typeof_polymap = polymap (MonoP . Mono . type_of)

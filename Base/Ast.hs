@@ -12,41 +12,41 @@ infixr `RecordConsA`
 data Store :: [*] -> * where
   NilST ::
     Store '[]
-  ConsST :: (A Type h, Typeable t) =>
+  ConsST :: A Type h =>
     h -> Store t -> Store (h ': t)
 
 data Env :: [*] -> * where
   NilEN ::
     Env '[]
-  ConsEN :: (A Type h, Typeable t) =>
+  ConsEN :: A Type h =>
     (String, Type h) -> Env t -> Env (h ': t)
   LetEN ::
     (String, Poly (Ast Hi e)) -> Env e -> Env e
 
 data Ast :: AstLevel -> [*] -> * -> * where
-  AddA :: Typeable e =>
+  AddA ::
     Ast l e (Int -> Int -> Int)
-  LiteralA :: Typeable e =>
+  LiteralA ::
     Int -> Ast l e Int
-  VarA :: (A Type a, Typeable e) =>
+  VarA :: A Type a =>
     Ast l (a ': e) a
-  LiftA :: (A Type a, A Type b, Typeable e) =>
+  LiftA :: (A Type a, A Type b) =>
     Ast l e a -> Ast l (b ': e) a
-  LambdaA :: (A Type a, A Type b, Typeable e) =>
+  LambdaA :: (A Type a, A Type b) =>
     Ast l (a ': e) b -> Ast l e (a -> b)
-  ErrorA :: (A Type a, Typeable e) =>
+  ErrorA :: A Type a =>
     String -> Ast l e a
-  AppA :: (A Type a, A Type b, Typeable e) =>
+  AppA :: (A Type a, A Type b) =>
     Ast l e (a -> b) -> Ast l e a -> Ast l e b
-  RecordHeadA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
+  RecordHeadA :: (A Type a, A FieldName f, A RecordType t) =>
     Ast l e (Record ('(f, a) ': t)) -> Ast l e a
-  RecordTailA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
+  RecordTailA :: (A Type a, A FieldName f, A RecordType t) =>
     Ast l e (Record ('(f, a) ': t)) -> Ast l e (Record t)
-  RecordNilA :: Typeable e =>
+  RecordNilA ::
     Ast l e (Record '[])
-  RecordConsA :: (A Type a, A FieldName f, A RecordType t, Typeable e) =>
+  RecordConsA :: (A Type a, A FieldName f, A RecordType t) =>
     (FieldName f, Ast l e a) -> Ast l e (Record t) -> Ast l e (Record ('(f, a) ': t))
-  RecordGetA :: (A Type a, A FieldName f, A Type r, Typeable e) =>
+  RecordGetA :: (A Type a, A FieldName f, A Type r) =>
     FieldName f -> Ast Hi e (HasField '(f, a) r) -> Ast Hi e a
 
 type instance T (Ast l e) = Type
