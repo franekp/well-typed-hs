@@ -5,16 +5,19 @@ module Semantics.Records (resolve_field_lookups) where
 import Base
 import Semantics.CastModulo (cast_modulo)
 
+import Unsafe.Coerce (unsafeCoerce)
+
 resolve_field_lookups :: Mono (Ast Hi '[]) -> Mono (Ast Lo '[])
 resolve_field_lookups (Mono a) = resolve_field_lookups' a
 
 resolve_field_lookups' :: forall aa e. A Type aa => Ast Hi e aa -> Mono (Ast Lo e)
-resolve_field_lookups' (RecordGetA field record) =
-  case resolve_field_lookups' record of
-    Mono record' -> case type_of record' of
-      RecordT _ -> helper record' field
-      _ -> error "not a record type"
-  where
+resolve_field_lookups' (RecordGetA field record) = do_work (resolve_field_lookups' record) where
+    do_work :: Mono (Ast Lo e) -> Mono (Ast Lo e)
+    do_work record = case record of
+      Mono record' -> case type_of record' of
+        RecordT _ -> helper record' field
+        HasFieldT _ (rest :: Type rest) -> do_work $ Mono (unsafeCoerce record' :: Ast Lo e rest)
+        _ -> error $ "not a record type: " ++ (show $ Mono $ type_of record')
     helper :: forall f r. (A RecordType r, Typeable f) => Ast Lo e (Record r) -> FieldName f -> Mono (Ast Lo e)
     helper record field = case (type_of record :: Type (Record r)) of
       RecordT (ConsRT (f', a') rest') ->
@@ -57,7 +60,7 @@ resolve_field_lookups' (AppA f a) = result where
     a :-> b -> case cast_modulo arg of
       Just correct_arg -> Mono $ fun `AppA` correct_arg
       Nothing -> Mono $ (ErrorA "wrong type of function argument" :: Ast Lo e Void)
-    _ -> Mono $ (ErrorA "_ is not a function" :: Ast Lo e Void)
+    _ -> Mono $ (ErrorA "Records.hs: _ is not a function" :: Ast Lo e Void)
   result = case f' of
     Mono ff -> case a' of
       Mono aa -> cont ff aa
