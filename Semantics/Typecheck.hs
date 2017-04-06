@@ -113,3 +113,4 @@ typecheck' te e (RecordGetUA f r) = polymap cont $ typecheck' te e r where
               error "field name mismatch"
           Nothing ->
             error "field name mismatch"
+    _ -> error "type mismatch"
