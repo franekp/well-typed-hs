@@ -57,7 +57,7 @@ test_typecheck_records =
   ]
 
 test_eval =
-  let f uast = (eval_polyast $ typecheck uast :: Int) in
+  let f uast = (eval_monoast $ polyast_to_monoast $ typecheck uast :: Int) in
   map f uast_int_examples == [8, 8]
 
 test_eval_records =

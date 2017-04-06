@@ -32,9 +32,6 @@ eval_ast' s ((f, h) `RecordConsA` t) = (f, eval_ast' s h) `ConsRC` eval_ast' s t
 eval_monoast :: (A Type a, Typeable l) => Mono (Ast l '[]) -> a
 eval_monoast = eval_ast . forcetype_monoast
 
-eval_polyast :: (A Type a, Typeable l) => Poly (Ast l '[]) -> a
-eval_polyast = eval_ast . forcetype_polyast
-
 polyast_to_monoast :: Poly (Ast l '[]) -> Mono (Ast l '[])
 polyast_to_monoast (ForallP _ exists_poly) =
   case exists_poly of
