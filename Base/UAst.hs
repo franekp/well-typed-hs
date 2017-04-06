@@ -17,5 +17,9 @@ data UAst = AddUA
   | RecordConsUA (String, UAst) UAst
   | RecordGetUA String UAst
 
-data UMonoType = IntUMT | ArrowUMT UMonoType UMonoType | VarUMT String
+data UMonoType = IntUMT
+  | ArrowUMT UMonoType UMonoType
+  | VarUMT String
+  | HasFieldUMT (String, UMonoType) UMonoType
+
 data UPolyType = ForallUPT String UPolyType | MonoUPT UMonoType

@@ -24,6 +24,10 @@ typecheck_monotype te (a `ArrowUMT` b) =
   case (typecheck_monotype te a, typecheck_monotype te b) of
     (Mono a', Mono b') -> Mono $ a' :-> b'
 typecheck_monotype te (VarUMT var) = te `lookup_type` var
+typecheck_monotype te (HasFieldUMT (field, a) rest) =
+  case (typecheck_monotype te a, typecheck_monotype te rest) of
+    (Mono a', Mono rest') -> case (read field :: Mono FieldName) of
+      Mono (field' :: FieldName f) -> Mono $ HasFieldT (field', a') rest'
 
 hash :: String -> Int
 hash = foldl' (\h c -> 33*h `xor` fromEnum c) 5381
