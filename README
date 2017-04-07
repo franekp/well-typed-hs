@@ -1,8 +1,3 @@
-gen_constraints -> fix a bug where a (proper) constraint a ~ b might be prevented
-from existence when a < start_var but b >= start_var
-
-synchronize_quantifiers -> fix it so that each quantifier has it's own unique id!
-
 exception handling guide:
 ghc -prof -fprof-auto -fprof-auto-calls Main.hs -o main
 ./main +RTS -xc
