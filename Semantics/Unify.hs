@@ -238,34 +238,28 @@ unify f_a a_input f_b b_input cont =
 
 test_unify =
   let
+    remove_digits :: String -> String
+    remove_digits [] = []
+    remove_digits (h:t) =
+      let tt = remove_digits t in
+      if any (== h) "0123456789" then tt else h:tt
+  in
+  let
     (e1, e2) =
       synchronize_quantifiers
         (polytype_examples !! 3)
         (polytype_examples !! 2)
   in (all id [
-    show e1 == "forall a7 b8 c4 d5 e6. (a -> b) -> (b -> a) -> a -> a",
-    show e2 == "forall a7 b8 c4 d5 e6. (c -> d) -> (d -> e) -> c -> e",
-    show (unify
+    remove_digits (show e1) == "forall a b c d e. (a -> b) -> (b -> a) -> a -> a",
+    remove_digits (show e2) == "forall a b c d e. (c -> d) -> (d -> e) -> c -> e",
+    remove_digits (show (unify
       (Mono . type_of) (polytype_examples !! 3)
       (Mono . type_of) (polytype_examples !! 2)
       (\a b -> MonoP $ Mono a)
-    ) == "forall a5 b6. (b -> a) -> (a -> b) -> b -> b",
-    show (unify
+    )) == "forall a b. (a -> b) -> (b -> a) -> a -> a",
+    remove_digits (show (unify
       (Mono . type_of) (polytype_examples !! 3)
       (Mono . type_of) (polytype_examples !! 2)
       (\a b -> MonoP $ Mono b)
-    ) == "forall a5 b6. (b -> a) -> (a -> b) -> b -> b"
-  ]) || (all id [
-    show e1 == "forall a b c d e. (a -> b) -> (b -> a) -> a -> a",
-    show e2 == "forall a b c d e. (c -> d) -> (d -> e) -> c -> e",
-    show (unify
-      (Mono . type_of) (polytype_examples !! 3)
-      (Mono . type_of) (polytype_examples !! 2)
-      (\a b -> MonoP $ Mono a)
-    ) == "forall a b. (b -> a) -> (a -> b) -> b -> b",
-    show (unify
-      (Mono . type_of) (polytype_examples !! 3)
-      (Mono . type_of) (polytype_examples !! 2)
-      (\a b -> MonoP $ Mono b)
-    ) == "forall a b. (b -> a) -> (a -> b) -> b -> b"
+    )) == "forall a b. (a -> b) -> (b -> a) -> a -> a"
   ])

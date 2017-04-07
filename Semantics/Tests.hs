@@ -53,7 +53,7 @@ test_typecheck_records =
   in map f uast_record_examples == [
     "{A :: Int, b :: Int, fun :: Int -> Int}",
     "{nest :: {A :: Int, b :: Int, fun :: Int -> Int}, A :: Int}",
-    "{::}"
+    "{::}", "Int", "Int", "Int", "Int"
   ]
 
 test_eval =
@@ -73,14 +73,15 @@ test_eval_records =
   in map f uast_record_examples == [
     "{A = 5, b = 2, fun = <func>}",
     "{nest = {A = 5, b = 2, fun = <func>}, A = 5}",
-    "{}"
+    "{}", "7", "7", "8", "7"
   ]
 
 main =
   let
     f :: UAst -> String
     f uast = case resolve_field_lookups $ polyast_to_monoast $ typecheck uast of
-        Mono ast -> show_value $ eval_ast ast
+        Mono ast -> (show_value $ eval_ast ast) ++ " :: " ++ (show $ type_of ast)
+    f' uast = show $ typeof_polymap $ typecheck uast
   in print $ map f uast_record_examples
 
 test_show_read_letter = all id [

@@ -83,10 +83,59 @@ uast_int_examples = [
 uast_record_examples :: [UAst]
 uast_record_examples = [
     ("A", LiteralUA 5) `RecordConsUA` ("b", LiteralUA 2) `RecordConsUA`
-    ("fun", AddUA `AppUA` LiteralUA 3) `RecordConsUA` RecordNilUA,
+    ("fun", AddUA `AppUA` LiteralUA 3) `RecordConsUA` RecordNilUA
+    ,
     ("nest", uast_record_examples !! 0) `RecordConsUA` ("A", LiteralUA 5)
-    `RecordConsUA` RecordNilUA,
+    `RecordConsUA` RecordNilUA
+    ,
     RecordNilUA
+    ,
+    ("dot_f", (LambdaUA ("re", (ForallUPT "a" $ ForallUPT "r" $ MonoUPT $ HasFieldUMT ("f", VarUMT "a") (VarUMT "r")))
+      (RecordGetUA "f" (VarUA "re"))
+    )) `LetUA` (
+      AddUA
+      `AppUA` (VarUA "dot_f" `AppUA` (
+        ("f", LiteralUA 5) `RecordConsUA` ("x", LiteralUA 2) `RecordConsUA` RecordNilUA
+      ))
+      `AppUA` (VarUA "dot_f" `AppUA` (
+        ("x", LiteralUA 5) `RecordConsUA` ("f", LiteralUA 2) `RecordConsUA` RecordNilUA
+      ))
+    )
+    ,
+    ("dot_f", (LambdaUA ("re", (ForallUPT "a" $ ForallUPT "b" $ ForallUPT "r" $ MonoUPT $ HasFieldUMT ("f", VarUMT "a") $ HasFieldUMT ("x", VarUMT "b") $ (VarUMT "r")))
+      (RecordGetUA "f" (VarUA "re"))
+    )) `LetUA` (
+      AddUA
+      `AppUA` (VarUA "dot_f" `AppUA` (
+        ("f", LiteralUA 5) `RecordConsUA` ("x", LiteralUA 2) `RecordConsUA` RecordNilUA
+      ))
+      `AppUA` (VarUA "dot_f" `AppUA` (
+        ("x", LiteralUA 5) `RecordConsUA` ("f", LiteralUA 2) `RecordConsUA` RecordNilUA
+      ))
+    )
+    ,
+    ("func", ("arg_func", ForallUPT "af" $ MonoUPT $ VarUMT "af") `LambdaUA` (
+      VarUA "arg_func"
+    )) `LetUA`
+    ("func2", ("arg_func2", ForallUPT "af2" $ MonoUPT $ VarUMT "af2") `LambdaUA` (
+      VarUA "arg_func2"
+    )) `LetUA`((("arg", MonoUPT $ IntUMT) `LambdaUA` (
+      AddUA
+      `AppUA` (VarUA "func2" `AppUA` VarUA "arg")
+      `AppUA` (VarUA "func2" `AppUA` VarUA "arg")
+    ) ) `AppUA` LiteralUA 4)
+    ,
+    ("dot_f", (LambdaUA ("re", (ForallUPT "r" $ ForallUPT "a" $ MonoUPT $ HasFieldUMT ("f", VarUMT "a") $ (VarUMT "r")))
+      (RecordGetUA "f" (VarUA "re"))
+    )) `LetUA` ("dot_x", (LambdaUA ("re", (ForallUPT "rr" $ ForallUPT "b" $ MonoUPT $ HasFieldUMT ("x", VarUMT "b") $ (VarUMT "rr")))
+      (RecordGetUA "x" (VarUA "re"))
+    )) `LetUA` ((
+      ("rec", (ForallUPT "rrr" $ MonoUPT $ HasFieldUMT ("f", IntUMT) $ HasFieldUMT ("x", IntUMT) $ (VarUMT "rrr")))
+      `LambdaUA` (
+      AddUA
+      `AppUA` (VarUA "dot_x" `AppUA` VarUA "rec")
+      `AppUA` (VarUA "dot_f" `AppUA` VarUA "rec")
+    )) `AppUA` (("f", LiteralUA 2) `RecordConsUA` ("x", LiteralUA 5) `RecordConsUA` RecordNilUA))
   ]
 
 monorecordtype_examples :: [Mono RecordType]
