@@ -8,6 +8,8 @@ import Semantics.CastModulo (cast_modulo)
 import Data.List (foldl')
 import Data.Bits (xor)
 
+import GHC.Stack (errorWithStackTrace)
+
 newtype TypeEnv = TypeEnv [(String, Mono Type)]
 
 lookup_type :: TypeEnv -> String -> Mono Type
@@ -67,19 +69,24 @@ typecheck = typecheck' (TypeEnv []) NilEN
 typecheck' :: forall e. TypeEnv -> Env e -> UAst -> Poly (Ast Hi e)
 typecheck' te e AddUA = MonoP $ Mono $ AddA
 typecheck' te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
-typecheck' te e (AppUA fun arg) =
-  unify type_of_arg (typecheck' te e fun) (Mono . type_of) (typecheck' te e arg) cont
+typecheck' te e (AppUA fun' arg') =
+  unify type_of_arg (typecheck' te e fun') (Mono . type_of) (typecheck' te e arg') cont
   where
     type_of_arg :: A Type a => Ast Hi e a -> Mono Type
     type_of_arg fun = case type_of fun of
       a :-> b -> Mono a
-      _ -> error "_ is not a function"
+      _ -> error $ show fun ++ " :: " ++ show (type_of fun) ++ " is not a function taking " ++ show (arg')
     cont :: (A Type a, A Type b) => Ast Hi e a -> Ast Hi e b -> Poly (Ast Hi e)
     cont fun arg = case type_of fun of
       a :-> b -> case cast_modulo arg of
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
-        Nothing -> MonoP $ Mono $ (ErrorA "wrong type of function argument" :: Ast Hi e Void)
-      _ -> MonoP $ Mono $ (ErrorA "_ is not a function" :: Ast Hi e Void)
+        Nothing -> errorWithStackTrace $ ("\n\nwrong type of function ("
+          ++ show fun' ++ " :: " ++ show (type_of fun)
+          ++") argument (" ++ show arg' ++ " :: " ++ show (type_of arg) ++ ")\n"
+          ) ++ ("\n\nwrong type of function ("
+            ++ show fun ++ " :: " ++ show (type_of fun)
+            ++") argument (" ++ show arg ++ " :: " ++ show (type_of arg) ++ ")" )
+      _ -> error $ show (type_of fun) ++ " is not a function"
 typecheck' te e ((var_name, ty) `LambdaUA` body) = (typecheck_polytype te ty helper :: Poly (Ast Hi e)) where
   helper :: forall a l. A Type a => TypeEnv -> Type a -> Poly (Ast Hi e)
   helper te' tt = polymap (MonoP . Mono . (
@@ -116,5 +123,5 @@ typecheck' te e (RecordGetUA f r) = polymap cont $ typecheck' te e r where
             else
               error "field name mismatch"
           Nothing ->
-            error "field name mismatch"
+            error $ "field name mismatch: " ++ show f ++ " != " ++ show f'
     _ -> error "type mismatch"
