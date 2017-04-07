@@ -16,10 +16,13 @@ data UAst = AddUA
   | RecordNilUA
   | RecordConsUA (String, UAst) UAst
   | RecordGetUA String UAst
+  deriving (Show)
 
 data UMonoType = IntUMT
   | ArrowUMT UMonoType UMonoType
   | VarUMT String
   | HasFieldUMT (String, UMonoType) UMonoType
+  deriving (Show)
 
 data UPolyType = ForallUPT String UPolyType | MonoUPT UMonoType
+  deriving (Show)
