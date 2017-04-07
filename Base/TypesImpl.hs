@@ -42,12 +42,16 @@ instance (A Type rest, A Type a, A FieldName f) => A Type (HasField '(f, a) rest
   anything = HasFieldT (anything, anything) anything
 
 deriving instance Eq (Type a)
---deriving instance Typeable Type
 instance Eq (Mono Type) where
+  -- first all uninhabitable types that are heavily used as dummy variables
+  -- for the purpose of unification of parameters of run-time type-level
+  -- functions; for some complex reasons they all need to be considered equal
+  Mono VoidT == _ = True
+  _ == Mono VoidT = True
+  Mono (TypeVarT _) == _ = True
+  _ == Mono (TypeVarT _) = True
   Mono (a :-> b) == Mono (a' :-> b') = Mono a == Mono a' && Mono b == Mono b'
   Mono IntT == Mono IntT = True
-  Mono VoidT == Mono VoidT = True
-  Mono (TypeVarT a) == Mono (TypeVarT a') = Mono a == Mono a'
   Mono (RecordT a) == Mono (RecordT a') = Mono a == Mono a'
   Mono (HasFieldT (f, a) rest) == Mono rest' = Mono rest == Mono rest'
   Mono rest == Mono (HasFieldT (f', a') rest') = Mono rest == Mono rest'

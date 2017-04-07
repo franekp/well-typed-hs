@@ -5,19 +5,22 @@ module Semantics.Unify (unify, test_unify) where
 import Base
 
 synchronize_quantifiers :: Poly t -> Poly t -> (Poly t, Poly t)
-synchronize_quantifiers (MonoP a) (MonoP b) = (MonoP a, MonoP b)
-synchronize_quantifiers (MonoP a) b = (aa, bb) where
-  (bb, aa) = synchronize_quantifiers b (MonoP a)
-synchronize_quantifiers (ForallP id_a a_) b_ =
+synchronize_quantifiers = synchronize_quantifiers' 0
+synchronize_quantifiers' :: Int -> Poly t -> Poly t -> (Poly t, Poly t)
+synchronize_quantifiers' i (MonoP a) (MonoP b) = (MonoP a, MonoP b)
+synchronize_quantifiers' i (MonoP a) b = (aa, bb) where
+  (bb, aa) = synchronize_quantifiers' i b (MonoP a)
+synchronize_quantifiers' i (ForallP id_a a_) b_ =
   let
+    -- TODO: optimize this!
     helper_left :: A (T t) a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly t a
     helper_left (ExistsPoly a_) (ExistsPoly b_) =
-      let (aa, bb) = synchronize_quantifiers a_ b_ in ExistsPoly aa
+      let (aa, bb) = synchronize_quantifiers' (i+1) a_ b_ in ExistsPoly aa
     helper_right :: A (T t) a => ExistsPoly t a -> ExistsPoly t a -> ExistsPoly t a
     helper_right (ExistsPoly a_) (ExistsPoly b_) =
-      let (aa, bb) = synchronize_quantifiers a_ b_ in ExistsPoly bb
+      let (aa, bb) = synchronize_quantifiers' (i+1) a_ b_ in ExistsPoly bb
   in
-  (ForallP id_a $ helper_left a_ (ExistsPoly b_), ForallP id_a $ helper_right a_ (ExistsPoly b_))
+  (ForallP i $ helper_left a_ (ExistsPoly b_), ForallP i $ helper_right a_ (ExistsPoly b_))
 
 newtype VarMapping = VarMapping [(Int, Mono TypeVar)]
   deriving Show
@@ -166,6 +169,11 @@ gen_constraints start_var ((f, t) `HasFieldT` rest) a =
   gen_constraints_assert_has_field start_var f t a ++ gen_constraints start_var rest a
 gen_constraints start_var a ((f, t) `HasFieldT` rest) =
   gen_constraints start_var ((f, t) `HasFieldT` rest) a
+gen_constraints start_var (TypeVarT a) (TypeVarT b) =
+  if Mono a < start_var && Mono b < start_var then [] else
+  if Mono a == Mono b then [] else
+  if Mono a < Mono b then [Constraint (Mono b) (Mono (TypeVarT a))] else
+  [Constraint (Mono a) (Mono (TypeVarT b))]
 gen_constraints start_var (TypeVarT a) a' = if Mono a < start_var then [] else
   case a' of
     TypeVarT a'' ->
