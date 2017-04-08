@@ -18,7 +18,7 @@ type Sym = [Chr]
 
 data Nat = Zero | Succ Nat
 
-data AstLevel = Hi | Lo
+data Level = Hi | Lo
 
 deriving instance Typeable Hi
 deriving instance Typeable Lo

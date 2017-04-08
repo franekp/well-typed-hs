@@ -4,11 +4,11 @@ ghc -prof -fprof-auto -fprof-auto-calls Main.hs -o main
 
 AST processing pipeline:
 
-InputAst
+SyntaxAst
 ---[Syntax.prepare]--->
-UAst (Maybe UPolyType)
+UAst Hi
 ---[TypeSystem.infer]--->
-UAst UPolyType
+UAst Lo
 ---[Semantics.Typecheck.typecheck]--->
 Poly (Ast Hi '[])
 ---[Semantics.Eval.polyast_to_monoast]

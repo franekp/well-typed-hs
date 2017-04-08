@@ -23,7 +23,7 @@ data Env :: [*] -> * where
   LetEN ::
     (String, Poly (Ast Hi e)) -> Env e -> Env e
 
-data Ast :: AstLevel -> [*] -> * -> * where
+data Ast :: Level -> [*] -> * -> * where
   AddA ::
     Ast l e (Int -> Int -> Int)
   LiteralA ::

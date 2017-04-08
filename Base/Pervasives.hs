@@ -2,13 +2,13 @@
 #include "../settings.hs"
 
 module Base.Pervasives (
-  Chr, Nat(Zero, Succ), AstLevel(Hi, Lo), T, A, anything, type_of, Mono(..),
+  Chr, Nat(Zero, Succ), Level(Hi, Lo), T, A, anything, type_of, Mono(..),
   ExistsPoly(..), Poly(..), polymap, Typeable, Void, trace, cast,
 ) where
 import Data.Typeable (Typeable, cast)
 import Data.Void (Void)
 import Debug.Trace (trace)
-import Base.Kinds (Chr {- , Sym -}, Nat(Zero, Succ), AstLevel(Hi, Lo))
+import Base.Kinds (Chr {- , Sym -}, Nat(Zero, Succ), Level(Hi, Lo))
 
 class (Typeable a, Typeable t) => A (t :: k -> *) (a :: k) where
   anything :: t a
