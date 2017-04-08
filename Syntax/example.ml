@@ -18,7 +18,7 @@ bla = let Monad = IO in begin
 
 some_object = object
   a = 3
-  double (i : Int) = Add i i
+  double (i : Int) = i + i
 
 some_record = {a = 2, b = 3, c = 4,}
 some_list = [1, 2, 3,]

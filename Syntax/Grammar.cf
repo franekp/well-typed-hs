@@ -1,7 +1,7 @@
 -- layout rules
 
 layout "let", "begin", "object" ;
-layout stop "in";
+layout stop "in" ;
 layout toplevel ;
 
 -- top level
@@ -20,15 +20,19 @@ EList. Expr ::= "[" [ListItem] "]" ;
 ETuple. Expr ::= "(" ListItem "," [ListItem] ")" ;
 ERecord. Expr ::= "{" [RecordItem] "}" ;
 
-EApp. Expr2 ::= Expr2 Expr3 ;
+EAdd. Expr1 ::= Expr1 "+" Expr2 ;
+ESub. Expr1 ::= Expr1 "-" Expr2 ;
+EMul. Expr2 ::= Expr2 "*" Expr3 ;
+EDiv. Expr2 ::= Expr2 "/" Expr3 ;
 
-EFieldAccess. Expr3 ::= Expr3 "." Ident ;
+EApp. Expr5 ::= Expr5 Expr6 ;
+EFieldAccess. Expr6 ::= Expr6 "." Ident ;
 
-EVar. Expr4 ::= Ident ;
-EInt. Expr4 ::= Integer ;
-EString. Expr4 ::= String ;
+EVar. Expr7 ::= Ident ;
+EInt. Expr7 ::= Integer ;
+EString. Expr7 ::= String ;
 
-coercions Expr 4 ;
+coercions Expr 7 ;
 
 -- expressions that can only occur inside a block
 
