@@ -17,6 +17,7 @@ bla = let Monad = IO in begin
   a <- readLine
   b = a
   putStrLn b
+end
 
 some_object = object
   a = 3

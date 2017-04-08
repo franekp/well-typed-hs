@@ -1,12 +1,51 @@
+-- tokens (from least tight to most tight)
+
+token RAppOp ( [".:"]? ({"<|"}|'$'|'@') )
+  | ( [".:"]? ('$'|'@') ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
+
+token LPipeOp ( [".:"]? '|' )
+  | ( [".:"]? '|' ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
+
+token LAndOp ( [".:"]? '&' )
+  | ( [".:"]? '&' ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
+
+token RAssignOp [".:;"]? ["@#$%^&*-+.:;|"] '='+ ;
+
+token RelOp [".:"]? ({"~"}|{"!="}|{"/="}|{"<"}|{"<="}|{">"}|{">="}|(('='|'~') ["~!@#$%^&*-+.:;|/<>="]+)) ;
+
+token LAddOp ( [".:"]? ["+-"] )
+  | ( [".:"]? ["+-"] ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
+
+token LMulOp ( [".:"]? ["*/%"] )  -- below exception: no "**" possible
+  | ( [".:"]? ["*/%"] ["~!@#$%^&-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
+
+token RExpOp ( [".:"]? ({"^"}|{"**"}) )
+  | ( [".:"]? ({"^"}|{"**"}) ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
+
+token RComposeOp ( [".:"]? ({">>"}|{"<<"}) )
+  | ( [".:"]? ({">>"}|{"<<"}) ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
+
 -- layout rules
 
 layout "let", "begin", "object" ;
-layout stop "in" ;
+layout stop "in", "end" ;
 layout toplevel ;
 
 -- top level
 
 Module. Module ::= [Def] ;
+
+-- generic operators
+
+AnyAppOp. AnyOp ::= RAppOp ;
+AnyPipeOp. AnyOp ::= LPipeOp ;
+AnyAndOp. AnyOp ::= LAndOp ;
+AnyAssignOp. AnyOp ::= RAssignOp ;
+AnyRelOp. AnyOp ::= RelOp ;
+AnyAddOp. AnyOp ::= LAddOp ;
+AnyMulOp. AnyOp ::= LMulOp ;
+AnyExpOp. AnyOp ::= RExpOp ;
+AnyComposeOp. AnyOp ::= RComposeOp ;
 
 -- expressions
 
@@ -15,24 +54,38 @@ separator Expr ";" ;
 ELet. Expr ::= "let" "{" [Def] "}" "in" Expr ;
 ELambda. Expr ::= "fun" [Arg] "->" Expr ;
 EObject. Expr ::= "object" "{" [Def] "}" ;
-EBlock. Expr ::= "begin" "{" [BlockExpr] "}" ;
+EBlock. Expr ::= "begin" "{" [BlockExpr] "}" "end" ;
 EList. Expr ::= "[" [ListItem] "]" ;
 ETuple. Expr ::= "(" ListItem "," [ListItem] ")" ;
 ERecord. Expr ::= "{" [RecordItem] "}" ;
+EIf. Expr ::= "if" Expr "then" Expr "else" Expr ;
 
-EAdd. Expr1 ::= Expr1 "+" Expr2 ;
-ESub. Expr1 ::= Expr1 "-" Expr2 ;
-EMul. Expr2 ::= Expr2 "*" Expr3 ;
-EDiv. Expr2 ::= Expr2 "/" Expr3 ;
+EAppOp. Expr5 ::= Expr6 RAppOp Expr5 ;
+EPipeOp. Expr6 ::= Expr6 LPipeOp Expr7 ;
+EAndOp. Expr7 ::= Expr7 LAndOp Expr8 ;
+EAssignOp. Expr8 ::= Expr9 RAssignOp Expr8 ;
 
-EApp. Expr5 ::= Expr5 Expr6 ;
-EFieldAccess. Expr6 ::= Expr6 "." Ident ;
+ERelOp. Expr9 ::= Expr10 [RelExpr] ;
 
-EVar. Expr7 ::= Ident ;
-EInt. Expr7 ::= Integer ;
-EString. Expr7 ::= String ;
+RelExpr. RelExpr ::= RelOp Expr10 ;
+separator nonempty RelExpr "" ;
 
-coercions Expr 7 ;
+EAddOp. Expr10 ::= Expr10 LAddOp Expr11 ;
+EMulOp. Expr11 ::= Expr11 LMulOp Expr12 ;
+EExpOp. Expr12 ::= Expr13 RExpOp Expr12 ;
+EComposeOp. Expr13 ::= Expr14 RComposeOp Expr13 ;
+
+EBackticks. Expr14 ::= Expr14 "`" Ident "`" Expr15 ;
+
+EApp. Expr18 ::= Expr18 Expr19 ;
+EFieldAccess. Expr19 ::= Expr19 "." Ident ;
+
+EVar. Expr20 ::= Ident ;
+EOpVar. Expr20 ::= "(" AnyOp ")" ;
+EInt. Expr20 ::= Integer ;
+EString. Expr20 ::= String ;
+
+coercions Expr 20 ;
 
 -- expressions that can only occur inside a block
 
@@ -60,7 +113,8 @@ Arg. Arg ::= "(" Ident ":" TypeScheme ")" ;
 -- definitions
 
 separator Def ";" ;
-DDef. Def ::= Ident [Arg] "=" Expr ;
+DVar. Def ::= Ident [Arg] "=" Expr ;
+DOpVar. Def ::= "(" AnyOp ")" [Arg] "=" Expr ;
 DOpen. Def ::= "open" Ident ;
 
 -- types
