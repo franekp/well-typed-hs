@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Translate where
+module Syntax.Translate where
 
 import Syntax.AbsGrammar
 import Syntax.ErrM
