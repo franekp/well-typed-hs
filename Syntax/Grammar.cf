@@ -1,47 +1,77 @@
 -- layout rules
 
 layout "let", "begin", "object" ;
-layout stop "in", "end" ;
+layout stop "in";
 layout toplevel ;
 
 -- top level
 
 Module. Module ::= [Def] ;
 
-separator Def ";" ;
-separator Arg "" ;
-separator Ident "" ;
-
 -- expressions
+
+separator Expr ";" ;
 
 ELet. Expr ::= "let" "{" [Def] "}" "in" Expr ;
 ELambda. Expr ::= "fun" [Arg] "->" Expr ;
-EApp. Expr1 ::= Expr1 Expr2 ;
-EVar. Expr2 ::= Ident ;
+EObject. Expr ::= "object" "{" [Def] "}" ;
+EBlock. Expr ::= "begin" "{" [BlockExpr] "}" ;
+EList. Expr ::= "[" [ListItem] "]" ;
+ETuple. Expr ::= "(" ListItem "," [ListItem] ")" ;
+ERecord. Expr ::= "{" [RecordItem] "}" ;
 
-EInt. Expr2 ::= Integer ;
-EString. Expr2 ::= String ;
-ETrue. Expr2 ::= "True" ;
-EFalse. Expr2 ::= "False" ;
-EAdd. Expr2 ::= "Add" ;
+EApp. Expr2 ::= Expr2 Expr3 ;
 
-coercions Expr 2 ;
+EFieldAccess. Expr3 ::= Expr3 "." Ident ;
 
--- arguments
+EVar. Expr4 ::= Ident ;
+EInt. Expr4 ::= Integer ;
+EString. Expr4 ::= String ;
 
+coercions Expr 4 ;
+
+-- expressions that can only occur inside a block
+
+separator BlockExpr ";" ;
+BlockExprId. BlockExpr ::= Expr ;
+BlockExprBind. BlockExpr ::= Ident "<-" Expr ;
+BlockExprDef. BlockExpr ::= Ident "=" Expr ;
+
+-- list items
+
+separator ListItem "," ;
+ListItem. ListItem ::= Expr ;
+
+-- record items
+
+separator RecordItem "," ;
+--terminator RecordItem "," ;
+RecordItem. RecordItem ::= Def ;
+
+-- function arguments
+
+separator Arg "" ;
 Arg. Arg ::= "(" Ident ":" TypeScheme ")" ;
 
 -- definitions
 
+separator Def ";" ;
 DDef. Def ::= Ident [Arg] "=" Expr ;
 DOpen. Def ::= "open" Ident ;
 
 -- types
 
-TypeScheme. TypeScheme ::= [Ident] "." Type ;
+terminator TypeV "." ;
+TypeV. TypeV ::= Ident ;
+
+TypeScheme. TypeScheme ::= [TypeV] Type ;
 
 TArrow. Type ::= Type1 "->" Type ;
+TRecord. Type ::= "{" Ident "|" [FieldAnnotation] "}" ;
 TInt. Type1 ::= "Int" ;
 TVar. Type1 ::= Ident ;
+
+FieldAnnotation. FieldAnnotation ::= Ident ":" Type ;
+separator FieldAnnotation "," ;
 
 coercions Type 1 ;
