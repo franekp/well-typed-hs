@@ -2,7 +2,10 @@
 set -e
 set -u
 
-bnfc -m Grammar.cf
-cp fixErrM.hs ErrM.hs
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $DIR/..
+
+bnfc -p Syntax -m Syntax/Grammar.cf
+cp Syntax/fixErrM.hs Syntax/ErrM.hs
 make
-happy -gca ParGrammar.y --info=Grammar.info
+happy -gca Syntax/ParGrammar.y --info=Syntax/Grammar.info
