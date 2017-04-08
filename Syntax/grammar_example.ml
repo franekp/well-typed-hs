@@ -9,6 +9,8 @@ something = let
 
 double_quantf = fun (ff : a. b. a -> b) -> 2
 
+hasfield_stuff (re : r. a. b. {a | a_field : a, b_field : b}) = re.a_field
+
 main = 4
 
 bla = let Monad = IO in begin
