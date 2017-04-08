@@ -1,0 +1,47 @@
+-- layout rules
+
+layout "let", "begin", "object" ;
+layout stop "in", "end" ;
+layout toplevel ;
+
+-- top level
+
+Module. Module ::= [Def] ;
+
+separator Def ";" ;
+separator Arg "" ;
+separator Ident "" ;
+
+-- expressions
+
+ELet. Expr ::= "let" "{" [Def] "}" "in" Expr ;
+ELambda. Expr ::= "fun" [Arg] "->" Expr ;
+EApp. Expr1 ::= Expr1 Expr2 ;
+EVar. Expr2 ::= Ident ;
+
+EInt. Expr2 ::= Integer ;
+EString. Expr2 ::= String ;
+ETrue. Expr2 ::= "True" ;
+EFalse. Expr2 ::= "False" ;
+EAdd. Expr2 ::= "Add" ;
+
+coercions Expr 2 ;
+
+-- arguments
+
+Arg. Arg ::= "(" Ident ":" TypeScheme ")" ;
+
+-- definitions
+
+DDef. Def ::= Ident [Arg] "=" Expr ;
+DOpen. Def ::= "open" Ident ;
+
+-- types
+
+TypeScheme. TypeScheme ::= [Ident] "." Type ;
+
+TArrow. Type ::= Type1 "->" Type ;
+TInt. Type1 ::= "Int" ;
+TVar. Type1 ::= Ident ;
+
+coercions Type 1 ;
