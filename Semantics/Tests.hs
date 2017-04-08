@@ -53,7 +53,7 @@ test_typecheck_records =
   in map f uast_record_examples == [
     "{A :: Int, b :: Int, fun :: Int -> Int}",
     "{nest :: {A :: Int, b :: Int, fun :: Int -> Int}, A :: Int}",
-    "{::}", "Int", "Int", "Int", "Int"
+    "{::}", "Int", "Int", "Int", "Int", "Int"
   ]
 
 test_eval =
@@ -73,7 +73,7 @@ test_eval_records =
   in map f uast_record_examples == [
     "{A = 5, b = 2, fun = <func>}",
     "{nest = {A = 5, b = 2, fun = <func>}, A = 5}",
-    "{}", "7", "7", "8", "7"
+    "{}", "7", "7", "8", "7", "3"
   ]
 
 main =

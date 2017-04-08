@@ -136,6 +136,14 @@ uast_record_examples = [
       `AppUA` (VarUA "dot_x" `AppUA` VarUA "rec")
       `AppUA` (VarUA "dot_f" `AppUA` VarUA "rec")
     )) `AppUA` (("f", LiteralUA 2) `RecordConsUA` ("x", LiteralUA 5) `RecordConsUA` RecordNilUA))
+    ,
+    ("as_type_of",
+      LambdaUA ("a", ForallUPT "a" $ MonoUPT $ VarUMT "a") $
+      LambdaUA ("b", MonoUPT $ VarUMT "a") $
+      VarUA "a"
+    ) `LetUA` (
+      VarUA "as_type_of" `AppUA` LiteralUA 3 `AppUA` LiteralUA 4
+    )
   ]
 
 monorecordtype_examples :: [Mono RecordType]
