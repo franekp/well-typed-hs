@@ -20,6 +20,11 @@ lookup_type (TypeEnv ((name, tt):t)) var =
 update_typeenv :: TypeEnv -> String -> Mono Type -> TypeEnv
 update_typeenv (TypeEnv li) name tt = TypeEnv $ (name, tt):li
 
+lookup_ext_module :: ExtModuleEnv -> String -> ExtModule
+lookup_ext_module (ExtModuleEnv []) var = error $ "unknown module: '" ++ var ++ "'"
+lookup_ext_module (ExtModuleEnv ((name, mo):rest)) var =
+  if var == name then mo else lookup_ext_module (ExtModuleEnv rest) var
+
 typecheck_monotype :: TypeEnv -> UMonoType -> Mono Type
 typecheck_monotype te IntUMT = Mono IntT
 typecheck_monotype te (a `ArrowUMT` b) =
@@ -63,15 +68,21 @@ lookup_var ((name, val) `LetEN` rest) var =
     -- should work
   else
     lookup_var rest var
+lookup_var (ExtModule [] `OpenEN` rest) var = lookup_var rest var
+lookup_var (ExtModule ((name, builtin):t) `OpenEN` rest) var =
+  if name == var then
+    polymap (MonoP . Mono . BuiltinA) builtin
+  else
+    lookup_var (ExtModule t `OpenEN` rest) var
 
-typecheck :: UAst Lo -> Poly (Ast Hi '[])
-typecheck = typecheck' (TypeEnv []) NilEN
+typecheck :: ExtModuleEnv -> UAst Lo -> Poly (Ast Hi '[])
+typecheck me = typecheck' me (TypeEnv []) NilEN
 
-typecheck' :: forall e. TypeEnv -> Env e -> UAst Lo -> Poly (Ast Hi e)
-typecheck' te e AddUA = MonoP $ Mono $ AddA
-typecheck' te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
-typecheck' te e (AppUA fun' arg') =
-  unify type_of_arg (typecheck' te e fun') (Mono . type_of) (typecheck' te e arg') cont
+typecheck' :: forall e. ExtModuleEnv -> TypeEnv -> Env e -> UAst Lo -> Poly (Ast Hi e)
+typecheck' me te e AddUA = MonoP $ Mono $ AddA
+typecheck' me te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
+typecheck' me te e (AppUA fun' arg') =
+  unify type_of_arg (typecheck' me te e fun') (Mono . type_of) (typecheck' me te e arg') cont
   where
     type_of_arg :: A Type a => Ast Hi e a -> Mono Type
     type_of_arg fun = case type_of fun of
@@ -88,22 +99,22 @@ typecheck' te e (AppUA fun' arg') =
             ++ show fun ++ " :: " ++ show (type_of fun)
             ++") argument (" ++ show arg ++ " :: " ++ show (type_of arg) ++ ")" )
       _ -> error $ show (type_of fun) ++ " is not a function"
-typecheck' te e ((var_name, ty) `LambdaUA` body) = (typecheck_polytype te ty helper :: Poly (Ast Hi e)) where
+typecheck' me te e ((var_name, ty) `LambdaUA` body) = (typecheck_polytype te ty helper :: Poly (Ast Hi e)) where
   helper :: forall a l. A Type a => TypeEnv -> Type a -> Poly (Ast Hi e)
   helper te' tt = polymap (MonoP . Mono . (
       LambdaA :: forall b l. A Type b => Ast Hi (a ': e) b -> Ast Hi e (a -> b)
     )) body_ast
     where
       body_ast :: Poly (Ast Hi (a ': e))
-      body_ast = typecheck' te' ((var_name, tt) `ConsEN` e) body
-typecheck' te e (VarUA name) = lookup_var e name
-typecheck' te e ((name, val) `LetUA` expr) =
-  typecheck' te ((name, (typecheck' te e val)) `LetEN` e) expr
-typecheck' te e RecordNilUA = MonoP $ Mono $ RecordNilA
-typecheck' te e ((fu, au) `RecordConsUA` restu) = result where
-  restp = typecheck' te e restu
+      body_ast = typecheck' me te' ((var_name, tt) `ConsEN` e) body
+typecheck' me te e (VarUA name) = lookup_var e name
+typecheck' me te e ((name, val) `LetUA` expr) =
+  typecheck' me te ((name, (typecheck' me te e val)) `LetEN` e) expr
+typecheck' me te e RecordNilUA = MonoP $ Mono $ RecordNilA
+typecheck' me te e ((fu, au) `RecordConsUA` restu) = result where
+  restp = typecheck' me te e restu
   fm = (read fu :: Mono FieldName)
-  ap = typecheck' te e au
+  ap = typecheck' me te e au
   result = polymap cont_a ap
   cont_a :: forall a. A Type a => Ast Hi e a -> Poly (Ast Hi e)
   cont_a a = polymap cont_rest restp where
@@ -112,7 +123,7 @@ typecheck' te e ((fu, au) `RecordConsUA` restu) = result where
       Mono f -> case type_of rest of
         RecordT _ -> MonoP $ Mono $ (f, a) `RecordConsA` rest
         _ -> error "RecordCons with non-record tail."
-typecheck' te e (RecordGetUA f r) = polymap cont $ typecheck' te e r where
+typecheck' me te e (RecordGetUA f r) = polymap cont $ typecheck' me te e r where
   cont :: forall r. A Type r => Ast Hi e r -> Poly (Ast Hi e)
   cont r_ast = case type_of r_ast of
     HasFieldT ((f' :: FieldName f'), (_ :: Type a)) (_ :: Type r') ->
@@ -126,3 +137,5 @@ typecheck' te e (RecordGetUA f r) = polymap cont $ typecheck' te e r where
           Nothing ->
             error $ "field name mismatch: " ++ show f ++ " != " ++ show f'
     _ -> error "type mismatch"
+typecheck' me te e (OpenUA mod rest) =
+  typecheck' me te (OpenEN (lookup_ext_module me mod) e) rest

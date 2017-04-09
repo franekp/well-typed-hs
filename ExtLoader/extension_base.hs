@@ -1,0 +1,3 @@
+import Base
+
+bString = "blabla"

@@ -22,8 +22,16 @@ data Env :: [*] -> * where
     (String, Type h) -> Env t -> Env (h ': t)
   LetEN ::
     (String, Poly (Ast Hi e)) -> Env e -> Env e
+  OpenEN ::
+    ExtModule -> Env e -> Env e
 
 newtype Builtin a = Builtin a
+
+type instance T Builtin = Type
+
+newtype ExtModule = ExtModule [(String, Poly Builtin)]
+
+newtype ExtModuleEnv = ExtModuleEnv [(String, ExtModule)]
 
 instance Show (Builtin a) where
   show _ = "<builtin>"

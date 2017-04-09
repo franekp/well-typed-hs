@@ -47,7 +47,7 @@ transExpr x = case x of
   ELet [] expr -> transExpr expr
   ELet (h:t) expr -> case transDef h of
     BVar b -> LetUA b $ transExpr $ ELet t expr
-    BOpenModule m -> failure m
+    BOpenModule m -> OpenUA m $ transExpr $ ELet t expr
   ELetRec defs expr -> failure x
   ELambda [] expr -> transExpr expr
   ELambda (h:t) expr -> LambdaUA (transArg h) $ transExpr $ ELambda t expr
