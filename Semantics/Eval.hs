@@ -29,6 +29,7 @@ eval_ast' s (RecordTailA r) = case eval_ast' s r of
   (name, val) `ConsRC` rest -> rest
 eval_ast' s RecordNilA = NilRC
 eval_ast' s ((f, h) `RecordConsA` t) = (f, eval_ast' s h) `ConsRC` eval_ast' s t
+eval_ast' s (BuiltinA (Builtin a)) = a
 
 eval_monoast :: A Type a => Mono (Ast Lo '[]) -> a
 eval_monoast = eval_ast . forcetype_monoast

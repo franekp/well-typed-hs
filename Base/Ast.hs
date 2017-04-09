@@ -23,6 +23,11 @@ data Env :: [*] -> * where
   LetEN ::
     (String, Poly (Ast Hi e)) -> Env e -> Env e
 
+newtype Builtin a = Builtin a
+
+instance Show (Builtin a) where
+  show _ = "<builtin>"
+
 data Ast :: Level -> [*] -> * -> * where
   AddA ::
     Ast l e (Int -> Int -> Int)
@@ -48,5 +53,6 @@ data Ast :: Level -> [*] -> * -> * where
     (FieldName f, Ast l e a) -> Ast l e (Record t) -> Ast l e (Record ('(f, a) ': t))
   RecordGetA :: (A Type a, A FieldName f, A Type r) =>
     FieldName f -> Ast Hi e (HasField '(f, a) r) -> Ast Hi e a
+  BuiltinA :: Builtin a -> Ast l e a
 
 type instance T (Ast l e) = Type

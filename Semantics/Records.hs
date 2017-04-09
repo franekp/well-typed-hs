@@ -91,3 +91,7 @@ resolve_field_lookups' (RecordConsA (f, a) r) = result where
       Mono r' -> case type_of r' of
         RecordT _ -> helper (f, a') r'
         _ -> error "unreachable"
+resolve_field_lookups' (a@(BuiltinA b)) = Mono $ helper a where
+  helper :: forall e a. Ast Hi e a -> Ast Lo e a
+  helper (BuiltinA b) = (BuiltinA b)
+  helper _ = error "unreachable"
