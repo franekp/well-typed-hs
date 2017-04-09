@@ -49,6 +49,7 @@ lookup_var :: forall e l. Env e -> String -> Poly (Ast Hi e)
 lookup_var NilEN var = MonoP $ Mono
   (ErrorA $ "unknown variable: '" ++ var ++ "'" :: Ast Hi e Void)
 lookup_var ((name, ty) `ConsEN` rest) var =
+  if var == "+" then MonoP $ Mono AddA else
   if var == name then
     MonoP $ Mono VarA
   else
