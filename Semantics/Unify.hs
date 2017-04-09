@@ -69,8 +69,12 @@ dump_typevars (MonoP (Mono tt)) = do_stuff (type_of tt) [] where
   do_stuff :: A Type a => Type a -> [Mono TypeVar] -> [Mono TypeVar]
   do_stuff arg acc = case arg of
     a :-> b -> do_stuff a $ do_stuff b $ acc
+    IntT -> acc
+    VoidT -> acc
     TypeVarT a -> Mono a:acc
-    _ -> acc
+    HasFieldT (f, a) rest -> do_stuff a $ do_stuff rest $ acc
+    RecordT NilRT -> acc
+    RecordT (ConsRT (f, a) rest) -> do_stuff a $ do_stuff (RecordT rest) $ acc
 dump_typevars (ForallP _ exists_poly) = result exists_poly where
   result :: ExistsPoly t Void -> [Mono TypeVar]
   result (ExistsPoly poly) = dump_typevars poly
@@ -126,7 +130,8 @@ apply_constraint var_map (Constraint var_to_replace replacement) input = result 
           else
             ForallP num $ do_stuff exists_poly
   result :: Poly t
-  result = duplicate_foralls_except_one_and_step_inside_them
+  result = -- trace (show var_to_replace ++ "~~~>" ++ show replacement ++ "    (" ++ show var_map ++ ")" ) $
+    duplicate_foralls_except_one_and_step_inside_them
     (var_map `mapping_var_to_int` var_to_replace)
     do_something_inside
   do_something_inside :: TypeMapping -> Poly t -> Poly t
@@ -214,7 +219,7 @@ zip_quantifiers (ForallP num_a exists_poly_a) (ForallP num_b exists_poly_b) cont
       ExistsPoly $ zip_quantifiers poly_a poly_b cont
 zip_quantifiers _ _ _ = error "zip_quantifiers: quantifier list length mismatch"
 
-unify :: forall t u. (T t ~ Type, T u ~ Type) =>
+unify :: forall t u. (T t ~ Type, T u ~ Type, Show (Mono t)) =>
   (forall a. A Type a => t a -> Mono Type) -> Poly t ->
   (forall a. A Type a => t a -> Mono Type) -> Poly t ->
   (forall a b. (A Type a, A Type b) => t a -> t b -> Poly u) -> Poly u
@@ -222,9 +227,14 @@ unify f_a a_input f_b b_input cont =
   let (a_poly, b_poly) = synchronize_quantifiers a_input b_input in
   let (a_mono, b_mono, m, start_var) = unpack_poly a_poly b_poly in
   let
-    constraints = case (a_mono, b_mono) of
-      (Mono a, Mono b) -> case (f_a a, f_b b) of
-        (Mono a', Mono b') -> gen_constraints start_var a' b'
+    constraints =
+      --trace (show (show m, show start_var)) $
+      --trace (show (show (typeof_polymap a_input), show (typeof_polymap b_input))) $
+      --trace (show (show (typeof_polymap a_poly), show (typeof_polymap b_poly))) $
+      --trace (show (show (a_poly), show (b_poly))) $
+      case (a_mono, b_mono) of
+        (Mono a, Mono b) -> case (f_a a, f_b b) of
+          (Mono a', Mono b') -> gen_constraints start_var a' b'
   in let
     helper :: [Constraint] -> Poly t -> Poly t -> (Poly t, Poly t)
     helper [] aa bb = (aa, bb)

@@ -44,6 +44,3 @@ forcetype_monoast :: A Type a => Mono (Ast Lo '[]) -> Ast Lo '[] a
 forcetype_monoast (Mono ast) = case cast_modulo ast of
   Just x -> x
   Nothing -> ErrorA $ "wrong type of: " ++ show ast
-
-typeof_polymap :: Poly (Ast l '[]) -> Poly Type
-typeof_polymap = polymap (MonoP . Mono . type_of)
