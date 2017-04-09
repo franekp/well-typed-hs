@@ -24,7 +24,7 @@ main = object
   g = three_letters_1
     1 2 3
     (fun (a : Int) -> a + 1)
-    (fun (a : a. a) -> a)
+    (fun (a : a. a) -> {x = a, y = a})
     (fun (a : Int) -> a + a)
   h = three_letters_2
     (fun (a : Int) -> a + 1)
