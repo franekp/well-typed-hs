@@ -1,3 +1,3 @@
 open DynTest
 
-main = 5 `substract` 2
+main = 5 |> substract 2
