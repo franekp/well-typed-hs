@@ -1,3 +1,3 @@
-open DynTest
+open StdLib
 
-main = 5 |> substract 2
+main = 5 * 3 ** 2 - 4 + 3
