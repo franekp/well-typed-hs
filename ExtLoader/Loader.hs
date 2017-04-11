@@ -12,7 +12,6 @@ module ExtLoader.Loader (load_ext_modules) where
 
 import GHC
 import GhcMonad (liftIO)
-import GHC.Paths (libdir)
 import Name (getOccString)
 import DynFlags
 import Data.Dynamic (fromDyn, fromDynamic)
@@ -40,7 +39,7 @@ load_ext_modules_by_name :: [String] -> IO ExtModuleEnv
 load_ext_modules_by_name modules = do
   script_path <- getExecutablePath
   let script_dir = takeDirectory script_path
-  runGhc (Just libdir) $ do
+  runGhc (Just GHC_LIBDIR) $ do
     putString ":::"
     modSums <- initSession modules script_dir
     putString ":::"
