@@ -1,17 +1,11 @@
-{-# LANGUAGE
-  EmptyDataDecls, MultiParamTypeClasses, GADTs, RankNTypes, StandaloneDeriving,
-  DeriveDataTypeable, ScopedTypeVariables, FunctionalDependencies,
-  FlexibleInstances, FlexibleContexts, ExistentialQuantification,
-  UndecidableInstances, TypeFamilies, EmptyCase, TypeOperators, KindSignatures,
-  LambdaCase, DataKinds, ConstraintKinds, PolyKinds #-}
-
+{-# LANGUAGE RankNTypes, ScopedTypeVariables, FlexibleContexts #-}
 #define _COUNT_ARGS(...) _COUNT_ARGS_(__VA_ARGS__, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
 #define _COUNT_ARGS_(_19, _18, _17, _16, _15, _14, _13, _12, _11, _10, _9, _8, _7, _6, _5, _4, _3, _2, _1, N, ...) N
 
 #define _CAT(A, B) _CAT_(A, B)
 #define _CAT_(A, B) A##B
 
-#define BEGIN_FORALL_STEP(a) ForallP 0 (ExistsPoly $
+#define BEGIN_FORALL_STEP(a) Base.ForallP 0 (Base.ExistsPoly $
 
 #define BEGIN_FORALL_0()
 #define BEGIN_FORALL_1(V, ...) BEGIN_FORALL_STEP(V) BEGIN_FORALL_0(__VA_ARGS__)
@@ -31,7 +25,7 @@
 
 #define BEGIN_FORALL(...) _CAT(BEGIN_FORALL_, _COUNT_ARGS(__VA_ARGS__)) (__VA_ARGS__)
 
-#define END_FORALL_STEP(a) :: forall a. A Type a => ExistsPoly Builtin a)
+#define END_FORALL_STEP(a) :: forall a. Base.A Base.Type a => Base.ExistsPoly Base.Builtin a)
 
 #define END_FORALL_0(...)
 #define END_FORALL_1(V, ...) END_FORALL_STEP(V) END_FORALL_0(__VA_ARGS__)
@@ -54,4 +48,4 @@
 #define BEGIN_NONE
 #define END_NONE
 
-#define EXPORT(name, quant, def) (name, BEGIN_##quant (MonoP $ Mono $ Builtin (def)) END_##quant)
+#define EXPORT(name, quant, def) (name, BEGIN_##quant (Base.MonoP $ Base.Mono $ Base.Builtin (def)) END_##quant)

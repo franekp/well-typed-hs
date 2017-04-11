@@ -54,15 +54,18 @@ load_ext_modules_by_name modules = do
 -- | Init interactive session and load modules
 initSession modStrNames script_dir = do
   dflags <- getSessionDynFlags
-  setSessionDynFlags $ flip xopt_set Opt_ScopedTypeVariables $ flip xopt_set Opt_RankNTypes $ flip xopt_set Opt_Cpp $ dflags {
-    --hscTarget = HscInterpreted
-    ghcLink   = LinkInMemory
-    , importPaths = importPaths dflags ++ [script_dir]
-    , includePaths = includePaths dflags ++ [script_dir </> "ExtLoader"]
-    , settings = (settings dflags) {
-        sPgm_P = ("gcc", [Option "-E"])
+  setSessionDynFlags
+    $ flip xopt_set Opt_Cpp
+    $ dflags {
+      --hscTarget = HscInterpreted
+      ghcLink   = LinkInMemory
+      , importPaths = importPaths dflags ++ [script_dir]
+      , includePaths = includePaths dflags ++ [script_dir </> "ExtLoader"]
+      , settings = (settings dflags) {
+          -- disable "-traditional" option because we want real CPP with real macros, not traditional
+          sPgm_P = ("gcc", [Option "-E"])
+        }
       }
-    }
   targets <- mapM
               (\modStrName -> do
                   putString modStrName
