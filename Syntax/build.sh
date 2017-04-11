@@ -5,7 +5,8 @@ set -u
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..
 
-bnfc -p Syntax -m Syntax/Grammar.cf
+bnfc -p Syntax Syntax/Grammar.cf
 cp Syntax/fixErrM.hs Syntax/ErrM.hs
-make
 happy -gca Syntax/ParGrammar.y --info=Syntax/Grammar.info
+alex -g Syntax/LexGrammar.x
+ghc --make Syntax/TestGrammar.hs -o Syntax/TestGrammar
