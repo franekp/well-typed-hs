@@ -16,6 +16,13 @@ show_value a = case (anything :: Type a) of
   TypeVarT v -> "(undefined :: " ++ show v ++ ")"
   RecordT r -> show a
   HasFieldT _ _ -> error "this code should be unreachable"
+  BoolT -> undefined
+  MaybeT (t :: Type t) -> undefined
+  EitherT (l :: Type l) (r :: Type r) -> undefined
+  CharT -> undefined
+  ListT (t :: Type t) -> undefined
+  IO_T t -> "<IO (" ++ show t ++ ")>"
+  DynamicT -> undefined
 
 instance A TypeVar Zero where
   anything = ZeroTV

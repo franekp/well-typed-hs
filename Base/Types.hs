@@ -5,6 +5,8 @@ module Base.Types where
 import Base.Pervasives
 import Base.Symbol
 
+import Data.Dynamic (Dynamic)
+
 typeof_polymap :: (T t ~ Type) => Poly t -> Poly Type
 typeof_polymap = polymap (MonoP . Mono . type_of)
 
@@ -27,6 +29,20 @@ data Type :: * -> * where
     RecordType a -> Type (Record a)
   HasFieldT :: (A FieldName f, A Type a, A Type r) =>
     (FieldName f, Type a) -> Type r -> Type (HasField '(f, a) r)
+  BoolT ::
+    Type Bool
+  MaybeT :: A Type a =>
+    Type a -> Type (Maybe a)
+  EitherT :: (A Type a, A Type b) =>
+    Type a -> Type b -> Type (Either a b)
+  CharT ::
+    Type Char
+  ListT :: A Type a =>
+    Type a -> Type [a]
+  IO_T :: A Type a =>
+    Type a -> Type (IO a)
+  DynamicT ::
+    Type Dynamic
 
 type instance T Type = Type
 
