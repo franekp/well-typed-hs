@@ -29,6 +29,9 @@ show_value val = case (anything :: Type a) of
     h:t -> "[" ++ show_value h ++ foldl (++) "" (map (("," ++) . show_value) t) ++ "]"
   IO_T t -> "<IO (" ++ show t ++ ")>"
   DynamicT -> show (val :: Dynamic)
+  UnitT -> "()"
+  PairT _ _ -> let (a, b) = val in "(" ++ show_value a ++ ", " ++ show_value b ++ ")"
+  TripleT _ _ _ -> let (a, b, c) = val in "(" ++ show_value a ++ ", " ++ show_value b ++ ", " ++ show_value c ++ ")"
 
 eq_value :: forall a. A Type a => a -> a -> Bool
 eq_value v1 v2 = case (anything :: Type a) of
@@ -54,6 +57,15 @@ eq_value v1 v2 = case (anything :: Type a) of
     _ -> False
   IO_T t -> error "IO values are not comparable"
   DynamicT -> error "Dynamic values are not comparable"
+  UnitT -> True
+  PairT _ _ -> let
+      (a, b) = v1
+      (a', b') = v2
+    in a `eq_value` a' && b `eq_value` b'
+  TripleT _ _ _ -> let
+      (a, b, c) = v1
+      (a', b', c') = v2
+    in a `eq_value` a' && b `eq_value` b' && c `eq_value` c'
 
 instance A TypeVar Zero where
   anything = ZeroTV
@@ -100,6 +112,15 @@ instance A Type t => A Type (IO t) where
 instance A Type Dynamic where
   anything = DynamicT
 
+instance A Type () where
+  anything = UnitT
+
+instance (A Type a, A Type b) => A Type (a, b) where
+  anything = PairT anything anything
+
+instance (A Type a, A Type b, A Type c) => A Type (a, b, c) where
+  anything = TripleT anything anything anything
+
 deriving instance Eq (Type a)
 instance Eq (Mono Type) where
   -- first all uninhabitable types that are heavily used as dummy variables
@@ -143,6 +164,15 @@ instance Eq (Mono Type) where
   Mono DynamicT == arg = case arg of
     Mono DynamicT -> True
     _ -> False
+  Mono UnitT == arg = case arg of
+    Mono UnitT -> True
+    _ -> False
+  Mono (PairT a b) == arg = case arg of
+    Mono (PairT a' b') -> Mono a == Mono a' && Mono b == Mono b'
+    _ -> False
+  Mono (TripleT a b c) == arg = case arg of
+    Mono (TripleT a' b' c') -> Mono a == Mono a' && Mono b == Mono b' && Mono c == Mono c'
+    _ -> False
 
 deriving instance Eq (TypeVar a)
 deriving instance Typeable TypeVar
@@ -171,6 +201,9 @@ instance Show (Type a) where
   show (ListT t) = "[" ++ show t ++ "]"
   show (IO_T t) = "IO (" ++ show t ++ ")"
   show DynamicT = "Dynamic"
+  show UnitT = "()"
+  show (PairT a b) = "(" ++ show a ++ ", " ++ show b ++ ")"
+  show (TripleT a b c) = "(" ++ show a ++ ", " ++ show b ++ ", " ++ show c ++ ")"
 
 instance Show (Mono Type) where
   show (Mono a) = show a

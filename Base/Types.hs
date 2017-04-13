@@ -41,6 +41,12 @@ data Type :: * -> * where
     Type a -> Type (IO a)
   DynamicT ::
     Type Dynamic
+  UnitT ::
+    Type ()
+  PairT :: (A Type a, A Type b) =>
+    Type a -> Type b -> Type (a, b)
+  TripleT :: (A Type a, A Type b, A Type c) =>
+    Type a -> Type b -> Type c -> Type (a, b, c)
 
 type instance T Type = Type
 

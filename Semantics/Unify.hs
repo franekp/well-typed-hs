@@ -82,6 +82,9 @@ dump_typevars (MonoP (Mono tt)) = do_stuff (type_of tt) [] where
     ListT t -> do_stuff t $ acc
     IO_T t -> do_stuff t $ acc
     DynamicT -> acc
+    UnitT -> acc
+    PairT a b -> do_stuff a $ do_stuff b $ acc
+    TripleT a b c -> do_stuff a $ do_stuff b $ do_stuff c $ acc
 dump_typevars (ForallP _ exists_poly) = result exists_poly where
   result :: ExistsPoly t Void -> [Mono TypeVar]
   result (ExistsPoly poly) = dump_typevars poly
@@ -155,6 +158,20 @@ map_vars f (Mono t) = case t of
     in case t' of
       Mono t'' -> Mono $ ListT t''
   DynamicT -> Mono t
+  UnitT -> Mono t
+  PairT a b ->
+    let
+      a' = map_vars f (Mono a)
+      b' = map_vars f (Mono b)
+    in case (a', b') of
+      (Mono a'', Mono b'') -> Mono $ PairT a'' b''
+  TripleT a b c ->
+    let
+      a' = map_vars f (Mono a)
+      b' = map_vars f (Mono b)
+      c' = map_vars f (Mono c)
+    in case (a', b', c') of
+      (Mono a'', Mono b'', Mono c'') -> Mono $ TripleT a'' b'' c''
 
 apply_constraint :: forall t. T t ~ Type => VarMapping -> Constraint -> Poly t -> Poly t
 apply_constraint var_map (Constraint var_to_replace replacement) input = result where
@@ -252,6 +269,13 @@ gen_constraints start_var (IO_T t) arg = case arg of
   (IO_T t') -> gen_constraints start_var t t'
   _ -> []
 gen_constraints start_var (DynamicT) arg = []
+gen_constraints start_var (UnitT) arg = []
+gen_constraints start_var (PairT a b) arg = case arg of
+  PairT a' b' -> gen_constraints start_var a a' ++ gen_constraints start_var b b'
+  _ -> []
+gen_constraints start_var (TripleT a b c) arg = case arg of
+  TripleT a' b' c' -> gen_constraints start_var a a' ++ gen_constraints start_var b b' ++ gen_constraints start_var c c'
+  _ -> []
 
 var_to_type :: Mono TypeVar -> Mono Type
 var_to_type (Mono a) = Mono $ TypeVarT a
