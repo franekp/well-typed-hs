@@ -1,3 +1,5 @@
 open StdLib
 
-main = "abc" == "abcd"
+main = begin
+    putStrLn "abc"
+  end

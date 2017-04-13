@@ -95,7 +95,7 @@ coercions Expr 20 ;
 
 separator BlockExpr ";" ;
 BlockExprId. BlockExpr ::= Expr ;
-BlockExprBind. BlockExpr ::= Ident "<-" Expr ;
+BlockExprBind. BlockExpr ::= Ident ":" TypeScheme "<-" Expr ;
 BlockExprDef. BlockExpr ::= Ident "=" Expr ;
 
 -- list items

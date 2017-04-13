@@ -56,7 +56,13 @@ transExpr x = case x of
     BVar b -> RecordConsUA b $ transExpr $ EObject t
     BOpenModule m -> error "opening modules not allowed inside records"
 
-  EBlock blockexprs -> failure x
+  EBlock [] -> VarUA "returnIO" `AppUA` VarUA "unit"
+  EBlock (BlockExprId expr:t) ->
+    VarUA "nextIO" `AppUA` transExpr expr `AppUA` transExpr (EBlock t)
+  EBlock (BlockExprBind id tt expr:t) ->
+    VarUA "bindIO" `AppUA` transExpr expr `AppUA` (LambdaUA (transIdent id, transTypeScheme tt) (transExpr $ EBlock t))
+  EBlock (BlockExprDef id expr:t) ->
+    LetUA (transIdent id, transExpr expr) $ transExpr (EBlock t)
   EList [] -> VarUA "nil"
   EList (h:t) -> VarUA "cons" `AppUA` transListItem h `AppUA` transExpr (EList t)
   ETuple a [b] -> VarUA "pair" `AppUA` transListItem a `AppUA` transListItem b
@@ -95,14 +101,6 @@ transExpr x = case x of
   EOpVar anyop -> VarUA (transAnyOp anyop)
   EInt n -> LiteralUA (fromIntegral n)
   EString str  -> StringUA str
-
-
-transBlockExpr :: BlockExpr -> Result
-transBlockExpr x = case x of
-  BlockExprId expr  -> failure x
-  BlockExprBind id expr  -> failure x
-  BlockExprDef id expr  -> failure x
-
 
 transListItem :: ListItem -> UAst Lo
 transListItem x = case x of
