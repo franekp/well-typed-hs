@@ -167,5 +167,12 @@ func_ = [
     EXPORT("$!", FORALL(a, b), ($!) :: (a -> b) -> a -> b)
   ]
 
+tuple_ = [
+    EXPORT("pair", FORALL(a, b), (,) :: a -> b -> (a, b)),
+    EXPORT("triple", FORALL(a, b, c), (,,) :: a -> b -> c -> (a, b, c)),
+    EXPORT("fst", FORALL(a, b), fst :: (a, b) -> a),
+    EXPORT("snd", FORALL(a, b), snd :: (a, b) -> b)
+  ]
+
 module_exports = Base.ExtModule $
-  bool_ ++ maybe_ ++ either_ ++ string_ ++ int_ ++ io_ ++ list_ ++ func_
+  bool_ ++ maybe_ ++ either_ ++ string_ ++ int_ ++ io_ ++ list_ ++ func_ ++ tuple_
