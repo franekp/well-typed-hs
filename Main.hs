@@ -21,7 +21,7 @@ type ParseFun a = [Token] -> Err a
 myLLexer = resolveLayout True . myLexer
 
 runFile :: ParseFun Module -> FilePath -> IO ()
-runFile p f = putStrLn f >> readFile f >>= run p
+runFile p f = {-putStrLn f >>-} readFile f >>= run p
 
 run :: ParseFun Module -> String -> IO ()
 run p s = let ts = myLLexer s in case p ts of
@@ -31,7 +31,7 @@ run p s = let ts = myLLexer s in case p ts of
     putStrLn $ show ts
     putStrLn s
   Ok tree -> do
-    putStrLn "\nParse Successful!"
+    --putStrLn "\nParse Successful!"
     let uast = transModule tree
     module_env <- load_ext_modules uast
     putStrLn $ uast_to_string module_env uast

@@ -30,6 +30,31 @@ show_value val = case (anything :: Type a) of
   IO_T t -> "<IO (" ++ show t ++ ")>"
   DynamicT -> show (val :: Dynamic)
 
+eq_value :: forall a. A Type a => a -> a -> Bool
+eq_value v1 v2 = case (anything :: Type a) of
+  _ :-> _ -> error "functions are not comparable"
+  IntT -> v1 == v2
+  VoidT -> error "unreachable"
+  TypeVarT a -> error "unreachable"
+  RecordT _ -> error "records are not comparable"
+  HasFieldT _ _ -> error "unreachable"
+  BoolT -> v1 == v2
+  MaybeT (t :: Type t) -> case (v1, v2) of
+    (Nothing, Nothing) -> True
+    (Just a, Just b) -> a `eq_value` b
+    _ -> False
+  EitherT (l :: Type l) (r :: Type r) -> case (v1, v2) of
+    (Left a, Left b) -> a `eq_value` b
+    (Right a, Right b) -> a `eq_value` b
+    _ -> False
+  CharT -> v1 == v2
+  ListT (t :: Type t) -> case (v1, v2) of
+    ([], []) -> True
+    (h1:t1, h2:t2) -> h1 `eq_value` h2 && t1 `eq_value` t2
+    _ -> False
+  IO_T t -> error "IO values are not comparable"
+  DynamicT -> error "Dynamic values are not comparable"
+
 instance A TypeVar Zero where
   anything = ZeroTV
 
@@ -53,6 +78,9 @@ instance A RecordType a => A Type (Record a) where
 
 instance (A Type rest, A Type a, A FieldName f) => A Type (HasField '(f, a) rest) where
   anything = HasFieldT (anything, anything) anything
+
+instance A Type Bool where
+  anything = BoolT
 
 instance A Type t => A Type (Maybe t) where
   anything = MaybeT anything
@@ -81,12 +109,40 @@ instance Eq (Mono Type) where
   _ == Mono VoidT = True
   Mono (TypeVarT _) == _ = True
   _ == Mono (TypeVarT _) = True
-  Mono (a :-> b) == Mono (a' :-> b') = Mono a == Mono a' && Mono b == Mono b'
-  Mono IntT == Mono IntT = True
-  Mono (RecordT a) == Mono (RecordT a') = Mono a == Mono a'
+  -- then record field stuff that is ignored
   Mono (HasFieldT (f, a) rest) == Mono rest' = Mono rest == Mono rest'
   Mono rest == Mono (HasFieldT (f', a') rest') = Mono rest == Mono rest'
-  _ == _ = False
+  -- then all normal types
+  Mono (a :-> b) == arg = case arg of
+    Mono (a' :-> b') -> Mono a == Mono a' && Mono b == Mono b'
+    _ -> False
+  Mono IntT == arg = case arg of
+    Mono IntT -> True
+    _ -> False
+  Mono (RecordT a) == arg = case arg of
+    Mono (RecordT a') -> Mono a == Mono a'
+    _ -> False
+  Mono BoolT == arg = case arg of
+    Mono BoolT -> True
+    _ -> False
+  Mono (MaybeT t) == arg = case arg of
+    Mono (MaybeT t') -> Mono t == Mono t'
+    _ -> False
+  Mono (EitherT l r) == arg = case arg of
+    Mono (EitherT l' r') -> Mono l == Mono l' && Mono r == Mono r'
+    _ -> False
+  Mono CharT == arg = case arg of
+    Mono CharT -> True
+    _ -> False
+  Mono (ListT t) == arg = case arg of
+    Mono (ListT t') -> Mono t == Mono t'
+    _ -> False
+  Mono (IO_T t) == arg = case arg of
+    Mono (IO_T t') -> Mono t == Mono t'
+    _ -> False
+  Mono DynamicT == arg = case arg of
+    Mono DynamicT -> True
+    _ -> False
 
 deriving instance Eq (TypeVar a)
 deriving instance Typeable TypeVar

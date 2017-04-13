@@ -18,6 +18,7 @@ import Data.Dynamic (fromDyn, fromDynamic)
 
 import System.Environment (getExecutablePath)
 import System.FilePath (takeDirectory, (</>))
+import Control.Monad.IO.Class
 
 import Base
 
@@ -42,7 +43,7 @@ load_ext_modules_by_name modules = do
   runGhc (Just GHC_LIBDIR) $ do
     --putString ":::"
     modSums <- initSession modules script_dir
-    putString ""  -- necessary for typechecker to disambiguate the underlying IO monad
+    --putString ":::"
     imports <- mapM parseImportDecl ["import qualified " ++ m | m <- modules]
     setContext [IIDecl i | i <- imports]
     dynVals <- mapM dynCompileExpr [m ++ ".module_exports" | m <- modules]
@@ -92,4 +93,5 @@ listExports mod = do
     _ -> return []
 
 -- | Util for printing
+putString :: MonadIO m => String -> m ()
 putString = liftIO . putStrLn
