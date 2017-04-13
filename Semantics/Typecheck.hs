@@ -81,6 +81,7 @@ typecheck me = typecheck' me (TypeEnv []) NilEN
 typecheck' :: forall e. ExtModuleEnv -> TypeEnv -> Env e -> UAst Lo -> Poly (Ast Hi e)
 typecheck' me te e AddUA = MonoP $ Mono $ AddA
 typecheck' me te e (LiteralUA val) = MonoP $ Mono $ LiteralA val
+typecheck' me te e (StringUA s) = MonoP $ Mono $ BuiltinA $ Builtin s
 typecheck' me te e (AppUA fun' arg') =
   unify type_of_arg (typecheck' me te e fun') (Mono . type_of) (typecheck' me te e arg') cont
   where

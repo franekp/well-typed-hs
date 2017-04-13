@@ -1,3 +1,3 @@
 open StdLib
 
-main = False == False
+main = "abc" == "abcd"

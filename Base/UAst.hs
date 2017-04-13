@@ -14,6 +14,7 @@ type instance UArgumentType Lo = UPolyType
 
 data UAst (l :: Level) = AddUA
   | LiteralUA Int
+  | StringUA String
   | AppUA (UAst l) (UAst l)
   | LambdaUA (String, UArgumentType l) (UAst l)
   | VarUA String

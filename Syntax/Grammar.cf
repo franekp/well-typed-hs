@@ -55,12 +55,6 @@ ELet. Expr ::= "let" "{" [Def] "}" "in" Expr ;
 ELetRec. Expr ::= "let" "rec" "{" [Def] "}" "in" Expr ;
 ELambda. Expr ::= "fun" [Arg] "->" Expr ;
 EObject. Expr ::= "object" "{" [Def] "}" ;
-EBlock. Expr ::= "begin" "{" [BlockExpr] "}" "end" ;
-EList. Expr ::= "[" [ListItem] "]" ;
-ETuple. Expr ::= "(" ListItem "," [ListItem] ")" ;
-ERecord. Expr ::= "{" [RecordItem] "}" ;
-ERecordUpdate. Expr ::= "{" Ident "|" [RecordItem] "}" ;
-ECoerce. Expr ::= "(" Expr ":" Type ")" ;
 EIf. Expr ::= "if" Expr "then" Expr "else" Expr ;
 
 EAppOp. Expr5 ::= Expr6 RAppOp Expr5 ;
@@ -87,6 +81,13 @@ EVar. Expr20 ::= Ident ;
 EOpVar. Expr20 ::= "(" AnyOp ")" ;
 EInt. Expr20 ::= Integer ;
 EString. Expr20 ::= String ;
+
+EBlock. Expr20 ::= "begin" "{" [BlockExpr] "}" "end" ;
+EList. Expr20 ::= "[" [ListItem] "]" ;
+ETuple. Expr20 ::= "(" ListItem "," [ListItem] ")" ;
+ERecord. Expr20 ::= "{" [RecordItem] "}" ;
+ERecordUpdate. Expr20 ::= "{" Ident "|" [RecordItem] "}" ;
+ECoerce. Expr20 ::= "(" Expr ":" Type ")" ;
 
 coercions Expr 20 ;
 

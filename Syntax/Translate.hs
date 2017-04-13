@@ -57,8 +57,11 @@ transExpr x = case x of
     BOpenModule m -> error "opening modules not allowed inside records"
 
   EBlock blockexprs -> failure x
-  EList listitems  -> failure x
-  ETuple listitem listitems  -> failure x
+  EList [] -> VarUA "nil"
+  EList (h:t) -> VarUA "cons" `AppUA` transListItem h `AppUA` transExpr (EList t)
+  ETuple a [b] -> VarUA "pair" `AppUA` transListItem a `AppUA` transListItem b
+  ETuple a [b, c] -> VarUA "triple" `AppUA` transListItem a `AppUA` transListItem b `AppUA` transListItem c
+  ETuple listitem listitems -> failure x
 
   ERecord [] -> RecordNilUA
   ERecord (h:t) -> case transRecordItem h of
@@ -67,7 +70,7 @@ transExpr x = case x of
 
   ERecordUpdate id recorditems  -> failure x
   ECoerce expr type'  -> failure x
-  EIf expr1 expr2 expr3  -> failure x
+  EIf expr1 expr2 expr3  -> VarUA "ifThenElse" `AppUA` transExpr expr1 `AppUA` transExpr expr2 `AppUA` transExpr expr3
 
   EAppOp e1 (RAppOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
   EPipeOp e1 (LPipeOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
@@ -91,7 +94,7 @@ transExpr x = case x of
   EVar id -> VarUA (transIdent id)
   EOpVar anyop -> VarUA (transAnyOp anyop)
   EInt n -> LiteralUA (fromIntegral n)
-  EString str  -> failure x
+  EString str  -> StringUA str
 
 
 transBlockExpr :: BlockExpr -> Result
@@ -99,10 +102,11 @@ transBlockExpr x = case x of
   BlockExprId expr  -> failure x
   BlockExprBind id expr  -> failure x
   BlockExprDef id expr  -> failure x
-transListItem :: ListItem -> Result
-transListItem x = case x of
-  ListItem expr  -> failure x
 
+
+transListItem :: ListItem -> UAst Lo
+transListItem x = case x of
+  ListItem expr  -> transExpr expr
 
 transRecordItem :: RecordItem -> Binding
 transRecordItem x = case x of

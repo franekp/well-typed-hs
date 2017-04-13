@@ -27,6 +27,7 @@ load_ext_modules = load_ext_modules_by_name . dump_module_names
 
 dump_module_names :: UAst l -> [String]
 dump_module_names (LiteralUA _) = []
+dump_module_names (StringUA _) = []
 dump_module_names (AppUA f a) = dump_module_names f ++ dump_module_names a
 dump_module_names (LambdaUA (_, _) a) = dump_module_names a
 dump_module_names (VarUA _) = []
