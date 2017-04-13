@@ -40,9 +40,9 @@ load_ext_modules_by_name modules = do
   script_path <- getExecutablePath
   let script_dir = takeDirectory script_path
   runGhc (Just GHC_LIBDIR) $ do
-    putString ":::"
+    --putString ":::"
     modSums <- initSession modules script_dir
-    putString ":::"
+    putString ""  -- necessary for typechecker to disambiguate the underlying IO monad
     imports <- mapM parseImportDecl ["import qualified " ++ m | m <- modules]
     setContext [IIDecl i | i <- imports]
     dynVals <- mapM dynCompileExpr [m ++ ".module_exports" | m <- modules]
@@ -67,7 +67,7 @@ initSession modStrNames script_dir = do
       }
   targets <- mapM
               (\modStrName -> do
-                  putString modStrName
+                  --putString modStrName
                   target <- guessTarget ("*"++modStrName++".hs") Nothing
                   return target
               ) modStrNames
@@ -75,7 +75,7 @@ initSession modStrNames script_dir = do
   load LoadAllTargets
   modSums <- mapM
               (\modStrName -> do
-                  putString modStrName
+                  --putString modStrName
                   modSum <- getModSummary $ mkModuleName modStrName
                   return $ ms_mod modSum
               ) modStrNames
