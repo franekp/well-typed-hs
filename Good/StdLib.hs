@@ -14,7 +14,8 @@ bool_ = [
     EXPORT(">", NONE, (>) :: Int -> Int -> Bool),
     EXPORT(">=", NONE, (>=) :: Int -> Int -> Bool),
     EXPORT("==", FORALL(a), eq_value :: A Type a => a -> a -> Bool),
-    EXPORT("!=", FORALL(a), (not .) . eq_value :: A Type a => a -> a -> Bool)
+    EXPORT("!=", FORALL(a), (not .) . eq_value :: A Type a => a -> a -> Bool),
+    EXPORT("ifThenElse", FORALL(a), (\a b c -> (if a then b else c)) :: Bool -> a -> a -> a)
   ]
 
 maybe_ = [
