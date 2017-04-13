@@ -94,6 +94,10 @@ lookup_ k [] = Nothing
 lookup_ k ((k_, v):t) = if k `eq_value` k_ then Just v else lookup_ k t
 
 list_ = [
+    EXPORT("cons", FORALL(a), (:) :: a -> [a] -> [a]),
+    EXPORT("nil", FORALL(a), [] :: [a]),
+    EXPORT("list", FORALL(a, b), ([a] -> b) -> (a -> b) -> b),
+
     EXPORT("foldr", FORALL(a, b), foldr :: (a -> b -> b) -> b -> [a] -> b),
     EXPORT("foldl", FORALL(a, b), foldl :: (b -> a -> b) -> b -> [a] -> b),
     EXPORT("foldr1", FORALL(a), foldr1 :: (a -> a -> a) -> [a] -> a),
