@@ -75,6 +75,13 @@ dump_typevars (MonoP (Mono tt)) = do_stuff (type_of tt) [] where
     HasFieldT (f, a) rest -> do_stuff a $ do_stuff rest $ acc
     RecordT NilRT -> acc
     RecordT (ConsRT (f, a) rest) -> do_stuff a $ do_stuff (RecordT rest) $ acc
+    BoolT -> acc
+    MaybeT t -> do_stuff t $ acc
+    EitherT l r -> do_stuff l $ do_stuff r $ acc
+    CharT -> acc
+    ListT t -> do_stuff t $ acc
+    IO_T t -> do_stuff t $ acc
+    DynamicT -> acc
 dump_typevars (ForallP _ exists_poly) = result exists_poly where
   result :: ExistsPoly t Void -> [Mono TypeVar]
   result (ExistsPoly poly) = dump_typevars poly
@@ -109,7 +116,45 @@ map_vars f (Mono t) = case t of
     in case (a', b') of
       (Mono a'', Mono b'') -> Mono $ a'' :-> b''
   TypeVarT tv -> f $ Mono tv
-  x -> Mono x
+  IntT -> Mono t
+  VoidT -> Mono t
+  HasFieldT (ff, a) rest ->
+    let
+      a' = map_vars f (Mono a)
+      rest' = map_vars f (Mono rest)
+    in case (a', rest') of
+      (Mono a'', Mono rest'') -> Mono $ HasFieldT (ff, a'') rest''
+  RecordT NilRT -> Mono t
+  RecordT (ConsRT (ff, a) rest) ->
+    let
+      a' = map_vars f (Mono a)
+      rest' = map_vars f (Mono (RecordT rest))
+    in case (a', rest') of
+      (Mono a'', Mono rest'') -> Mono $ HasFieldT (ff, a'') rest''
+  BoolT -> Mono t
+  MaybeT t ->
+    let
+      t' = map_vars f (Mono t)
+    in case t' of
+      Mono t'' -> Mono $ MaybeT t''
+  EitherT l r ->
+    let
+      l' = map_vars f (Mono l)
+      r' = map_vars f (Mono r)
+    in case (l', r') of
+      (Mono l'', Mono r'') -> Mono $ EitherT l'' r''
+  CharT -> Mono t
+  ListT t ->
+    let
+      t' = map_vars f (Mono t)
+    in case t' of
+      Mono t'' -> Mono $ ListT t''
+  IO_T t ->
+    let
+      t' = map_vars f (Mono t)
+    in case t' of
+      Mono t'' -> Mono $ ListT t''
+  DynamicT -> Mono t
 
 apply_constraint :: forall t. T t ~ Type => VarMapping -> Constraint -> Poly t -> Poly t
 apply_constraint var_map (Constraint var_to_replace replacement) input = result where
@@ -168,8 +213,6 @@ gen_constraints_assert_has_field start_var _ _ _ = []
 
 -- TODO add a check to detect infinite types
 gen_constraints :: (A Type a, A Type b) => Mono TypeVar -> Type a -> Type b -> [Constraint]
-gen_constraints start_var (a :-> b) (a' :-> b') =
-  gen_constraints start_var a a' ++ gen_constraints start_var b b'
 gen_constraints start_var ((f, t) `HasFieldT` rest) a =
   gen_constraints_assert_has_field start_var f t a ++ gen_constraints start_var rest a
 gen_constraints start_var a ((f, t) `HasFieldT` rest) =
@@ -187,7 +230,28 @@ gen_constraints start_var (TypeVarT a) a' = if Mono a < start_var then [] else
     _ -> [Constraint (Mono a) (Mono a')]
 gen_constraints start_var a (TypeVarT a') =
   gen_constraints start_var (TypeVarT a') a
-gen_constraints _ _ _ = []
+
+gen_constraints start_var (a :-> b) arg = case arg of
+  a' :-> b' -> gen_constraints start_var a a' ++ gen_constraints start_var b b'
+  _ -> []
+gen_constraints start_var (IntT) arg = []
+gen_constraints start_var (VoidT) arg = []
+gen_constraints start_var (RecordT _) arg = []
+gen_constraints start_var (BoolT) arg = []
+gen_constraints start_var (MaybeT t) arg = case arg of
+  (MaybeT t') -> gen_constraints start_var t t'
+  _ -> []
+gen_constraints start_var (EitherT l r) arg = case arg of
+  (EitherT l' r') -> gen_constraints start_var l l' ++ gen_constraints start_var r r'
+  _ -> []
+gen_constraints start_var (CharT) arg = []
+gen_constraints start_var (ListT t) arg = case arg of
+  (ListT t') -> gen_constraints start_var t t'
+  _ -> []
+gen_constraints start_var (IO_T t) arg = case arg of
+  (IO_T t') -> gen_constraints start_var t t'
+  _ -> []
+gen_constraints start_var (DynamicT) arg = []
 
 var_to_type :: Mono TypeVar -> Mono Type
 var_to_type (Mono a) = Mono $ TypeVarT a

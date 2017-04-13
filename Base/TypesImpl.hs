@@ -9,20 +9,26 @@ import Base.SymbolImpl
 import qualified Data.Char
 
 show_value :: forall a. A Type a => a -> String
-show_value a = case (anything :: Type a) of
+show_value val = case (anything :: Type a) of
   _ :-> _ -> "<func>"
-  IntT -> show (a :: Int)
+  IntT -> show (val :: Int)
   VoidT -> "<void>"
-  TypeVarT v -> "(undefined :: " ++ show v ++ ")"
-  RecordT r -> show a
+  TypeVarT a -> "(undefined :: " ++ show a ++ ")"
+  RecordT _ -> show val
   HasFieldT _ _ -> error "this code should be unreachable"
-  BoolT -> undefined
-  MaybeT (t :: Type t) -> undefined
-  EitherT (l :: Type l) (r :: Type r) -> undefined
-  CharT -> undefined
-  ListT (t :: Type t) -> undefined
+  BoolT -> show (val :: Bool)
+  MaybeT (t :: Type t) -> case (val :: Maybe t) of
+    Nothing -> "Nothing"
+    Just a -> "Just (" ++ show_value a ++ ")"
+  EitherT (l :: Type l) (r :: Type r) -> case (val :: Either l r) of
+    Left a -> "Left (" ++ show_value a ++ ")"
+    Right a -> "Right (" ++ show_value a ++ ")"
+  CharT -> show (val :: Char)
+  ListT (t :: Type t) -> case (val :: [t]) of
+    [] -> "[]"
+    h:t -> "[" ++ show_value h ++ foldl (++) "" (map (("," ++) . show_value) t) ++ "]"
   IO_T t -> "<IO (" ++ show t ++ ")>"
-  DynamicT -> undefined
+  DynamicT -> show (val :: Dynamic)
 
 instance A TypeVar Zero where
   anything = ZeroTV
@@ -47,6 +53,24 @@ instance A RecordType a => A Type (Record a) where
 
 instance (A Type rest, A Type a, A FieldName f) => A Type (HasField '(f, a) rest) where
   anything = HasFieldT (anything, anything) anything
+
+instance A Type t => A Type (Maybe t) where
+  anything = MaybeT anything
+
+instance (A Type l, A Type r) => A Type (Either l r) where
+  anything = EitherT anything anything
+
+instance A Type Char where
+  anything = CharT
+
+instance A Type t => A Type [t] where
+  anything = ListT anything
+
+instance A Type t => A Type (IO t) where
+  anything = IO_T anything
+
+instance A Type Dynamic where
+  anything = DynamicT
 
 deriving instance Eq (Type a)
 instance Eq (Mono Type) where
@@ -84,6 +108,13 @@ instance Show (Type a) where
   show (TypeVarT a) = show a
   show (RecordT r) = show r
   show (HasFieldT (f, a) r) = "HasField(" ++ show f ++ ":" ++ show a ++ ") " ++ show r
+  show BoolT = "Bool"
+  show (MaybeT t) = "Maybe (" ++ show t ++ ")"
+  show (EitherT l r) = "Either (" ++ show l ++ ") (" ++ show r ++ ")"
+  show CharT = "Char"
+  show (ListT t) = "[" ++ show t ++ "]"
+  show (IO_T t) = "IO (" ++ show t ++ ")"
+  show DynamicT = "Dynamic"
 
 instance Show (Mono Type) where
   show (Mono a) = show a

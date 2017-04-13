@@ -3,9 +3,10 @@
 
 module Base.Pervasives (
   Chr, Nat(Zero, Succ), Level(Hi, Lo), T, A, anything, type_of, Mono(..),
-  ExistsPoly(..), Poly(..), polymap, Typeable, Void, trace, cast,
+  ExistsPoly(..), Poly(..), polymap, Typeable, Dynamic, Void, trace, cast,
 ) where
 import Data.Typeable (Typeable, cast)
+import Data.Dynamic (Dynamic)
 import Data.Void (Void)
 import Debug.Trace (trace)
 import Base.Kinds (Chr {- , Sym -}, Nat(Zero, Succ), Level(Hi, Lo))

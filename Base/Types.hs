@@ -5,8 +5,6 @@ module Base.Types where
 import Base.Pervasives
 import Base.Symbol
 
-import Data.Dynamic (Dynamic)
-
 typeof_polymap :: (T t ~ Type) => Poly t -> Poly Type
 typeof_polymap = polymap (MonoP . Mono . type_of)
 
