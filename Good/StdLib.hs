@@ -71,6 +71,7 @@ io_ = [
     EXPORT("bindIO", FORALL(a, b), (>>=) :: IO a -> (a -> IO b) -> IO b),
     EXPORT("nextIO", FORALL(a, b), (>>) :: IO a -> IO b -> IO b),
     EXPORT("returnIO", FORALL(a), return :: a -> IO a),
+    EXPORT("return", FORALL(a), return :: a -> IO a),
     EXPORT("failIO", FORALL(a), fail :: String -> IO a),
     EXPORT("mapM_", FORALL(a, b), mapM_ :: (a -> IO b) -> [a] -> IO ()),
     EXPORT("mapM", FORALL(a, b), mapM :: (a -> IO b) -> [a] -> IO [b]),
@@ -168,6 +169,7 @@ func_ = [
   ]
 
 tuple_ = [
+    EXPORT("unit", NONE, () :: ()),
     EXPORT("pair", FORALL(a, b), (,) :: a -> b -> (a, b)),
     EXPORT("triple", FORALL(a, b, c), (,,) :: a -> b -> c -> (a, b, c)),
     EXPORT("fst", FORALL(a, b), fst :: (a, b) -> a),
