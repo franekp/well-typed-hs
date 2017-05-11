@@ -156,7 +156,7 @@ map_vars f (Mono t) = case t of
     let
       t' = map_vars f (Mono t)
     in case t' of
-      Mono t'' -> Mono $ ListT t''
+      Mono t'' -> Mono $ IO_T t''
   DynamicT -> Mono t
   UnitT -> Mono t
   PairT a b ->
