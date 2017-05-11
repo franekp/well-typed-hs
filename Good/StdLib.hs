@@ -154,6 +154,7 @@ list_ = [
 func_ = [
     EXPORT("|>", FORALL(a, b), flip ($) :: a -> (a -> b) -> b),
     EXPORT("<|", FORALL(a, b), ($) :: (a -> b) -> a -> b),
+    EXPORT("fix", FORALL(a), (let fix f = f $ fix f in fix) :: (a -> a) -> a),
 
     EXPORT("id", FORALL(a), id :: a -> a),
     EXPORT("const", FORALL(a, b), const :: a -> b -> a),

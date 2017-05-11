@@ -17,3 +17,9 @@ Mono (Ast Hi '[])
 Mono (Ast Lo '[])
 ---[Semantics.Eval.eval_monoast]--->
 A Type a => a
+
+
+TODO:
+ - pretty-printing for error messages
+ - when a generic function (show) is applied to an ill-typed expression, program
+   just assumes it's type is Void and ignores this error
