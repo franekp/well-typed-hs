@@ -25,10 +25,20 @@ data UAst (l :: Level) = AddUA
   | OpenUA String (UAst l)
 deriving instance (Show (UArgumentType l) => Show (UAst l))
 
-data UMonoType = IntUMT
-  | ArrowUMT UMonoType UMonoType
+data UMonoType = ArrowUMT UMonoType UMonoType
+  | IntUMT
   | VarUMT String
   | HasFieldUMT (String, UMonoType) UMonoType
+  | BoolUMT
+  | MaybeUMT UMonoType
+  | EitherUMT UMonoType UMonoType
+  | CharUMT
+  | ListUMT UMonoType
+  | IO_UMT UMonoType
+  | DynamicUMT
+  | UnitUMT
+  | PairUMT UMonoType UMonoType
+  | TripleUMT UMonoType UMonoType UMonoType
   deriving (Show)
 
 data UPolyType = ForallUPT String UPolyType | MonoUPT UMonoType

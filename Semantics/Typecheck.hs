@@ -26,7 +26,6 @@ lookup_ext_module (ExtModuleEnv ((name, mo):rest)) var =
   if var == name then mo else lookup_ext_module (ExtModuleEnv rest) var
 
 typecheck_monotype :: TypeEnv -> UMonoType -> Mono Type
-typecheck_monotype te IntUMT = Mono IntT
 typecheck_monotype te (a `ArrowUMT` b) =
   case (typecheck_monotype te a, typecheck_monotype te b) of
     (Mono a', Mono b') -> Mono $ a' :-> b'
@@ -35,6 +34,30 @@ typecheck_monotype te (HasFieldUMT (field, a) rest) =
   case (typecheck_monotype te a, typecheck_monotype te rest) of
     (Mono a', Mono rest') -> case (read field :: Mono FieldName) of
       Mono (field' :: FieldName f) -> Mono $ HasFieldT (field', a') rest'
+
+typecheck_monotype te (IntUMT) = Mono IntT
+typecheck_monotype te (BoolUMT) = Mono BoolT
+typecheck_monotype te (MaybeUMT a) =
+  case typecheck_monotype te a of
+    Mono a' -> Mono $ MaybeT a'
+typecheck_monotype te (EitherUMT a b) =
+  case (typecheck_monotype te a, typecheck_monotype te b) of
+    (Mono a', Mono b') -> Mono $ EitherT a' b'
+typecheck_monotype te (CharUMT) = Mono CharT
+typecheck_monotype te (ListUMT a) =
+  case typecheck_monotype te a of
+    Mono a' -> Mono $ ListT a'
+typecheck_monotype te (IO_UMT a) =
+  case typecheck_monotype te a of
+    Mono a' -> Mono $ IO_T a'
+typecheck_monotype te (DynamicUMT) = Mono DynamicT
+typecheck_monotype te (UnitUMT) = Mono UnitT
+typecheck_monotype te (PairUMT a b) =
+  case (typecheck_monotype te a, typecheck_monotype te b) of
+    (Mono a', Mono b') -> Mono $ PairT a' b'
+typecheck_monotype te (TripleUMT a b c) =
+  case (typecheck_monotype te a, typecheck_monotype te b, typecheck_monotype te c) of
+    (Mono a', Mono b', Mono c') -> Mono $ TripleT a' b' c'
 
 hash :: String -> Int
 hash = foldl' (\h c -> 33*h `xor` fromEnum c) 5381
