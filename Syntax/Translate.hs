@@ -131,6 +131,17 @@ transType x = case x of
   TInt  -> IntUMT
   TVar id  -> VarUMT $ transIdent id
 
+  TBool -> BoolUMT
+  TMaybe a -> MaybeUMT (transType a)
+  TEither a b -> EitherUMT (transType a) (transType b)
+  TChar -> CharUMT
+  TList a -> ListUMT (transType a)
+  T_IO a -> IO_UMT (transType a)
+  TDynamic -> DynamicUMT
+  TUnit -> UnitUMT
+  TPair a b -> PairUMT (transType a) (transType b)
+  TTriple a b c -> TripleUMT (transType a) (transType b) (transType c)
+
 transFieldAnnotation :: FieldAnnotation -> (String, UMonoType)
 transFieldAnnotation x = case x of
   FieldAnnotation id type'  -> (transIdent id, transType type')

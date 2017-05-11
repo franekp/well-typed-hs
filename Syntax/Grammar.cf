@@ -129,11 +129,23 @@ TypeV. TypeV ::= Ident ;
 TypeScheme. TypeScheme ::= [TypeV] Type ;
 
 TArrow. Type ::= Type1 "->" Type ;
-TRecord. Type ::= "{" Ident "|" [FieldAnnotation] "}" ;
-TInt. Type1 ::= "Int" ;
-TVar. Type1 ::= Ident ;
+
+TBool. Type1 ::= "Bool" ;
+TMaybe. Type1 ::= "Maybe" Type2 ;
+TEither. Type1 ::= "Either" Type2 Type2 ;
+TChar. Type1 ::= "Char" ;
+TList. Type1 ::= "[" Type "]" ;
+T_IO. Type1 ::= "IO" Type2 ;
+TDynamic. Type1 ::= "Dynamic" ;
+TUnit. Type1 ::= "(" ")" ;
+TPair. Type1 ::= "(" Type "," Type ")" ;
+TTriple. Type1 ::= "(" Type "," Type "," Type ")" ;
+
+TRecord. Type3 ::= "{" Ident "|" [FieldAnnotation] "}" ;
+TInt. Type3 ::= "Int" ;
+TVar. Type3 ::= Ident ;
 
 FieldAnnotation. FieldAnnotation ::= Ident ":" Type ;
 separator FieldAnnotation "," ;
 
-coercions Type 1 ;
+coercions Type 3 ;
