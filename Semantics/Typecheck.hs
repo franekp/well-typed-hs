@@ -163,3 +163,6 @@ typecheck' me te e (RecordGetUA f r) = polymap cont $ typecheck' me te e r where
     _ -> error "type mismatch"
 typecheck' me te e (OpenUA mod rest) =
   typecheck' me te (OpenEN (lookup_ext_module me mod) e) rest
+typecheck' me (TypeEnv te) e (TypeDefUA (name, tt) expr) =
+  let ty = typecheck_monotype (TypeEnv te) tt in
+  typecheck' me (TypeEnv $ (name, ty):te) e expr

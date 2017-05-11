@@ -11,7 +11,7 @@ import Base.UAst
 
 data Result
 
-data Binding = BVar (String, UAst Lo) | BOpenModule String
+data Binding = BVar (String, UAst Lo) | BOpenModule String | BTypeDef String UMonoType
 
 failure :: Show a => a -> b
 failure x = error $ "Undefined case: " ++ show x
@@ -29,6 +29,7 @@ transDef x = case x of
   DVar id args expr -> BVar (transIdent id, transExpr $ ELambda args expr)
   DOpVar anyop args expr -> BVar (transAnyOp anyop, transExpr $ ELambda args expr)
   DOpen id -> BOpenModule (transIdent id)
+  DType id tt -> BTypeDef (transIdent id) (transType tt)
 
 transAnyOp :: AnyOp -> String
 transAnyOp x = case x of
@@ -48,6 +49,7 @@ transExpr x = case x of
   ELet (h:t) expr -> case transDef h of
     BVar b -> LetUA b $ transExpr $ ELet t expr
     BOpenModule m -> OpenUA m $ transExpr $ ELet t expr
+    BTypeDef name tt -> TypeDefUA (name, tt) $ transExpr $ ELet t expr
   ELetRec defs expr -> failure x
   ELambda [] expr -> transExpr expr
   ELambda (h:t) expr -> LambdaUA (transArg h) $ transExpr $ ELambda t expr
@@ -55,6 +57,7 @@ transExpr x = case x of
   EObject (h:t) -> case transDef h of
     BVar b -> RecordConsUA b $ transExpr $ EObject t
     BOpenModule m -> error "opening modules not allowed inside records"
+    BTypeDef _ _ -> error "defining types not allowed inside records"
 
   EBlock [] -> VarUA "returnIO" `AppUA` VarUA "unit"
   EBlock (BlockExprId expr:t) ->
@@ -73,6 +76,7 @@ transExpr x = case x of
   ERecord (h:t) -> case transRecordItem h of
     BVar b -> RecordConsUA b $ transExpr $ ERecord t
     BOpenModule m -> error "opening modules not allowed inside records"
+    BTypeDef _ _ -> error "defining types not allowed inside records"
 
   ERecordUpdate id recorditems  -> failure x
   ECoerce expr type'  -> failure x

@@ -31,6 +31,9 @@ layout "let", "begin", "object" ;
 layout stop "in", "end" ;
 layout toplevel ;
 
+-- comments
+comment "(*" "*)" ;
+
 -- top level
 
 Module. Module ::= [Def] ;
@@ -121,6 +124,7 @@ separator Def ";" ;
 DVar. Def ::= Ident [Arg] "=" Expr ;
 DOpVar. Def ::= "(" AnyOp ")" [Arg] "=" Expr ;
 DOpen. Def ::= "open" Ident ;
+DType. Def ::= "type" Ident "=" Type ;
 
 -- types
 

@@ -23,6 +23,7 @@ data UAst (l :: Level) = AddUA
   | RecordConsUA (String, UAst l) (UAst l)
   | RecordGetUA String (UAst l)
   | OpenUA String (UAst l)
+  | TypeDefUA (String, UMonoType) (UAst l)
 deriving instance (Show (UArgumentType l) => Show (UAst l))
 
 data UMonoType = ArrowUMT UMonoType UMonoType

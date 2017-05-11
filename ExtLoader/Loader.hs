@@ -36,6 +36,7 @@ dump_module_names (RecordNilUA) = []
 dump_module_names (RecordConsUA (_, a) rest) = dump_module_names a ++ dump_module_names rest
 dump_module_names (RecordGetUA _ a) = dump_module_names a
 dump_module_names (OpenUA m a) = (m:dump_module_names a)
+dump_module_names (TypeDefUA _ a) = dump_module_names a
 
 load_ext_modules_by_name :: [String] -> IO ExtModuleEnv
 load_ext_modules_by_name modules = do
