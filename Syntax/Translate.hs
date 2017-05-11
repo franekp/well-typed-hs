@@ -80,6 +80,7 @@ transExpr x = case x of
 
   ERecordUpdate id recorditems  -> failure x
   ECoerce expr type'  -> failure x
+  EUnit -> VarUA "unit"
   EIf expr1 expr2 expr3  -> VarUA "ifThenElse" `AppUA` transExpr expr1 `AppUA` transExpr expr2 `AppUA` transExpr expr3
 
   EAppOp e1 (RAppOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
@@ -118,6 +119,7 @@ transRecordItem x = case x of
 transArg :: Arg -> (String, UPolyType)
 transArg x = case x of
   Arg id typescheme -> (transIdent id, transTypeScheme typescheme)
+  ArgUnit -> ("__unit__", MonoUPT UnitUMT)
 
 transTypeV :: TypeV -> String
 transTypeV x = case x of

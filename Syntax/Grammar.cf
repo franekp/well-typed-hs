@@ -92,6 +92,7 @@ ETuple. Expr20 ::= "(" ListItem "," [ListItem] ")" ;
 ERecord. Expr20 ::= "{" [RecordItem] "}" ;
 ERecordUpdate. Expr20 ::= "{" Ident "|" [RecordItem] "}" ;
 ECoerce. Expr20 ::= "(" Expr ":" Type ")" ;
+EUnit. Expr20 ::= "(" ")" ;
 
 coercions Expr 20 ;
 
@@ -117,6 +118,7 @@ RecordItem. RecordItem ::= Def ;
 
 separator Arg "" ;
 Arg. Arg ::= "(" Ident ":" TypeScheme ")" ;
+ArgUnit. Arg ::= "(" ")" ;
 
 -- definitions
 
