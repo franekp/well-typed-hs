@@ -99,6 +99,7 @@ transExpr x = case x of
   EFieldAccess expr id -> RecordGetUA (transIdent id) (transExpr expr)
   EVar id -> VarUA (transIdent id)
   EOpVar anyop -> VarUA (transAnyOp anyop)
+  EPartialOp anyop expr -> VarUA "flip" `AppUA` VarUA (transAnyOp anyop) `AppUA` transExpr expr
   EInt n -> LiteralUA (fromIntegral n)
   EString str  -> StringUA str
 

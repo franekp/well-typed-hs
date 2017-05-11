@@ -79,6 +79,7 @@ EFieldAccess. Expr19 ::= Expr19 "." Ident ;
 
 EVar. Expr20 ::= Ident ;
 EOpVar. Expr20 ::= "(" AnyOp ")" ;
+EPartialOp. Expr20 ::= "(" AnyOp Expr ")" ;
 EInt. Expr20 ::= Integer ;
 EString. Expr20 ::= String ;
 
