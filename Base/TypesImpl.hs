@@ -24,6 +24,7 @@ show_value val = case (anything :: Type a) of
     Left a -> "Left (" ++ show_value a ++ ")"
     Right a -> "Right (" ++ show_value a ++ ")"
   CharT -> show (val :: Char)
+  ListT CharT -> val :: String
   ListT (t :: Type t) -> case (val :: [t]) of
     [] -> "[]"
     h:t -> "[" ++ show_value h ++ foldl (++) "" (map (("," ++) . show_value) t) ++ "]"
