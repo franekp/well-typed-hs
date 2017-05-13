@@ -7,9 +7,9 @@ Syntax/*.log
 Syntax/*.ps
 Syntax/*.tex
 Syntax/*.txt
-Syntax/Layout*
-Syntax/Lex*
-Syntax/Print*
-Syntax/Par*
-Syntax/ErrM.hs
+#Syntax/Layout*
+#Syntax/Lex*
+#Syntax/Print*
+#Syntax/Par*
+#Syntax/ErrM.hs
 Syntax/TestGrammar

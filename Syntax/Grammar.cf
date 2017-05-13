@@ -1,29 +1,33 @@
 -- tokens (from least tight to most tight)
 
-token RAppOp ( [".:"]? ({"<|"}|'$'|'@') )
+position token RAppOp ( [".:"]? ({"<|"}|'$'|'@') )
   | ( [".:"]? ('$'|'@') ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
 
-token LPipeOp ( [".:"]? '|' )
+position token LPipeOp ( [".:"]? '|' )
   | ( [".:"]? '|' ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
 
-token LAndOp ( [".:"]? '&' )
+position token LAndOp ( [".:"]? '&' )
   | ( [".:"]? '&' ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
 
-token RAssignOp [".:;"]? ["@#$%^&*-+.:;|"] '='+ ;
+position token RAssignOp [".:;"]? ["@#$%^&*-+.:;|"] '='+ ;
 
-token RelOp [".:"]? ({"~"}|{"!="}|{"/="}|{"<"}|{"<="}|{">"}|{">="}|(('='|'~') ["~!@#$%^&*-+.:;|/<>="]+)) ;
+position token RelOp [".:"]? ({"~"}|{"!="}|{"/="}|{"<"}|{"<="}|{">"}|{">="}|(('='|'~') ["~!@#$%^&*-+.:;|/<>="]+)) ;
 
-token LAddOp ( [".:"]? ["+-"] )
+position token LAddOp ( [".:"]? ["+-"] )
   | ( [".:"]? ["+-"] ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
 
-token LMulOp ( [".:"]? ["*/%"] )  -- below exception: no "**" possible
+position token LMulOp ( [".:"]? ["*/%"] )  -- below exception: no "**" possible
   | ( [".:"]? ["*/%"] ["~!@#$%^&-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
 
-token RExpOp ( [".:"]? ({"^"}|{"**"}) )
+position token RExpOp ( [".:"]? ({"^"}|{"**"}) )
   | ( [".:"]? ({"^"}|{"**"}) ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
 
-token RComposeOp ( [".:"]? ({">>"}|{"<<"}) )
+position token RComposeOp ( [".:"]? ({">>"}|{"<<"}) )
   | ( [".:"]? ({">>"}|{"<<"}) ["~!@#$%^&*-+.:;|/<>"] ["~!@#$%^&*-+.:;|/<>="]* ) ;
+
+position token PIdent letter (letter | digit | '_' | '\'')* ;
+position token PInteger digit+ ;
+position token PString '"' ((char - ["\"\\"]) | ('\\' ["\"\\nt"]))* '"' ;
 
 -- layout rules
 
@@ -75,22 +79,22 @@ EMulOp. Expr11 ::= Expr11 LMulOp Expr12 ;
 EExpOp. Expr12 ::= Expr13 RExpOp Expr12 ;
 EComposeOp. Expr13 ::= Expr14 RComposeOp Expr13 ;
 
-EBackticks. Expr14 ::= Expr14 "`" Ident "`" Expr15 ;
+EBackticks. Expr14 ::= Expr14 "`" PIdent "`" Expr15 ;
 
 EApp. Expr18 ::= Expr18 Expr19 ;
-EFieldAccess. Expr19 ::= Expr19 "." Ident ;
+EFieldAccess. Expr19 ::= Expr19 "." PIdent ;
 
-EVar. Expr20 ::= Ident ;
+EVar. Expr20 ::= PIdent ;
 EOpVar. Expr20 ::= "(" AnyOp ")" ;
 EPartialOp. Expr20 ::= "(" AnyOp Expr ")" ;
-EInt. Expr20 ::= Integer ;
-EString. Expr20 ::= String ;
+EInt. Expr20 ::= PInteger ;
+EString. Expr20 ::= PString ;
 
 EBlock. Expr20 ::= "begin" "{" [BlockExpr] "}" "end" ;
 EList. Expr20 ::= "[" [ListItem] "]" ;
 ETuple. Expr20 ::= "(" ListItem "," [ListItem] ")" ;
 ERecord. Expr20 ::= "{" [RecordItem] "}" ;
-ERecordUpdate. Expr20 ::= "{" Ident "|" [RecordItem] "}" ;
+ERecordUpdate. Expr20 ::= "{" PIdent "|" [RecordItem] "}" ;
 ECoerce. Expr20 ::= "(" Expr ":" Type ")" ;
 EUnit. Expr20 ::= "(" ")" ;
 
@@ -100,8 +104,8 @@ coercions Expr 20 ;
 
 separator BlockExpr ";" ;
 BlockExprId. BlockExpr ::= Expr ;
-BlockExprBind. BlockExpr ::= Ident ":" TypeScheme "<-" Expr ;
-BlockExprDef. BlockExpr ::= Ident "=" Expr ;
+BlockExprBind. BlockExpr ::= PIdent ":" TypeScheme "<-" Expr ;
+BlockExprDef. BlockExpr ::= PIdent "=" Expr ;
 
 -- list items
 
@@ -117,21 +121,21 @@ RecordItem. RecordItem ::= Def ;
 -- function arguments
 
 separator Arg "" ;
-Arg. Arg ::= "(" Ident ":" TypeScheme ")" ;
+Arg. Arg ::= "(" PIdent ":" TypeScheme ")" ;
 ArgUnit. Arg ::= "(" ")" ;
 
 -- definitions
 
 separator Def ";" ;
-DVar. Def ::= Ident [Arg] "=" Expr ;
+DVar. Def ::= PIdent [Arg] "=" Expr ;
 DOpVar. Def ::= "(" AnyOp ")" [Arg] "=" Expr ;
-DOpen. Def ::= "open" Ident ;
-DType. Def ::= "type" Ident "=" Type ;
+DOpen. Def ::= "open" PIdent ;
+DType. Def ::= "type" PIdent "=" Type ;
 
 -- types
 
 terminator TypeV "." ;
-TypeV. TypeV ::= Ident ;
+TypeV. TypeV ::= PIdent ;
 
 TypeScheme. TypeScheme ::= [TypeV] Type ;
 
@@ -148,12 +152,12 @@ TUnit. Type1 ::= "(" ")" ;
 TPair. Type1 ::= "(" Type "," Type ")" ;
 TTriple. Type1 ::= "(" Type "," Type "," Type ")" ;
 
-TRecord. Type3 ::= "{" Ident "|" [FieldAnnotation] "}" ;
+TRecord. Type3 ::= "{" PIdent "|" [FieldAnnotation] "}" ;
 TExactRecord. Type3 ::= "{" [FieldAnnotation] "}" ;
 TInt. Type3 ::= "Int" ;
-TVar. Type3 ::= Ident ;
+TVar. Type3 ::= PIdent ;
 
-FieldAnnotation. FieldAnnotation ::= Ident ":" Type ;
+FieldAnnotation. FieldAnnotation ::= PIdent ":" Type ;
 separator FieldAnnotation "," ;
 
 coercions Type 3 ;
