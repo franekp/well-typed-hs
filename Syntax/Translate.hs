@@ -135,6 +135,14 @@ transType x = case x of
   TArrow type1 type2  -> transType type1 `ArrowUMT` transType type2
   TRecord id [] -> VarUMT $ transIdent id
   TRecord id (h:t) -> HasFieldUMT (transFieldAnnotation h) $ transType $ TRecord id t
+  TExactRecord li -> let
+      helper1 :: [FieldAnnotation] -> UMonoType
+      helper1 [] = RecordNilUMT
+      helper1 (h:t) = RecordConsUMT (transFieldAnnotation h) $ helper1 t
+      helper2 :: UMonoType -> [FieldAnnotation] -> UMonoType
+      helper2 inner [] = inner
+      helper2 inner (h:t) = HasFieldUMT (transFieldAnnotation h) $ helper2 inner t
+    in helper2 (helper1 li) li
   TInt  -> IntUMT
   TVar id  -> VarUMT $ transIdent id
 

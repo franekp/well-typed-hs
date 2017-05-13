@@ -30,6 +30,8 @@ data UMonoType = ArrowUMT UMonoType UMonoType
   | IntUMT
   | VarUMT String
   | HasFieldUMT (String, UMonoType) UMonoType
+  | RecordConsUMT (String, UMonoType) UMonoType
+  | RecordNilUMT
   | BoolUMT
   | MaybeUMT UMonoType
   | EitherUMT UMonoType UMonoType

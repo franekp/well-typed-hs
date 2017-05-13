@@ -34,6 +34,12 @@ typecheck_monotype te (HasFieldUMT (field, a) rest) =
   case (typecheck_monotype te a, typecheck_monotype te rest) of
     (Mono a', Mono rest') -> case (read field :: Mono FieldName) of
       Mono (field' :: FieldName f) -> Mono $ HasFieldT (field', a') rest'
+typecheck_monotype te (RecordConsUMT (field, a) rest) =
+  case (typecheck_monotype te a, typecheck_monotype te rest) of
+    (Mono a', Mono (RecordT rest')) -> case (read field :: Mono FieldName) of
+      Mono (field' :: FieldName f) -> Mono $ RecordT $ ConsRT (field', a') rest'
+    (_, Mono _) -> error "this code should be unreachable"
+typecheck_monotype te RecordNilUMT = Mono $ RecordT $ NilRT
 
 typecheck_monotype te (IntUMT) = Mono IntT
 typecheck_monotype te (BoolUMT) = Mono BoolT

@@ -149,6 +149,7 @@ TPair. Type1 ::= "(" Type "," Type ")" ;
 TTriple. Type1 ::= "(" Type "," Type "," Type ")" ;
 
 TRecord. Type3 ::= "{" Ident "|" [FieldAnnotation] "}" ;
+TExactRecord. Type3 ::= "{" [FieldAnnotation] "}" ;
 TInt. Type3 ::= "Int" ;
 TVar. Type3 ::= Ident ;
 
