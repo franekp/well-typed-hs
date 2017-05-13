@@ -133,7 +133,8 @@ map_vars f (Mono t) = case t of
       a' = map_vars f (Mono a)
       rest' = map_vars f (Mono (RecordT rest))
     in case (a', rest') of
-      (Mono a'', Mono rest'') -> Mono $ HasFieldT (ff, a'') rest''
+      (Mono a'', Mono (RecordT rest'')) -> Mono $ RecordT $ ConsRT (ff, a'') rest''
+      (_, _) -> error "unreachable code"
   BoolT -> Mono t
   MaybeT t ->
     let

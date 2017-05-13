@@ -1,3 +1,4 @@
+open StdLib
 
 get_a (re : r. a. {r | a : a}) = re.a
 get_b (re : r. b. {r | b : b}) = re.b
@@ -15,7 +16,9 @@ get_a_and_b_revised (re : r. b. a. {r | newa : a, newb : b}) = {
   b = get_newb re,
 }
 
-main = get_a_and_b_revised (get_a_and_b ({
-  a = 4,
-  b = {ba = 2, bb = 3},
-}))
+result = get_a_and_b_revised (get_a_and_b ({
+    a = 4,
+    b = {ba = 2, bb = 3},
+  }))
+
+main = putStrLn $ show $ result

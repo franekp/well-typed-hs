@@ -1,4 +1,4 @@
-
+open StdLib
 
 three_letters_0 (a : a. a) (b : b. b) (c : c. c) = object
   a = a
@@ -19,7 +19,7 @@ three_letters_2 (fa : a. aa. a -> aa) (fb : b. bb. b -> bb) (fc : c. cc. c -> cc
       b = fb b
       c = fc c
 
-main = object
+result = object
   f = three_letters_0 1 2 3
   g = three_letters_1
     1 2 3
@@ -31,3 +31,5 @@ main = object
     (fun (a : a. a) -> a)
     (fun (a : Int) -> a + a)
     1 2 3
+
+main = putStrLn $ show $ result

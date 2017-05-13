@@ -1,4 +1,4 @@
-
+open StdLib
 
 four_letters_0 (a : a. a) (b : b. b) (c : c. c) (d : d. d) = object
   a = a
@@ -22,7 +22,7 @@ four_letters_2 (fa : a. aa. a -> aa) (fb : b. bb. b -> bb) (fc : c. cc. c -> cc)
       c = fc c
       d = fd d
 
-main = object
+result = object
   f = four_letters_0 1 2 3 4
   g = four_letters_1
     1 2 3 4
@@ -36,3 +36,5 @@ main = object
     (fun (a : Int) -> a + a)
     (fun (a : a. a) -> a)
     1 2 3 4
+
+main = putStrLn $ show $ result
