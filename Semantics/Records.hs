@@ -59,8 +59,11 @@ resolve_field_lookups' (AppA f a) = result where
   cont fun arg = case type_of fun of
     a :-> b -> case cast_modulo arg of
       Just correct_arg -> Mono $ fun `AppA` correct_arg
-      Nothing -> Mono $ (ErrorA "wrong type of function argument" :: Ast Lo e Void)
-    _ -> Mono $ (ErrorA "Records.hs: _ is not a function" :: Ast Lo e Void)
+      Nothing -> error $ "Type mismatch:\n\n"
+        ++ "Function:\n" ++ "<unknown> :: " ++ show (type_of fun)
+        ++"\n\nArgument:\n" ++ "<unknown> :: " ++ show (type_of arg) ++ "\n"
+    _ -> error $ "This expression cannot be used as a function:\n"
+      ++ "<unknown> :: " ++ show (type_of fun)
   result = case f' of
     Mono ff -> case a' of
       Mono aa -> cont ff aa

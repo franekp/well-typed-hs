@@ -194,7 +194,17 @@ instance Show (Type a) where
   show VoidT = "Void"
   show (TypeVarT a) = show a
   show (RecordT r) = show r
-  show (HasFieldT (f, a) r) = "HasField(" ++ show f ++ ":" ++ show a ++ ") " ++ show r
+  show (HasFieldT (f, a) r) = helper (HasFieldT (f, a) r) [] where
+    bla = "HasField(" ++ show f ++ ":" ++ show a ++ ") " ++ show r
+    helper :: forall a. Type a -> [String] -> String
+    concat_annotations :: [String] -> String
+    concat_annotations [] = error "unreachable code"
+    concat_annotations [a] = a
+    concat_annotations (h:t) = h ++ ", " ++ concat_annotations t
+    helper (HasFieldT (f, a) r) li = helper r $ annotation:li where
+      annotation = show f ++ " : " ++ show a
+    helper t li = "{" ++ show t ++ " | " ++ concat_annotations li ++ "}"
+
   show BoolT = "Bool"
   show (MaybeT t) = "Maybe (" ++ show t ++ ")"
   show (EitherT l r) = "Either (" ++ show l ++ ") (" ++ show r ++ ")"
@@ -267,9 +277,9 @@ instance Eq (Mono RecordType) where
 instance Show (RecordType r) where
   show = ("{" ++) . (++ "}") . inner where
     inner :: RecordType a -> String
-    inner NilRT = "::"
-    inner ((f, t) `ConsRT` NilRT) = show f ++ " :: " ++ show t
-    inner ((f, t) `ConsRT` rest) = show f ++ " :: " ++ show t ++ ", " ++ inner rest
+    inner NilRT = ""
+    inner ((f, t) `ConsRT` NilRT) = show f ++ " : " ++ show t
+    inner ((f, t) `ConsRT` rest) = show f ++ " : " ++ show t ++ ", " ++ inner rest
 
 instance Show (Mono RecordType) where
   show (Mono a) = show a

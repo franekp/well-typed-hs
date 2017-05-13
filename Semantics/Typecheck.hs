@@ -122,13 +122,11 @@ typecheck' me te e (AppUA fun' arg') =
     cont fun arg = case type_of fun of
       a :-> b -> case cast_modulo arg of
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
-        Nothing -> errorWithStackTrace $ ("\n\nwrong type of function ("
-          ++ show fun' ++ " :: " ++ show (type_of fun)
-          ++") argument (" ++ show arg' ++ " :: " ++ show (type_of arg) ++ ")\n"
-          ) ++ ("\n\nwrong type of function ("
-            ++ show fun ++ " :: " ++ show (type_of fun)
-            ++") argument (" ++ show arg ++ " :: " ++ show (type_of arg) ++ ")" )
-      _ -> error $ show (type_of fun) ++ " is not a function"
+        Nothing -> error $ "Type mismatch:\n\n"
+          ++ "Function:\n" ++ show fun' ++ "\n :: " ++ show (type_of fun)
+          ++"\n\nArgument:\n" ++ show arg' ++ "\n :: " ++ show (type_of arg) ++ "\n"
+      _ -> error $ "This expression cannot be used as a function:\n"
+        ++ show fun' ++ "\n :: " ++ show (type_of fun)
 typecheck' me te e ((var_name, ty) `LambdaUA` body) = (typecheck_polytype te ty helper :: Poly (Ast Hi e)) where
   helper :: forall a l. A Type a => TypeEnv -> Type a -> Poly (Ast Hi e)
   helper te' tt = polymap (MonoP . Mono . (
