@@ -37,7 +37,9 @@ instance Positioned (Pos a) where
     right_end (Pos _ r _) = r
 
 instance Positioned a => Positioned [a] where
+    left_end [] = (-1, -1)
     left_end li = left_end $ head li
+    right_end [] = (-1, -1)
     right_end li = right_end $ last li
         """.strip() + "\n\n"
         #print text
