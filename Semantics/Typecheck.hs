@@ -123,8 +123,8 @@ typecheck' me te e (UAst src (AppUA fun' arg')) =
       a :-> b -> case cast_modulo arg of
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
         Nothing -> error $ "Type mismatch:\n\n"
-          ++ "Function:\n" ++ show fun' ++ "\n :: " ++ show (type_of fun)
-          ++"\n\nArgument:\n" ++ show arg' ++ "\n :: " ++ show (type_of arg) ++ "\n"
+          ++ show fun' ++ "\n :: " ++ show (type_of fun)
+          ++"\n\n" ++ show arg' ++ "\n :: " ++ show (type_of arg) ++ "\n"
       _ -> error $ "This expression cannot be used as a function:\n"
         ++ show fun' ++ "\n :: " ++ show (type_of fun)
 typecheck' me te e (UAst src ((var_name, ty) `LambdaUA` body)) =

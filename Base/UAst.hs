@@ -8,7 +8,31 @@ infixr `LambdaUA`
 infixr `LetUA`
 infixr `RecordConsUA`
 
-type SourceInfo = ((Int, Int), (Int, Int), String)
+type SourceInfo = ((Int, Int), (Int, Int), (String, String))
+
+show_source :: SourceInfo -> String
+show_source src@((line1, col1), (line2, col2), (path, _)) = position ++ "\n" ++ msg where
+  position' = if line1 == line2 then
+      path ++ ":" ++ show line1 ++ ":" ++ show col1 ++ "-" ++ show col2 ++ ":"
+    else
+      path ++ ":" ++ show line1 ++ "-" ++ show line2 ++ ":"
+  position = "\ESC[33m" ++ position' ++ "\ESC[0m"
+  msg = show_source' src
+
+show_source' ((line1, col1), (line2, col2), (_, src)) =
+    if line1 < 0 || col1 < 0 || line2 < 0 || col2 < 0 then "<unknown>" else
+    if line1 == line2 then
+      show_one_line
+    else
+      show_block
+  where
+    underline =
+      replicate (max 0 $ col1 - 1) ' ' ++ replicate (max 1 $ col2 - col1) '^'
+    show_one_line =
+      "\ESC[0m" ++ ("":lines src) !! line1 ++ "\ESC[0m\n\ESC[31;1m" ++ underline ++ "\ESC[0m"
+    show_block =
+      concat $ drop line1 $ take line2 $ "":lines src
+
 
 type family UArgumentType (l :: Level) :: *
 type instance UArgumentType Hi = Maybe UPolyType
@@ -26,10 +50,10 @@ data UAstImpl (l :: Level) = AddUA
   | RecordGetUA String (UAst l)
   | OpenUA String (UAst l)
   | TypeDefUA (String, UMonoType) (UAst l)
-deriving instance (Show (UArgumentType l) => Show (UAstImpl l))
 
 data UAst (l :: Level) = UAst SourceInfo (UAstImpl l)
-deriving instance (Show (UArgumentType l) => Show (UAst l))
+instance Show (UAst l) where
+  show (UAst src _) = show_source src
 
 data UMonoTypeImpl = ArrowUMT UMonoType UMonoType
   | IntUMT
@@ -47,13 +71,13 @@ data UMonoTypeImpl = ArrowUMT UMonoType UMonoType
   | UnitUMT
   | PairUMT UMonoType UMonoType
   | TripleUMT UMonoType UMonoType UMonoType
-  deriving (Show)
 
 data UMonoType = UMonoType SourceInfo UMonoTypeImpl
-  deriving (Show)
+instance Show UMonoType where
+  show (UMonoType src _) = show_source src
 
 data UPolyTypeImpl = ForallUPT String UPolyType | MonoUPT UMonoType
-  deriving (Show)
 
 data UPolyType = UPolyType SourceInfo UPolyTypeImpl
-  deriving (Show)
+instance Show UPolyType where
+  show (UPolyType src _) = show_source src

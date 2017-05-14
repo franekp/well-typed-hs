@@ -20,21 +20,21 @@ failure x = error $ "Undefined case: " ++ show x
 dummyPos :: a -> Pos a
 dummyPos = Pos (-1, -1) (-1, -1)
 
-transPIdent :: String -> PIdent -> String
+transPIdent :: (String, String) -> PIdent -> String
 transPIdent s (PIdent ((_, _), str)) = str
 
-transModule :: String -> Pos Module -> UAst Lo
+transModule :: (String, String) -> Pos Module -> UAst Lo
 transModule s (Pos _ _ x) = case x of
   Module defs  -> transExpr s $ dummyPos $ ELet defs $ dummyPos $ EVar (PIdent ((-1, -1), "main"))
 
-transDef :: String -> Pos Def -> Binding
+transDef :: (String, String) -> Pos Def -> Binding
 transDef s (Pos p q x) = case x of
   DVar id args expr -> BVar (transPIdent s id, transExpr s $ Pos p q $ ELambda args expr)
   DOpVar anyop args expr -> BVar (transAnyOp s anyop, transExpr s $ Pos p q $ ELambda args expr)
   DOpen id -> BOpenModule (transPIdent s id)
   DType id tt -> BTypeDef (transPIdent s id) (transType s tt)
 
-transAnyOp :: String -> Pos AnyOp -> String
+transAnyOp :: (String, String) -> Pos AnyOp -> String
 transAnyOp s (Pos p q x) = case x of
   AnyAppOp (RAppOp ((_, _), str)) -> str
   AnyPipeOp (LPipeOp ((_, _), str)) -> str
@@ -46,7 +46,7 @@ transAnyOp s (Pos p q x) = case x of
   AnyExpOp (RExpOp ((_, _), str)) -> str
   AnyComposeOp (RComposeOp ((_, _), str)) -> str
 
-transExpr :: String -> Pos Expr -> UAst Lo
+transExpr :: (String, String) -> Pos Expr -> UAst Lo
 transExpr s (Pos p q x) = UAst (p, q, s) $ case x of
   ELet [] expr -> case transExpr s expr of
     UAst _ res -> res
@@ -185,29 +185,29 @@ transExpr s (Pos p q x) = UAst (p, q, s) $ case x of
   EInt (PInteger ((_, _), n)) -> LiteralUA (read n :: Int)
   EString (PString ((_, _), str)) -> StringUA $ Syntax.LexGrammar.unescapeInitTail str
 
-transListItem :: String -> Pos ListItem -> UAst Lo
+transListItem :: (String, String) -> Pos ListItem -> UAst Lo
 transListItem s (Pos _ _ x) = case x of
   ListItem expr  -> transExpr s expr
 
-transRecordItem :: String -> Pos RecordItem -> Binding
+transRecordItem :: (String, String) -> Pos RecordItem -> Binding
 transRecordItem s (Pos _ _ x) = case x of
   RecordItem def  -> transDef s def
 
-transArg :: String -> Pos Arg -> (String, UPolyType)
+transArg :: (String, String) -> Pos Arg -> (String, UPolyType)
 transArg s (Pos p q x) = case x of
   Arg id typescheme -> (transPIdent s id, transTypeScheme s typescheme)
   ArgUnit -> ("__unit__", UPolyType (p, q, s) $ MonoUPT $ UMonoType (p, q, s) $ UnitUMT)
 
-transTypeV :: String -> Pos TypeV -> String
+transTypeV :: (String, String) -> Pos TypeV -> String
 transTypeV s (Pos _ _ x) = case x of
   TypeV id  -> transPIdent s id
 
-transTypeScheme :: String -> Pos TypeScheme -> UPolyType
+transTypeScheme :: (String, String) -> Pos TypeScheme -> UPolyType
 transTypeScheme s (Pos p q x) = UPolyType (p, q, s) $ case x of
   TypeScheme [] type' -> MonoUPT $ transType s type'
   TypeScheme (h:t) type' -> ForallUPT (transTypeV s h) $ transTypeScheme s $ Pos (left_end t) q $ TypeScheme t type'
 
-transType :: String -> Pos Type -> UMonoType
+transType :: (String, String) -> Pos Type -> UMonoType
 transType s (Pos p q x) = UMonoType (p, q, s) $ case x of
   TArrow type1 type2  -> transType s type1 `ArrowUMT` transType s type2
   TRecord id [] -> VarUMT $ transPIdent s id
@@ -235,6 +235,6 @@ transType s (Pos p q x) = UMonoType (p, q, s) $ case x of
   TPair a b -> PairUMT (transType s a) (transType s b)
   TTriple a b c -> TripleUMT (transType s a) (transType s b) (transType s c)
 
-transFieldAnnotation :: String -> Pos FieldAnnotation -> (String, UMonoType)
+transFieldAnnotation :: (String, String) -> Pos FieldAnnotation -> (String, UMonoType)
 transFieldAnnotation s (Pos _ _ x) = case x of
   FieldAnnotation id type'  -> (transPIdent s id, transType s type')

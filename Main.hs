@@ -20,10 +20,10 @@ type ParseFun a = [Token] -> Err a
 myLLexer = resolveLayout True . myLexer
 
 runFile :: ParseFun (Pos Module) -> FilePath -> IO ()
-runFile p f = {-putStrLn f >>-} readFile f >>= run p
+runFile p f = {-putStrLn f >>-} readFile f >>= run p f
 
-run :: ParseFun (Pos Module) -> String -> IO ()
-run p s = let ts = myLLexer s in case p ts of
+run :: ParseFun (Pos Module) -> String -> String -> IO ()
+run p filename s = let ts = myLLexer s in case p ts of
   Bad s -> do
     putStrLn "\nParse              Failed...\n"
     putStrLn "Tokens:"
@@ -31,7 +31,7 @@ run p s = let ts = myLLexer s in case p ts of
     putStrLn s
   Ok tree -> do
     --putStrLn "\nParse Successful!"
-    let uast = transModule s tree
+    let uast = transModule (filename, s) tree
     module_env <- load_ext_modules uast
     uast_to_io module_env uast
     --putStrLn $ uast_to_string module_env uast
