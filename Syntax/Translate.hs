@@ -174,7 +174,17 @@ transExpr s (Pos p q x) = UAst (p, q, s) $ case x of
     in
       varUA (transPIdent s func) `appUA` transExpr s e1 `AppUA` transExpr s e2
   EApp e1 e2 -> transExpr s e1 `AppUA` transExpr s e2
-  EFieldAccess expr id -> RecordGetUA (transPIdent s id) (transExpr s expr)  -- FIXME: add lambda to enable polymorphism
+  EFieldAccess expr id -> let
+      lambdaUA = (UAst (left_end id, right_end id, s) .) . LambdaUA
+    in
+      (lambdaUA (
+        "__record__",
+        UPolyType (p, q, s) $ ForallUPT "r" $ UPolyType (p, q, s) $ ForallUPT "f" $ UPolyType (p, q, s) $ MonoUPT
+          $ UMonoType (p, q, s) $ HasFieldUMT (transPIdent s id, UMonoType (p, q, s) $ VarUMT "f")
+            $ UMonoType (p, q, s) $ VarUMT "r"
+      ) $ UAst (p, q, s) $ RecordGetUA (transPIdent s id)
+        (UAst (p, q, s) $ VarUA "__record__")
+      ) `AppUA` (transExpr s expr)
   EVar id -> VarUA (transPIdent s id)
   EOpVar anyop -> VarUA (transAnyOp s anyop)
   EPartialOp anyop expr -> let

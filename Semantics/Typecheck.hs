@@ -167,7 +167,7 @@ typecheck' me te e (UAst src (RecordGetUA f r)) = polymap cont $ typecheck' me t
               error "field name mismatch"
           Nothing ->
             error $ "field name mismatch: " ++ show f ++ " != " ++ show f'
-    _ -> error "type mismatch"
+    _ -> error $ "type mismatch (record-related)\n\n" ++ show_source src ++ "\n" ++ show (type_of r_ast)
 typecheck' me te e (UAst src (OpenUA mod rest)) =
   typecheck' me te (OpenEN (lookup_ext_module me mod) e) rest
 typecheck' me (TypeEnv te) e (UAst src (TypeDefUA (name, tt) expr)) =
