@@ -4,6 +4,7 @@
 module Syntax.Translate where
 
 import Syntax.AbsGrammar
+import qualified Syntax.LexGrammar
 import Syntax.ErrM
 
 import Base.Pervasives
@@ -16,65 +17,67 @@ data Binding = BVar (String, UAst Lo) | BOpenModule String | BTypeDef String UMo
 failure :: Show a => a -> b
 failure x = error $ "Undefined case: " ++ show x
 
-transIdent :: Ident -> String
-transIdent x = case x of
-  Ident str  -> str
+dummyPos :: a -> Pos a
+dummyPos = Pos (-1, -1) (-1, -1)
 
-transModule :: Module -> UAst Lo
-transModule x = case x of
-  Module defs  -> transExpr $ ELet defs $ EVar (Ident "main")
+transPIdent :: PIdent -> String
+transPIdent (PIdent ((_, _), str)) = str
 
-transDef :: Def -> Binding
-transDef x = case x of
-  DVar id args expr -> BVar (transIdent id, transExpr $ ELambda args expr)
-  DOpVar anyop args expr -> BVar (transAnyOp anyop, transExpr $ ELambda args expr)
-  DOpen id -> BOpenModule (transIdent id)
-  DType id tt -> BTypeDef (transIdent id) (transType tt)
+transModule :: Pos Module -> UAst Lo
+transModule (Pos _ _ x) = case x of
+  Module defs  -> transExpr $ dummyPos $ ELet defs $ dummyPos $ EVar (PIdent ((-1, -1), "main"))
 
-transAnyOp :: AnyOp -> String
-transAnyOp x = case x of
-  AnyAppOp (RAppOp str) -> str
-  AnyPipeOp (LPipeOp str) -> str
-  AnyAndOp (LAndOp str) -> str
-  AnyAssignOp (RAssignOp str) -> str
-  AnyRelOp (RelOp str) -> str
-  AnyAddOp (LAddOp str) -> str
-  AnyMulOp (LMulOp str) -> str
-  AnyExpOp (RExpOp str) -> str
-  AnyComposeOp (RComposeOp str) -> str
+transDef :: Pos Def -> Binding
+transDef (Pos p q x) = case x of
+  DVar id args expr -> BVar (transPIdent id, transExpr $ Pos p q $ ELambda args expr)
+  DOpVar anyop args expr -> BVar (transAnyOp anyop, transExpr $ Pos p q $ ELambda args expr)
+  DOpen id -> BOpenModule (transPIdent id)
+  DType id tt -> BTypeDef (transPIdent id) (transType tt)
 
-transExpr :: Expr -> UAst Lo
-transExpr x = case x of
+transAnyOp :: Pos AnyOp -> String
+transAnyOp (Pos p q x) = case x of
+  AnyAppOp (RAppOp ((_, _), str)) -> str
+  AnyPipeOp (LPipeOp ((_, _), str)) -> str
+  AnyAndOp (LAndOp ((_, _), str)) -> str
+  AnyAssignOp (RAssignOp ((_, _), str)) -> str
+  AnyRelOp (RelOp ((_, _), str)) -> str
+  AnyAddOp (LAddOp ((_, _), str)) -> str
+  AnyMulOp (LMulOp ((_, _), str)) -> str
+  AnyExpOp (RExpOp ((_, _), str)) -> str
+  AnyComposeOp (RComposeOp ((_, _), str)) -> str
+
+transExpr :: Pos Expr -> UAst Lo
+transExpr (Pos p q x) = case x of
   ELet [] expr -> transExpr expr
   ELet (h:t) expr -> case transDef h of
-    BVar b -> LetUA b $ transExpr $ ELet t expr
-    BOpenModule m -> OpenUA m $ transExpr $ ELet t expr
-    BTypeDef name tt -> TypeDefUA (name, tt) $ transExpr $ ELet t expr
+    BVar b -> LetUA b $ transExpr $ Pos p q $ ELet t expr
+    BOpenModule m -> OpenUA m $ transExpr $ Pos p q $ ELet t expr
+    BTypeDef name tt -> TypeDefUA (name, tt) $ transExpr $ Pos p q $ ELet t expr
   ELetRec defs expr -> failure x
   ELambda [] expr -> transExpr expr
-  ELambda (h:t) expr -> LambdaUA (transArg h) $ transExpr $ ELambda t expr
+  ELambda (h:t) expr -> LambdaUA (transArg h) $ transExpr $ Pos p q $ ELambda t expr
   EObject [] -> RecordNilUA
   EObject (h:t) -> case transDef h of
-    BVar b -> RecordConsUA b $ transExpr $ EObject t
+    BVar b -> RecordConsUA b $ transExpr $ Pos p q $ EObject t
     BOpenModule m -> error "opening modules not allowed inside records"
     BTypeDef _ _ -> error "defining types not allowed inside records"
 
   EBlock [] -> VarUA "returnIO" `AppUA` VarUA "unit"
-  EBlock (BlockExprId expr:t) ->
-    VarUA "nextIO" `AppUA` transExpr expr `AppUA` transExpr (EBlock t)
-  EBlock (BlockExprBind id tt expr:t) ->
-    VarUA "bindIO" `AppUA` transExpr expr `AppUA` (LambdaUA (transIdent id, transTypeScheme tt) (transExpr $ EBlock t))
-  EBlock (BlockExprDef id expr:t) ->
-    LetUA (transIdent id, transExpr expr) $ transExpr (EBlock t)
+  EBlock (Pos _ p (BlockExprId expr):t) ->
+    VarUA "nextIO" `AppUA` transExpr expr `AppUA` transExpr (Pos p q $ EBlock t)
+  EBlock (Pos _ p (BlockExprBind id tt expr):t) ->
+    VarUA "bindIO" `AppUA` transExpr expr `AppUA` (LambdaUA (transPIdent id, transTypeScheme tt) (transExpr $ Pos p q $ EBlock t))
+  EBlock (Pos _ p (BlockExprDef id expr):t) ->
+    LetUA (transPIdent id, transExpr expr) $ transExpr (Pos p q $ EBlock t)
   EList [] -> VarUA "nil"
-  EList (h:t) -> VarUA "cons" `AppUA` transListItem h `AppUA` transExpr (EList t)
+  EList (h:t) -> VarUA "cons" `AppUA` transListItem h `AppUA` transExpr (Pos p q $ EList t)
   ETuple a [b] -> VarUA "pair" `AppUA` transListItem a `AppUA` transListItem b
   ETuple a [b, c] -> VarUA "triple" `AppUA` transListItem a `AppUA` transListItem b `AppUA` transListItem c
   ETuple listitem listitems -> failure x
 
   ERecord [] -> RecordNilUA
   ERecord (h:t) -> case transRecordItem h of
-    BVar b -> RecordConsUA b $ transExpr $ ERecord t
+    BVar b -> RecordConsUA b $ transExpr $ Pos p q $ ERecord t
     BOpenModule m -> error "opening modules not allowed inside records"
     BTypeDef _ _ -> error "defining types not allowed inside records"
 
@@ -83,68 +86,68 @@ transExpr x = case x of
   EUnit -> VarUA "unit"
   EIf expr1 expr2 expr3  -> VarUA "ifThenElse" `AppUA` transExpr expr1 `AppUA` transExpr expr2 `AppUA` transExpr expr3
 
-  EAppOp e1 (RAppOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
-  EPipeOp e1 (LPipeOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
-  EAndOp e1 (LAndOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
-  EAssignOp e1 (RAssignOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
-  EAddOp e1 (LAddOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
-  EMulOp e1 (LMulOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
-  EExpOp e1 (RExpOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
-  EComposeOp e1 (RComposeOp op) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
+  EAppOp e1 (RAppOp ((_, _), op)) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
+  EPipeOp e1 (LPipeOp ((_, _), op)) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
+  EAndOp e1 (LAndOp ((_, _), op)) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
+  EAssignOp e1 (RAssignOp ((_, _), op)) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
+  EAddOp e1 (LAddOp ((_, _), op)) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
+  EMulOp e1 (LMulOp ((_, _), op)) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
+  EExpOp e1 (RExpOp ((_, _), op)) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
+  EComposeOp e1 (RComposeOp ((_, _), op)) e2 -> VarUA op `AppUA` transExpr e1 `AppUA` transExpr e2
 
   ERelOp expr [] -> VarUA "True"
-  ERelOp expr (RelExpr (RelOp op) e : relexprs) ->
+  ERelOp expr (Pos pp qq (RelExpr (RelOp ((_, _), op)) e) : relexprs) ->
     VarUA "&&"
     `AppUA` (VarUA op `AppUA` transExpr expr `AppUA` transExpr e)
-    `AppUA` (transExpr $ ERelOp e relexprs)
+    `AppUA` (transExpr $ Pos p q $ ERelOp e relexprs)
 
   EBackticks e1 func e2 ->
-    VarUA (transIdent func) `AppUA` transExpr e1 `AppUA` transExpr e2
+    VarUA (transPIdent func) `AppUA` transExpr e1 `AppUA` transExpr e2
   EApp e1 e2 -> transExpr e1 `AppUA` transExpr e2
-  EFieldAccess expr id -> RecordGetUA (transIdent id) (transExpr expr)
-  EVar id -> VarUA (transIdent id)
+  EFieldAccess expr id -> RecordGetUA (transPIdent id) (transExpr expr)
+  EVar id -> VarUA (transPIdent id)
   EOpVar anyop -> VarUA (transAnyOp anyop)
   EPartialOp anyop expr -> VarUA "flip" `AppUA` VarUA (transAnyOp anyop) `AppUA` transExpr expr
-  EInt n -> LiteralUA (fromIntegral n)
-  EString str  -> StringUA str
+  EInt (PInteger ((_, _), n)) -> LiteralUA (read n :: Int)
+  EString (PString ((_, _), str)) -> StringUA $ Syntax.LexGrammar.unescapeInitTail str
 
-transListItem :: ListItem -> UAst Lo
-transListItem x = case x of
+transListItem :: Pos ListItem -> UAst Lo
+transListItem (Pos _ _ x) = case x of
   ListItem expr  -> transExpr expr
 
-transRecordItem :: RecordItem -> Binding
-transRecordItem x = case x of
+transRecordItem :: Pos RecordItem -> Binding
+transRecordItem (Pos _ _ x) = case x of
   RecordItem def  -> transDef def
 
-transArg :: Arg -> (String, UPolyType)
-transArg x = case x of
-  Arg id typescheme -> (transIdent id, transTypeScheme typescheme)
+transArg :: Pos Arg -> (String, UPolyType)
+transArg (Pos _ _ x) = case x of
+  Arg id typescheme -> (transPIdent id, transTypeScheme typescheme)
   ArgUnit -> ("__unit__", MonoUPT UnitUMT)
 
-transTypeV :: TypeV -> String
-transTypeV x = case x of
-  TypeV id  -> transIdent id
+transTypeV :: Pos TypeV -> String
+transTypeV (Pos _ _ x) = case x of
+  TypeV id  -> transPIdent id
 
-transTypeScheme :: TypeScheme -> UPolyType
-transTypeScheme x = case x of
+transTypeScheme :: Pos TypeScheme -> UPolyType
+transTypeScheme (Pos p q x) = case x of
   TypeScheme [] type' -> MonoUPT $ transType type'
-  TypeScheme (h:t) type' -> ForallUPT (transTypeV h) $ transTypeScheme $ TypeScheme t type'
+  TypeScheme (h:t) type' -> ForallUPT (transTypeV h) $ transTypeScheme $ Pos p q $ TypeScheme t type'
 
-transType :: Type -> UMonoType
-transType x = case x of
+transType :: Pos Type -> UMonoType
+transType (Pos p q x) = case x of
   TArrow type1 type2  -> transType type1 `ArrowUMT` transType type2
-  TRecord id [] -> VarUMT $ transIdent id
-  TRecord id (h:t) -> HasFieldUMT (transFieldAnnotation h) $ transType $ TRecord id t
+  TRecord id [] -> VarUMT $ transPIdent id
+  TRecord id (h:t) -> HasFieldUMT (transFieldAnnotation h) $ transType $ Pos p q $ TRecord id t
   TExactRecord li -> let
-      helper1 :: [FieldAnnotation] -> UMonoType
+      helper1 :: [Pos FieldAnnotation] -> UMonoType
       helper1 [] = RecordNilUMT
       helper1 (h:t) = RecordConsUMT (transFieldAnnotation h) $ helper1 t
-      helper2 :: UMonoType -> [FieldAnnotation] -> UMonoType
+      helper2 :: UMonoType -> [Pos FieldAnnotation] -> UMonoType
       helper2 inner [] = inner
       helper2 inner (h:t) = HasFieldUMT (transFieldAnnotation h) $ helper2 inner t
     in helper2 (helper1 li) li
   TInt  -> IntUMT
-  TVar id  -> VarUMT $ transIdent id
+  TVar id  -> VarUMT $ transPIdent id
 
   TBool -> BoolUMT
   TMaybe a -> MaybeUMT (transType a)
@@ -157,6 +160,6 @@ transType x = case x of
   TPair a b -> PairUMT (transType a) (transType b)
   TTriple a b c -> TripleUMT (transType a) (transType b) (transType c)
 
-transFieldAnnotation :: FieldAnnotation -> (String, UMonoType)
-transFieldAnnotation x = case x of
-  FieldAnnotation id type'  -> (transIdent id, transType type')
+transFieldAnnotation :: Pos FieldAnnotation -> (String, UMonoType)
+transFieldAnnotation (Pos _ _ x) = case x of
+  FieldAnnotation id type'  -> (transPIdent id, transType type')

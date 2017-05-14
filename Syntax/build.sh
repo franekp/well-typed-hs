@@ -7,6 +7,7 @@ cd $DIR/..
 
 bnfc -p Syntax Syntax/Grammar.cf
 cp Syntax/fixErrM.hs Syntax/ErrM.hs
+Syntax/bnfc_enhancer.py
 happy -gca Syntax/ParGrammar.y --info=Syntax/Grammar.info
 alex -g Syntax/LexGrammar.x
-ghc --make Syntax/TestGrammar.hs -o Syntax/TestGrammar
+#ghc --make Syntax/TestGrammar.hs -o Syntax/TestGrammar

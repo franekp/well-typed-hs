@@ -5,7 +5,6 @@ import System.Environment (getArgs, getProgName)
 
 import Syntax.LexGrammar
 import Syntax.ParGrammar
-import Syntax.PrintGrammar
 import Syntax.AbsGrammar
 import Syntax.LayoutGrammar
 
@@ -20,10 +19,10 @@ type ParseFun a = [Token] -> Err a
 
 myLLexer = resolveLayout True . myLexer
 
-runFile :: ParseFun Module -> FilePath -> IO ()
+runFile :: ParseFun (Pos Module) -> FilePath -> IO ()
 runFile p f = {-putStrLn f >>-} readFile f >>= run p
 
-run :: ParseFun Module -> String -> IO ()
+run :: ParseFun (Pos Module) -> String -> IO ()
 run p s = let ts = myLLexer s in case p ts of
   Bad s -> do
     putStrLn "\nParse              Failed...\n"
