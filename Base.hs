@@ -8,7 +8,7 @@ module Base (
   module Base.Ast,
   module Base.AstImpl,
   module Base.UAst,
-  module Base.Examples,
+  --module Base.Examples,
   module Base.Symbol,
   module Base.SymbolImpl,
   module Base.ChrRep,
@@ -21,7 +21,7 @@ import Base.TypesImpl
 import Base.Ast
 import Base.AstImpl
 import Base.UAst
-import Base.Examples
+--import Base.Examples
 import Base.Symbol
 import Base.SymbolImpl
 import Base.ChrRep

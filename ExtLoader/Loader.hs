@@ -26,17 +26,17 @@ load_ext_modules :: UAst l -> IO ExtModuleEnv
 load_ext_modules = load_ext_modules_by_name . dump_module_names
 
 dump_module_names :: UAst l -> [String]
-dump_module_names (LiteralUA _) = []
-dump_module_names (StringUA _) = []
-dump_module_names (AppUA f a) = dump_module_names f ++ dump_module_names a
-dump_module_names (LambdaUA (_, _) a) = dump_module_names a
-dump_module_names (VarUA _) = []
-dump_module_names (LetUA (_, a) b) = dump_module_names a ++ dump_module_names b
-dump_module_names (RecordNilUA) = []
-dump_module_names (RecordConsUA (_, a) rest) = dump_module_names a ++ dump_module_names rest
-dump_module_names (RecordGetUA _ a) = dump_module_names a
-dump_module_names (OpenUA m a) = (m:dump_module_names a)
-dump_module_names (TypeDefUA _ a) = dump_module_names a
+dump_module_names (UAst src (LiteralUA _)) = []
+dump_module_names (UAst src (StringUA _)) = []
+dump_module_names (UAst src (AppUA f a)) = dump_module_names f ++ dump_module_names a
+dump_module_names (UAst src (LambdaUA (_, _) a)) = dump_module_names a
+dump_module_names (UAst src (VarUA _)) = []
+dump_module_names (UAst src (LetUA (_, a) b)) = dump_module_names a ++ dump_module_names b
+dump_module_names (UAst src (RecordNilUA)) = []
+dump_module_names (UAst src (RecordConsUA (_, a) rest)) = dump_module_names a ++ dump_module_names rest
+dump_module_names (UAst src (RecordGetUA _ a)) = dump_module_names a
+dump_module_names (UAst src (OpenUA m a)) = (m:dump_module_names a)
+dump_module_names (UAst src (TypeDefUA _ a)) = dump_module_names a
 
 load_ext_modules_by_name :: [String] -> IO ExtModuleEnv
 load_ext_modules_by_name modules = do

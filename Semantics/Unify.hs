@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module Semantics.Unify (unify, test_unify) where
+module Semantics.Unify (unify{-, test_unify-}) where
 import Base
 
 synchronize_quantifiers :: Poly t -> Poly t -> (Poly t, Poly t)
@@ -334,7 +334,7 @@ unify f_a a_input f_b b_input cont =
         (apply_constraint m c bb)
     (a_res, b_res) = helper constraints a_poly b_poly
   in zip_quantifiers a_res b_res cont
-
+{-
 test_unify =
   let
     remove_digits :: String -> String
@@ -362,3 +362,4 @@ test_unify =
       (\a b -> MonoP $ Mono b)
     )) == "forall a b. (a -> b) -> (b -> a) -> a -> a"
   ])
+-}
