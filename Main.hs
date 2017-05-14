@@ -31,7 +31,7 @@ run p s = let ts = myLLexer s in case p ts of
     putStrLn s
   Ok tree -> do
     --putStrLn "\nParse Successful!"
-    let uast = transModule tree
+    let uast = transModule s tree
     module_env <- load_ext_modules uast
     uast_to_io module_env uast
     --putStrLn $ uast_to_string module_env uast
