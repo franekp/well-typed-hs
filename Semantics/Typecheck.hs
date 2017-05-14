@@ -12,10 +12,10 @@ import GHC.Stack (errorWithStackTrace)
 
 newtype TypeEnv = TypeEnv [(String, Mono Type)]
 
-lookup_type :: TypeEnv -> String -> Mono Type
-lookup_type (TypeEnv []) var = error $ "unknown type variable: '" ++ var ++ "'"
-lookup_type (TypeEnv ((name, tt):t)) var =
-  if var == name then tt else lookup_type (TypeEnv t) var
+lookup_type :: SourceInfo -> TypeEnv -> String -> Mono Type
+lookup_type src (TypeEnv []) var = error $ "Unknown type variable:\n\n" ++ show_source src
+lookup_type src (TypeEnv ((name, tt):t)) var =
+  if var == name then tt else lookup_type src (TypeEnv t) var
 
 update_typeenv :: TypeEnv -> String -> Mono Type -> TypeEnv
 update_typeenv (TypeEnv li) name tt = TypeEnv $ (name, tt):li
@@ -29,7 +29,7 @@ typecheck_monotype :: TypeEnv -> UMonoType -> Mono Type
 typecheck_monotype te (UMonoType src (a `ArrowUMT` b)) =
   case (typecheck_monotype te a, typecheck_monotype te b) of
     (Mono a', Mono b') -> Mono $ a' :-> b'
-typecheck_monotype te (UMonoType src (VarUMT var)) = te `lookup_type` var
+typecheck_monotype te (UMonoType src (VarUMT var)) = lookup_type src te var
 typecheck_monotype te (UMonoType src (HasFieldUMT (field, a) rest)) =
   case (typecheck_monotype te a, typecheck_monotype te rest) of
     (Mono a', Mono rest') -> case (read field :: Mono FieldName) of
