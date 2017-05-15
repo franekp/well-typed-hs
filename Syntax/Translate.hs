@@ -220,15 +220,8 @@ transType s (Pos p q x) = UMonoType (p, q, s) $ case x of
   TRecord id [] -> VarUMT $ transPIdent s id
   TRecord id [h] -> HasFieldUMT (transFieldAnnotation s h) $ transType s $ Pos (left_end id) (right_end id) $ TRecord id []
   TRecord id (h:t) -> HasFieldUMT (transFieldAnnotation s h) $ transType s $ Pos (left_end t) q $ TRecord id t
-  TExactRecord li -> let
-      helper1 :: [Pos FieldAnnotation] -> UMonoType
-      helper1 [] = UMonoType (p, q, s) $ RecordNilUMT
-      helper1 (h:t) = UMonoType (p, q, s) $ RecordConsUMT (transFieldAnnotation s h) $ helper1 t
-      helper2 :: UMonoType -> [Pos FieldAnnotation] -> UMonoType
-      helper2 inner [] = inner
-      helper2 inner (h:t) = UMonoType (p, q, s) $ HasFieldUMT (transFieldAnnotation s h) $ helper2 inner t
-    in case helper2 (helper1 li) li of
-      UMonoType _ res -> res
+  TExactRecord [] -> RecordNilUMT
+  TExactRecord (h:t) -> RecordConsUMT (transFieldAnnotation s h) $ transType s $ Pos (left_end t) q $ TExactRecord t
   TInt  -> IntUMT
   TVar id  -> VarUMT $ transPIdent s id
 
