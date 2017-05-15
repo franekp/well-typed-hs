@@ -119,7 +119,7 @@ typecheck' me te e (UAst src (AppUA fun' arg')) =
     type_of_arg fun = case type_of fun of
       a :-> b -> Mono a
       _ ->
-        error $ "Cannot call a non-function\ndo_work :: forall a. A Type a => Ast Lo e a -> Mono (Ast Lo e)\n"
+        error $ "Cannot call a non-function\n\n"
         ++ show fun' ++ "\nType: " ++ show (type_of fun) ++ "\n"
     cont :: (A Type a, A Type b) => Ast Lo e a -> Ast Lo e b -> Poly (Ast Lo e)
     cont fun arg = case type_of fun of
@@ -164,7 +164,9 @@ typecheck' me te e (UAst src (RecordGetUA f r)) = polymap resolve_field_lookups'
         Mono record' -> case type_of record' of
           RecordT _ -> helper (show $ type_of record') record' field
           HasFieldT _ (rest :: Type rest) -> do_work $ Mono (unsafeCoerce record' :: Ast Lo e rest)
-          _ -> Mono (ErrorA $ "Not a record type: " ++ (show $ Mono $ type_of record') :: Ast Lo e field_type)
+          TypeVarT _ -> Mono (ErrorA $ "Not a record type: " ++ (show $ Mono $ type_of record') :: Ast Lo e field_type)
+          VoidT -> Mono (ErrorA $ "Not a record type: " ++ (show $ Mono $ type_of record') :: Ast Lo e field_type)
+          _ -> error $ "Not a record type\n\n" ++ show_source src ++ "\nType: " ++ show (type_of record') ++ "\n"
       helper :: forall f r. (A RecordType r, Typeable f) => String -> Ast Lo e (Record r) -> FieldName f -> Mono (Ast Lo e)
       helper record_typeinfo record field = case (type_of record :: Type (Record r)) of
         RecordT (ConsRT (f', a') rest') ->
