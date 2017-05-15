@@ -231,10 +231,7 @@ gen_constraints_assert_has_field start_var _ _ _ = []
 
 -- TODO add a check to detect infinite types
 gen_constraints :: (A Type a, A Type b) => Mono TypeVar -> Type a -> Type b -> [Constraint]
-gen_constraints start_var ((f, t) `HasFieldT` rest) a =
-  gen_constraints_assert_has_field start_var f t a ++ gen_constraints start_var rest a
-gen_constraints start_var a ((f, t) `HasFieldT` rest) =
-  gen_constraints start_var ((f, t) `HasFieldT` rest) a
+
 gen_constraints start_var (TypeVarT a) (TypeVarT b) =
   if Mono a < start_var && Mono b < start_var then [] else
   if Mono a == Mono b then [] else
@@ -249,12 +246,22 @@ gen_constraints start_var (TypeVarT a) a' = if Mono a < start_var then [] else
 gen_constraints start_var a (TypeVarT a') =
   gen_constraints start_var (TypeVarT a') a
 
+gen_constraints start_var ((f, t) `HasFieldT` rest) a =
+  gen_constraints_assert_has_field start_var f t a ++ gen_constraints start_var rest a
+gen_constraints start_var a ((f, t) `HasFieldT` rest) =
+  gen_constraints start_var ((f, t) `HasFieldT` rest) a
+
+gen_constraints start_var (RecordT ((f, t) `ConsRT` rest)) a =
+  gen_constraints_assert_has_field start_var f t a ++ gen_constraints start_var (RecordT rest) a
+gen_constraints start_var a (RecordT ((f, t) `ConsRT` rest)) =
+  gen_constraints start_var (RecordT ((f, t) `ConsRT` rest)) a
+gen_constraints start_var (RecordT NilRT) arg = []
+
 gen_constraints start_var (a :-> b) arg = case arg of
   a' :-> b' -> gen_constraints start_var a a' ++ gen_constraints start_var b b'
   _ -> []
 gen_constraints start_var (IntT) arg = []
 gen_constraints start_var (VoidT) arg = []
-gen_constraints start_var (RecordT _) arg = []
 gen_constraints start_var (BoolT) arg = []
 gen_constraints start_var (MaybeT t) arg = case arg of
   (MaybeT t') -> gen_constraints start_var t t'

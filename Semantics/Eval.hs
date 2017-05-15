@@ -44,4 +44,4 @@ polyast_to_monoast (MonoP res) = res
 forcetype_monoast :: A Type a => Mono (Ast Lo '[]) -> Ast Lo '[] a
 forcetype_monoast (Mono ast) = case cast_modulo ast of
   Just x -> x
-  Nothing -> ErrorA $ "wrong type of: " ++ show ast
+  Nothing -> error $ "wrong type of: " ++ show ast
