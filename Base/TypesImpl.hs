@@ -12,7 +12,7 @@ show_value :: forall a. A Type a => a -> String
 show_value val = case (anything :: Type a) of
   _ :-> _ -> "<func>"
   IntT -> show (val :: Int)
-  VoidT -> "<void>"
+  VoidT -> case val of {}
   TypeVarT a -> "(undefined :: " ++ show a ++ ")"
   RecordT _ -> show val
   HasFieldT _ _ -> error "this code should be unreachable"
