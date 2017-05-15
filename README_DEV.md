@@ -20,6 +20,8 @@ A Type a => a
 
 
 TODO:
+ - get rid of position information from UPolyType
+ - exact record types
  - pretty-printing for error messages
  - when a generic function (show) is applied to an ill-typed expression, program
    just assumes it's type is Void and ignores this error

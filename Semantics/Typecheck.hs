@@ -71,10 +71,10 @@ hash = foldl' (\h c -> 33*h `xor` fromEnum c) 5381
 -- FIXME: this should be a monad generating unique ids, not hashes!
 typecheck_polytype :: forall u. T u ~ Type => TypeEnv -> UPolyType
   -> (forall a. A Type a => TypeEnv -> Type a -> Poly u) -> Poly u
-typecheck_polytype te (UPolyType src (MonoUPT monotype)) cont =
+typecheck_polytype te (MonoUPT monotype) cont =
   case typecheck_monotype te monotype of
     Mono a -> cont te a
-typecheck_polytype te (UPolyType src (ForallUPT var inner)) cont = ForallP (hash var) (
+typecheck_polytype te (ForallUPT var inner) cont = ForallP (hash var) (
     ExistsPoly $ typecheck_polytype
       (update_typeenv te var $ Mono (anything :: Type a)) inner cont
     :: forall a. A Type a => ExistsPoly u a)
