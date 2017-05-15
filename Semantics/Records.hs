@@ -27,7 +27,7 @@ resolve_field_lookups' (RecordGetA field record) = do_work (resolve_field_lookup
         case cast f' of
           Just f' -> if f' == field then Mono $ RecordHeadA record else default'
           Nothing -> default'
-      RecordT NilRT -> error "no such field"
+      RecordT NilRT -> error $ "No such field: " ++ show field
 resolve_field_lookups' (a@AddA) = Mono $ helper a where
   helper :: forall e. Ast Hi e (Int -> Int -> Int) -> Ast Lo e (Int -> Int -> Int)
   helper _ = AddA

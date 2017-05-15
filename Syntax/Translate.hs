@@ -17,15 +17,12 @@ data Binding = BVar (String, UAst Lo) | BOpenModule String | BTypeDef String UMo
 failure :: Show a => a -> b
 failure x = error $ "Undefined case: " ++ show x
 
-dummyPos :: a -> Pos a
-dummyPos = Pos (-1, -1) (-1, -1)
-
 transPIdent :: (String, String) -> PIdent -> String
 transPIdent s (PIdent ((_, _), str)) = str
 
 transModule :: (String, String) -> Pos Module -> UAst Lo
-transModule s (Pos _ _ x) = case x of
-  Module defs  -> transExpr s $ dummyPos $ ELet defs $ dummyPos $ EVar (PIdent ((-1, -1), "main"))
+transModule s (Pos p q x) = case x of
+  Module defs  -> transExpr s $ Pos p q $ ELet defs $ Pos p q $ EVar (PIdent ((-1, -1), "main"))
 
 transDef :: (String, String) -> Pos Def -> Binding
 transDef s (Pos p q x) = case x of
@@ -221,6 +218,7 @@ transType :: (String, String) -> Pos Type -> UMonoType
 transType s (Pos p q x) = UMonoType (p, q, s) $ case x of
   TArrow type1 type2  -> transType s type1 `ArrowUMT` transType s type2
   TRecord id [] -> VarUMT $ transPIdent s id
+  TRecord id [h] -> HasFieldUMT (transFieldAnnotation s h) $ transType s $ Pos (left_end id) (right_end id) $ TRecord id []
   TRecord id (h:t) -> HasFieldUMT (transFieldAnnotation s h) $ transType s $ Pos (left_end t) q $ TRecord id t
   TExactRecord li -> let
       helper1 :: [Pos FieldAnnotation] -> UMonoType
