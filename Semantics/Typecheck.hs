@@ -5,8 +5,10 @@ module Semantics.Typecheck (typecheck, typecheck') where
 import Base
 import Semantics.Unify (unify)
 import Semantics.CastModulo (cast_modulo)
+
 import Data.List (foldl')
 import Data.Bits (xor)
+import Unsafe.Coerce (unsafeCoerce)
 
 import GHC.Stack (errorWithStackTrace)
 
@@ -79,7 +81,7 @@ typecheck_polytype te (ForallUPT var inner) cont = ForallP (hash var) (
       (update_typeenv te var $ Mono (anything :: Type a)) inner cont
     :: forall a. A Type a => ExistsPoly u a)
 
-lookup_var :: forall e l. SourceInfo -> Env e -> String -> Poly (Ast Hi e)
+lookup_var :: forall e l. SourceInfo -> Env e -> String -> Poly (Ast Lo e)
 lookup_var src NilEN var = error $ "Undefined variable '" ++ var ++ "'\n\n" ++ show_source src
 lookup_var src ((name, ty) `ConsEN` rest) var =
   if var == "+" then MonoP $ Mono AddA else
@@ -103,23 +105,23 @@ lookup_var src (ExtModule ((name, builtin):t) `OpenEN` rest) var =
   else
     lookup_var src (ExtModule t `OpenEN` rest) var
 
-typecheck :: ExtModuleEnv -> UAst Lo -> Poly (Ast Hi '[])
+typecheck :: ExtModuleEnv -> UAst Lo -> Poly (Ast Lo '[])
 typecheck me = typecheck' me (TypeEnv []) NilEN
 
-typecheck' :: forall e. ExtModuleEnv -> TypeEnv -> Env e -> UAst Lo -> Poly (Ast Hi e)
+typecheck' :: forall e. ExtModuleEnv -> TypeEnv -> Env e -> UAst Lo -> Poly (Ast Lo e)
 typecheck' me te e (UAst src AddUA) = MonoP $ Mono $ AddA
 typecheck' me te e (UAst src (LiteralUA val)) = MonoP $ Mono $ LiteralA val
 typecheck' me te e (UAst src (StringUA s)) = MonoP $ Mono $ BuiltinA $ Builtin s
 typecheck' me te e (UAst src (AppUA fun' arg')) =
   unify type_of_arg (typecheck' me te e fun') (Mono . type_of) (typecheck' me te e arg') cont
   where
-    type_of_arg :: A Type a => Ast Hi e a -> Mono Type
+    type_of_arg :: A Type a => Ast Lo e a -> Mono Type
     type_of_arg fun = case type_of fun of
       a :-> b -> Mono a
       _ ->
-        error $ "Cannot call a non-function\n\n"
+        error $ "Cannot call a non-function\ndo_work :: forall a. A Type a => Ast Lo e a -> Mono (Ast Lo e)\n"
         ++ show fun' ++ "\nType: " ++ show (type_of fun) ++ "\n"
-    cont :: (A Type a, A Type b) => Ast Hi e a -> Ast Hi e b -> Poly (Ast Hi e)
+    cont :: (A Type a, A Type b) => Ast Lo e a -> Ast Lo e b -> Poly (Ast Lo e)
     cont fun arg = case type_of fun of
       a :-> b -> case cast_modulo arg of
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
@@ -130,13 +132,13 @@ typecheck' me te e (UAst src (AppUA fun' arg')) =
         error $ "Cannot call a non-function\n\n"
         ++ show fun' ++ "\nType: " ++ show (type_of fun) ++ "\n"
 typecheck' me te e (UAst src ((var_name, ty) `LambdaUA` body)) =
-  (typecheck_polytype te ty helper :: Poly (Ast Hi e)) where
-    helper :: forall a l. A Type a => TypeEnv -> Type a -> Poly (Ast Hi e)
+  (typecheck_polytype te ty helper :: Poly (Ast Lo e)) where
+    helper :: forall a l. A Type a => TypeEnv -> Type a -> Poly (Ast Lo e)
     helper te' tt = polymap (MonoP . Mono . (
-        LambdaA :: forall b l. A Type b => Ast Hi (a ': e) b -> Ast Hi e (a -> b)
+        LambdaA :: forall b l. A Type b => Ast Lo (a ': e) b -> Ast Lo e (a -> b)
       )) body_ast
       where
-        body_ast :: Poly (Ast Hi (a ': e))
+        body_ast :: Poly (Ast Lo (a ': e))
         body_ast = typecheck' me te' ((var_name, tt) `ConsEN` e) body
 typecheck' me te e (UAst src (VarUA name)) = lookup_var src e name
 typecheck' me te e (UAst src ((name, val) `LetUA` expr)) =
@@ -147,22 +149,44 @@ typecheck' me te e (UAst src ((fu, au) `RecordConsUA` restu)) = result where
   fm = (read fu :: Mono FieldName)
   ap = typecheck' me te e au
   result = polymap cont_a ap
-  cont_a :: forall a. A Type a => Ast Hi e a -> Poly (Ast Hi e)
+  cont_a :: forall a. A Type a => Ast Lo e a -> Poly (Ast Lo e)
   cont_a a = polymap cont_rest restp where
-    cont_rest :: forall a. A Type a => Ast Hi e a -> Poly (Ast Hi e)
+    cont_rest :: forall a. A Type a => Ast Lo e a -> Poly (Ast Lo e)
     cont_rest rest = case fm of
       Mono f -> case type_of rest of
         RecordT _ -> MonoP $ Mono $ (f, a) `RecordConsA` rest
         _ -> error "RecordCons with non-record tail."
-typecheck' me te e (UAst src (RecordGetUA f r)) = polymap cont $ typecheck' me te e r where
-  cont :: forall r. A Type r => Ast Hi e r -> Poly (Ast Hi e)
+typecheck' me te e (UAst src (RecordGetUA f r)) = polymap resolve_field_lookups' partial_result where
+  resolve_field_lookups' :: forall a. A Type a => Ast Hi e a -> Poly (Ast Lo e)
+  resolve_field_lookups' (RecordGetA field (record :: Ast Lo e (HasField '(xxx_, field_type) yyy_))) = MonoP $ do_work $ Mono record where
+      do_work :: Mono (Ast Lo e) -> Mono (Ast Lo e)
+      do_work record = case record of
+        Mono record' -> case type_of record' of
+          RecordT _ -> helper (show $ type_of record') record' field
+          HasFieldT _ (rest :: Type rest) -> do_work $ Mono (unsafeCoerce record' :: Ast Lo e rest)
+          _ -> Mono (ErrorA $ "Not a record type: " ++ (show $ Mono $ type_of record') :: Ast Lo e field_type)
+      helper :: forall f r. (A RecordType r, Typeable f) => String -> Ast Lo e (Record r) -> FieldName f -> Mono (Ast Lo e)
+      helper record_typeinfo record field = case (type_of record :: Type (Record r)) of
+        RecordT (ConsRT (f', a') rest') ->
+          let
+            default' = helper record_typeinfo (RecordTailA record) field
+          in
+          case cast f' of
+            Just f' -> if f' == field then Mono $ RecordHeadA record else default'
+            Nothing -> default'
+        RecordT NilRT ->
+          error $ "No such field: '" ++ show field ++ "'\n\n" ++ show_source src
+          ++ "\nIn record type: " ++ record_typeinfo ++ "\n"
+  resolve_field_lookups' _ = error "unreachable"
+  partial_result = polymap cont $ typecheck' me te e r
+  cont :: forall r. A Type r => Ast Lo e r -> Poly (Ast Hi e)
   cont r_ast = case type_of r_ast of
     HasFieldT ((f' :: FieldName f'), (_ :: Type a)) (_ :: Type r') ->
       case (read f :: Mono FieldName) of
         Mono (f :: FieldName f) -> case cast f of
           Just f ->
             if f == f' then
-              MonoP $ Mono $ (RecordGetA f' :: Ast Hi e (HasField '(f', a) r') -> Ast Hi e a) r_ast
+              MonoP $ Mono $ (RecordGetA f' :: Ast Lo e (HasField '(f', a) r') -> Ast Hi e a) r_ast
             else
               error "field name mismatch"
           Nothing ->

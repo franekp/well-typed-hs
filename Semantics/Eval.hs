@@ -34,10 +34,10 @@ eval_ast' s (BuiltinA (Builtin a)) = a
 eval_monoast :: A Type a => Mono (Ast Lo '[]) -> a
 eval_monoast = eval_ast . forcetype_monoast
 
-polyast_to_monoast :: Poly (Ast Hi '[]) -> Mono (Ast Hi '[])
+polyast_to_monoast :: Poly (Ast Lo '[]) -> Mono (Ast Lo '[])
 polyast_to_monoast (ForallP _ exists_poly) =
   case exists_poly of
-    (ExistsPoly poly :: ExistsPoly (Ast Hi '[]) Void) ->
+    (ExistsPoly poly :: ExistsPoly (Ast Lo '[]) Void) ->
       polyast_to_monoast poly
 polyast_to_monoast (MonoP res) = res
 

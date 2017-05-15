@@ -21,7 +21,7 @@ data Env :: [*] -> * where
   ConsEN :: A Type h =>
     (String, Type h) -> Env t -> Env (h ': t)
   LetEN ::
-    (String, Poly (Ast Hi e)) -> Env e -> Env e
+    (String, Poly (Ast Lo e)) -> Env e -> Env e
   OpenEN ::
     ExtModule -> Env e -> Env e
 
@@ -60,7 +60,7 @@ data Ast :: Level -> [*] -> * -> * where
   RecordConsA :: (A Type a, A FieldName f, A RecordType t) =>
     (FieldName f, Ast l e a) -> Ast l e (Record t) -> Ast l e (Record ('(f, a) ': t))
   RecordGetA :: (A Type a, A FieldName f, A Type r) =>
-    FieldName f -> Ast Hi e (HasField '(f, a) r) -> Ast Hi e a
+    FieldName f -> Ast Lo e (HasField '(f, a) r) -> Ast Hi e a
   BuiltinA :: Builtin a -> Ast l e a
 
 type instance T (Ast l e) = Type
