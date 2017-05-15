@@ -13,7 +13,7 @@ import GHC.Stack (errorWithStackTrace)
 newtype TypeEnv = TypeEnv [(String, Mono Type)]
 
 lookup_type :: SourceInfo -> TypeEnv -> String -> Mono Type
-lookup_type src (TypeEnv []) var = error $ "Unknown type variable:\n\n" ++ show_source src
+lookup_type src (TypeEnv []) var = error $ "Undefined type\n\n" ++ show_source src
 lookup_type src (TypeEnv ((name, tt):t)) var =
   if var == name then tt else lookup_type src (TypeEnv t) var
 
@@ -79,16 +79,15 @@ typecheck_polytype te (UPolyType src (ForallUPT var inner)) cont = ForallP (hash
       (update_typeenv te var $ Mono (anything :: Type a)) inner cont
     :: forall a. A Type a => ExistsPoly u a)
 
-lookup_var :: forall e l. Env e -> String -> Poly (Ast Hi e)
-lookup_var NilEN var = MonoP $ Mono
-  (ErrorA $ "unknown variable: '" ++ var ++ "'" :: Ast Hi e Void)
-lookup_var ((name, ty) `ConsEN` rest) var =
+lookup_var :: forall e l. SourceInfo -> Env e -> String -> Poly (Ast Hi e)
+lookup_var src NilEN var = error $ "Undefined variable '" ++ var ++ "'\n\n" ++ show_source src
+lookup_var src ((name, ty) `ConsEN` rest) var =
   if var == "+" then MonoP $ Mono AddA else
   if var == name then
     MonoP $ Mono VarA
   else
-    polymap (MonoP . Mono . LiftA) $ lookup_var rest var
-lookup_var ((name, val) `LetEN` rest) var =
+    polymap (MonoP . Mono . LiftA) $ lookup_var src rest var
+lookup_var src ((name, val) `LetEN` rest) var =
   if var == name then
     val
     -- FIXME: here should be generating fresh ids for quantifiers inside val
@@ -96,13 +95,13 @@ lookup_var ((name, val) `LetEN` rest) var =
     -- "let apply = \a f -> f a in apply apply (\app -> app 3 unary_minus)"
     -- should work
   else
-    lookup_var rest var
-lookup_var (ExtModule [] `OpenEN` rest) var = lookup_var rest var
-lookup_var (ExtModule ((name, builtin):t) `OpenEN` rest) var =
+    lookup_var src rest var
+lookup_var src (ExtModule [] `OpenEN` rest) var = lookup_var src rest var
+lookup_var src (ExtModule ((name, builtin):t) `OpenEN` rest) var =
   if name == var then
     polymap (MonoP . Mono . BuiltinA) builtin
   else
-    lookup_var (ExtModule t `OpenEN` rest) var
+    lookup_var src (ExtModule t `OpenEN` rest) var
 
 typecheck :: ExtModuleEnv -> UAst Lo -> Poly (Ast Hi '[])
 typecheck me = typecheck' me (TypeEnv []) NilEN
@@ -117,16 +116,19 @@ typecheck' me te e (UAst src (AppUA fun' arg')) =
     type_of_arg :: A Type a => Ast Hi e a -> Mono Type
     type_of_arg fun = case type_of fun of
       a :-> b -> Mono a
-      _ -> error $ show fun ++ " :: " ++ show (type_of fun) ++ " is not a function taking " ++ show (arg')
+      _ ->
+        error $ "Cannot call a non-function\n\n"
+        ++ show fun' ++ "\nType: " ++ show (type_of fun) ++ "\n"
     cont :: (A Type a, A Type b) => Ast Hi e a -> Ast Hi e b -> Poly (Ast Hi e)
     cont fun arg = case type_of fun of
       a :-> b -> case cast_modulo arg of
         Just correct_arg -> MonoP $ Mono $ fun `AppA` correct_arg
-        Nothing -> error $ "Type mismatch:\n\n"
-          ++ show fun' ++ "\n :: " ++ show (type_of fun)
-          ++"\n\n" ++ show arg' ++ "\n :: " ++ show (type_of arg) ++ "\n"
-      _ -> error $ "This expression cannot be used as a function:\n"
-        ++ show fun' ++ "\n :: " ++ show (type_of fun)
+        Nothing -> error $ "Type mismatch\n\n"
+          ++ show fun' ++ "\nFunction type: " ++ show (type_of fun)
+          ++"\n\n" ++ show arg' ++ "\nArgument type: " ++ show (type_of arg) ++ "\n"
+      _ ->
+        error $ "Cannot call a non-function\n\n"
+        ++ show fun' ++ "\nType: " ++ show (type_of fun) ++ "\n"
 typecheck' me te e (UAst src ((var_name, ty) `LambdaUA` body)) =
   (typecheck_polytype te ty helper :: Poly (Ast Hi e)) where
     helper :: forall a l. A Type a => TypeEnv -> Type a -> Poly (Ast Hi e)
@@ -136,7 +138,7 @@ typecheck' me te e (UAst src ((var_name, ty) `LambdaUA` body)) =
       where
         body_ast :: Poly (Ast Hi (a ': e))
         body_ast = typecheck' me te' ((var_name, tt) `ConsEN` e) body
-typecheck' me te e (UAst src (VarUA name)) = lookup_var e name
+typecheck' me te e (UAst src (VarUA name)) = lookup_var src e name
 typecheck' me te e (UAst src ((name, val) `LetUA` expr)) =
   typecheck' me te ((name, (typecheck' me te e val)) `LetEN` e) expr
 typecheck' me te e (UAst src RecordNilUA) = MonoP $ Mono $ RecordNilA
