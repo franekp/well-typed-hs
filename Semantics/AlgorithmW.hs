@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "../settings.hs"
 
-module AlgorithmW.UMonoTypeInference (infer) where
+module Semantics.AlgorithmW (run_algorithm_w) where
 
 import Control.Monad.Trans.State
 import Data.List (nub, (\\))
@@ -9,6 +9,9 @@ import Data.List (nub, (\\))
 import Base hiding (Env)
 
 --import Debug.Trace (trace)
+
+run_algorithm_w :: ExtModuleTypeEnv -> UAst -> UAst
+run_algorithm_w env a = fst $ runTCM env $ infer a
 
 type Env = [(String, UPolyType)]
 
