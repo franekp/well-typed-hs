@@ -77,3 +77,5 @@ instance Show UMonoType where
   show (UMonoType src _) = show_source src
 
 data UPolyType = UPolyType [String] UMonoType
+
+newtype ExtModuleTypeEnv = ExtModuleTypeEnv [(String, [(String, UPolyType)])]
