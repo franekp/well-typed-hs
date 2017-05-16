@@ -15,7 +15,8 @@ type Env = [(String, UPolyType)]
 data TCState = TCState {
     env :: [(String, UPolyType)],
     stack :: [UMonoType],
-    last_var :: Int
+    last_var :: Int,
+    module_env :: ExtModuleTypeEnv
   }
 
 type TCM = State TCState
@@ -48,10 +49,12 @@ free_vars_env env = nub $ helper env where
   helper [] = []
   helper ((_, scheme):t) = free_vars_scheme scheme ++ helper t
 
-initTCState = TCState {env = [], stack = [], last_var = 0}
+initTCState module_env = TCState {
+    env = [], stack = [], last_var = 0, module_env = module_env
+  }
 
-runTCM :: TCM a -> a
-runTCM = flip evalState initTCState
+runTCM :: ExtModuleTypeEnv -> TCM a -> a
+runTCM module_env = flip evalState $ initTCState module_env
 
 new_var :: SourceInfo -> String -> TCM UMonoType
 new_var src prefix = do
@@ -131,6 +134,16 @@ lookup_binding :: String -> TCM UPolyType
 lookup_binding a = do
   s <- get
   return $ lookup_env a $ env s
+
+lookup_module :: String -> TCM [(String, UPolyType)]
+lookup_module name = let
+    helper :: [(String, [(String, UPolyType)])] -> [(String, UPolyType)]
+    helper [] = error "Unreachable code"
+    helper ((n, m):t) = if n == name then m else helper t
+  in do
+    s <- get
+    let ExtModuleTypeEnv e = module_env s
+    return $ helper e
 
 instantiate :: UPolyType -> TCM UMonoType
 instantiate (UPolyType vars t@(UMonoType src tt)) = do
@@ -300,3 +313,10 @@ infer (UAst src ast) = (>>= (\(a, tt) -> return (UAst src a, tt))) $ case ast of
     (UAst _ b', type_b) <- infer b
     pop_binding
     return (b', type_b)
+  RecordNilUA -> return $ (RecordNilUA, UMonoType src $ RecordNilUMT)
+  OpenUA m e -> do
+    mod_ <- lookup_module m
+    mapM_ push_binding mod_
+    (UAst _ e', type_e) <- infer e
+    mapM_ (const pop_binding) mod_
+    return (e', type_e)
