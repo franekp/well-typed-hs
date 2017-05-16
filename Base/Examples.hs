@@ -38,7 +38,7 @@ polytype_examples = [
     :: forall a. A Type a => ExistsPoly Type a)
   ]
 
-uast_func_examples :: [UAst Lo]
+uast_func_examples :: [UAst]
 uast_func_examples = [
     -- (|>)
     LambdaUA ("a", ForallUPT "a" $ MonoUPT $ VarUMT "a") $
@@ -68,7 +68,7 @@ uast_func_examples = [
     ) $ VarUA "g" `AppUA` (VarUA "f" `AppUA` VarUA "x")
   ]
 
-uast_int_examples :: [UAst Lo]
+uast_int_examples :: [UAst]
 uast_int_examples = [
     -- 8
     (uast_func_examples !! 0)
@@ -80,7 +80,7 @@ uast_int_examples = [
     )
   ]
 
-uast_record_examples :: [UAst Lo]
+uast_record_examples :: [UAst]
 uast_record_examples = [
     ("A", LiteralUA 5) `RecordConsUA` ("b", LiteralUA 2) `RecordConsUA`
     ("fun", AddUA `AppUA` LiteralUA 3) `RecordConsUA` RecordNilUA

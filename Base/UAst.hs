@@ -33,29 +33,24 @@ show_source' ((line1, col1), (line2, col2), (_, src)) =
     show_block =
       concat $ drop line1 $ take line2 $ "":lines src
 
-
-type family UArgumentType (l :: Level) :: *
-type instance UArgumentType Hi = Maybe UPolyType
-type instance UArgumentType Lo = UPolyType
-
-data UAstImpl (l :: Level) = AddUA
+data UAstImpl = AddUA
   | LiteralUA Int
   | StringUA String
-  | AppUA (UAst l) (UAst l)
-  | LambdaUA (String, UArgumentType l) (UAst l)
+  | AppUA UAst UAst
+  | LambdaUA (String, UPolyType) UAst
   | VarUA String
-  | LetUA (String, UAst l) (UAst l)
+  | LetUA (String, UAst) UAst
   | RecordNilUA
-  | RecordConsUA (String, UAst l) (UAst l)
-  | RecordGetUA String (UAst l)
-  | OpenUA String (UAst l)
-  | TypeDefUA (String, UMonoType) (UAst l)
-deriving instance Eq (UArgumentType l) => Eq (UAstImpl l)
+  | RecordConsUA (String, UAst) UAst
+  | RecordGetUA String UAst
+  | OpenUA String UAst
+  | TypeDefUA (String, UMonoType) UAst
+  deriving Eq
 
-data UAst (l :: Level) = UAst SourceInfo (UAstImpl l)
-instance Show (UAst l) where
+data UAst = UAst SourceInfo UAstImpl
+  deriving Eq
+instance Show UAst where
   show (UAst src _) = show_source src
-deriving instance Eq (UArgumentType l) => Eq (UAst l)
 
 data UMonoTypeImpl = ArrowUMT UMonoType UMonoType
   | IntUMT

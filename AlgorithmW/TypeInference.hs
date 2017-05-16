@@ -265,7 +265,7 @@ bind_var u tt@(UMonoType src t) =
     else
       substitute u tt
 
-infer :: UAst Hi -> TCM (UAst Lo, UMonoType)
+infer :: UAst -> TCM (UAst, UMonoType)
 infer (UAst src ast) = (>>= (\(a, tt) -> return (UAst src a, tt))) $ case ast of
   LiteralUA x -> return $ (LiteralUA x, UMonoType src $ IntUMT)
   StringUA x -> return $ (StringUA x, UMonoType src $ ListUMT $ UMonoType src $ CharUMT)
@@ -273,16 +273,7 @@ infer (UAst src ast) = (>>= (\(a, tt) -> return (UAst src a, tt))) $ case ast of
     scheme <- lookup_binding n
     (UMonoType _ ty) <- instantiate scheme
     return (VarUA n, UMonoType src ty)
-  LambdaUA (n, Nothing) e -> do
-    arg_type <- new_var src n
-    push_type arg_type
-    push_binding (n, UPolyType [] arg_type)
-    (e', result_type) <- infer e
-    arg_type <- pop_type
-    pop_binding
-    arg_type_gen <- generalize arg_type
-    return (LambdaUA (n, arg_type_gen) e', UMonoType src $ ArrowUMT arg_type result_type)
-  LambdaUA (n, Just arg_t) e -> do
+  LambdaUA (n, arg_t) e -> do
     arg_type <- instantiate arg_t
     push_type arg_type
     push_binding (n, UPolyType [] arg_type)

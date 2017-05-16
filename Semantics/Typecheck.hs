@@ -105,10 +105,10 @@ lookup_var src (ExtModule ((name, builtin):t) `OpenEN` rest) var =
   else
     lookup_var src (ExtModule t `OpenEN` rest) var
 
-typecheck :: ExtModuleEnv -> UAst Lo -> Poly (Ast Lo '[])
+typecheck :: ExtModuleEnv -> UAst -> Poly (Ast Lo '[])
 typecheck me = typecheck' me (TypeEnv []) NilEN
 
-typecheck' :: forall e. ExtModuleEnv -> TypeEnv -> Env e -> UAst Lo -> Poly (Ast Lo e)
+typecheck' :: forall e. ExtModuleEnv -> TypeEnv -> Env e -> UAst -> Poly (Ast Lo e)
 typecheck' me te e (UAst src AddUA) = MonoP $ Mono $ AddA
 typecheck' me te e (UAst src (LiteralUA val)) = MonoP $ Mono $ LiteralA val
 typecheck' me te e (UAst src (StringUA s)) = MonoP $ Mono $ BuiltinA $ Builtin s

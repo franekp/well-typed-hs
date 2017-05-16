@@ -22,10 +22,10 @@ import Control.Monad.IO.Class
 
 import Base
 
-load_ext_modules :: UAst l -> IO ExtModuleEnv
+load_ext_modules :: UAst -> IO ExtModuleEnv
 load_ext_modules = load_ext_modules_by_name . dump_module_names
 
-dump_module_names :: UAst l -> [String]
+dump_module_names :: UAst -> [String]
 dump_module_names (UAst src (LiteralUA _)) = []
 dump_module_names (UAst src (StringUA _)) = []
 dump_module_names (UAst src (AppUA f a)) = dump_module_names f ++ dump_module_names a

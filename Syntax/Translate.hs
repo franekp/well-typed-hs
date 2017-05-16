@@ -12,7 +12,7 @@ import Base.UAst
 
 data Result
 
-data Binding = BVar (String, UAst Lo) | BOpenModule String | BTypeDef String UMonoType
+data Binding = BVar (String, UAst) | BOpenModule String | BTypeDef String UMonoType
 
 failure :: Show a => a -> b
 failure x = error $ "Undefined case: " ++ show x
@@ -20,7 +20,7 @@ failure x = error $ "Undefined case: " ++ show x
 transPIdent :: (String, String) -> PIdent -> String
 transPIdent s (PIdent ((_, _), str)) = str
 
-transModule :: (String, String) -> Pos Module -> UAst Lo
+transModule :: (String, String) -> Pos Module -> UAst
 transModule s (Pos p q x) = case x of
   Module defs  -> transExpr s $ Pos p q $ ELet defs $ Pos p q $ EVar (PIdent ((-1, -1), "main"))
 
@@ -43,7 +43,7 @@ transAnyOp s (Pos p q x) = case x of
   AnyExpOp (RExpOp ((_, _), str)) -> str
   AnyComposeOp (RComposeOp ((_, _), str)) -> str
 
-transExpr :: (String, String) -> Pos Expr -> UAst Lo
+transExpr :: (String, String) -> Pos Expr -> UAst
 transExpr s (Pos p q x) = UAst (p, q, s) $ case x of
   ELet [] expr -> case transExpr s expr of
     UAst _ res -> res
@@ -192,7 +192,7 @@ transExpr s (Pos p q x) = UAst (p, q, s) $ case x of
   EInt (PInteger ((_, _), n)) -> LiteralUA (read n :: Int)
   EString (PString ((_, _), str)) -> StringUA $ Syntax.LexGrammar.unescapeInitTail str
 
-transListItem :: (String, String) -> Pos ListItem -> UAst Lo
+transListItem :: (String, String) -> Pos ListItem -> UAst
 transListItem s (Pos _ _ x) = case x of
   ListItem expr  -> transExpr s expr
 

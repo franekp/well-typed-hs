@@ -47,7 +47,7 @@ test_typecheck =
 
 test_typecheck_records =
   let
-    f :: UAst Lo -> String
+    f :: UAst -> String
     f uast = case resolve_field_lookups $ polyast_to_monoast $ typecheck uast of
         Mono ast -> show $ type_of ast
   in map f uast_record_examples == [
@@ -67,7 +67,7 @@ test_eval =
 
 test_eval_records =
   let
-    f :: UAst Lo -> String
+    f :: UAst -> String
     f uast = case resolve_field_lookups $ polyast_to_monoast $ typecheck uast of
         Mono ast -> show_value $ eval_ast ast
   in map f uast_record_examples == [
@@ -78,7 +78,7 @@ test_eval_records =
 
 main =
   let
-    f :: UAst Lo -> String
+    f :: UAst -> String
     f uast = case resolve_field_lookups $ polyast_to_monoast $ typecheck uast of
         Mono ast -> (show_value $ eval_ast ast) ++ " :: " ++ (show $ type_of ast)
     f' uast = show $ typeof_polymap $ typecheck uast

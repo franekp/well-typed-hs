@@ -6,9 +6,9 @@ AST processing pipeline:
 
 SyntaxAst
 ---[Syntax.prepare]--->
-UAst Hi
+UAst
 ---[TypeSystem.infer]--->
-UAst Lo
+UAst
 ---[Semantics.Typecheck.typecheck]--->
 Poly (Ast Hi '[])
 ---[Semantics.Eval.polyast_to_monoast]
