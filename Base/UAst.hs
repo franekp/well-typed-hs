@@ -50,10 +50,12 @@ data UAstImpl (l :: Level) = AddUA
   | RecordGetUA String (UAst l)
   | OpenUA String (UAst l)
   | TypeDefUA (String, UMonoType) (UAst l)
+deriving instance Eq (UArgumentType l) => Eq (UAstImpl l)
 
 data UAst (l :: Level) = UAst SourceInfo (UAstImpl l)
 instance Show (UAst l) where
   show (UAst src _) = show_source src
+deriving instance Eq (UArgumentType l) => Eq (UAst l)
 
 data UMonoTypeImpl = ArrowUMT UMonoType UMonoType
   | IntUMT
@@ -71,11 +73,14 @@ data UMonoTypeImpl = ArrowUMT UMonoType UMonoType
   | UnitUMT
   | PairUMT UMonoType UMonoType
   | TripleUMT UMonoType UMonoType UMonoType
+  deriving Eq
 
 data UMonoType = UMonoType SourceInfo UMonoTypeImpl
+  deriving Eq
 instance Show UMonoType where
   show (UMonoType src _) = show_source src
 
 data UPolyType = UPolyType [String] UMonoType
+  deriving Eq
 
 newtype ExtModuleTypeEnv = ExtModuleTypeEnv [(String, [(String, UPolyType)])]
