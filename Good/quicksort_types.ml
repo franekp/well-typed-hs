@@ -1,7 +1,7 @@
 open StdLib
 
 quicksort = let
-  mkQuicksort (quicksort : q. q) (li : li. li) =
+  mkQuicksort (quicksort : [Int] -> [Int]) (li : [Int]) =
     if null li then [] else
     let
       lesser = tail li |> filter (< head li)
