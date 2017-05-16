@@ -204,6 +204,9 @@ transArg :: (String, String) -> Pos Arg -> (String, UPolyType)
 transArg s (Pos p q x) = case x of
   Arg id typescheme -> (transPIdent s id, transTypeScheme s typescheme)
   ArgUnit -> ("__unit__", UPolyType [] $ UMonoType (p, q, s) $ UnitUMT)
+  ArgNoType id -> let
+      ident = transPIdent s id
+    in (ident, UPolyType [ident] $ UMonoType (p, q, s) $ VarUMT ident)
 
 transTypeV :: (String, String) -> Pos TypeV -> String
 transTypeV s (Pos _ _ x) = case x of

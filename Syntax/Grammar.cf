@@ -122,6 +122,7 @@ RecordItem. RecordItem ::= Def ;
 
 separator Arg "" ;
 Arg. Arg ::= "(" PIdent ":" TypeScheme ")" ;
+ArgNoType. Arg ::= PIdent ;
 ArgUnit. Arg ::= "(" ")" ;
 
 -- definitions
