@@ -12,7 +12,9 @@ import Syntax.ErrM
 
 import Syntax.Translate (transModule)
 import Semantics.Exec (uast_to_string, uast_to_io)
+import Semantics.AlgorithmW (run_algorithm_w)
 import ExtLoader.Loader (load_ext_modules)
+import ExtLoader.GetTypes (get_ext_module_types)
 import Base (ExtModuleEnv)
 
 type ParseFun a = [Token] -> Err a
@@ -33,7 +35,9 @@ run p filename s = let ts = myLLexer s in case p ts of
     --putStrLn "\nParse Successful!"
     let uast = transModule (filename, s) tree
     module_env <- load_ext_modules uast
-    uast_to_io module_env uast
+    let module_type_env = get_ext_module_types module_env
+    let uast' = run_algorithm_w module_type_env uast
+    uast_to_io module_env uast'
     --putStrLn $ uast_to_string module_env uast
 
 main :: IO ()

@@ -304,13 +304,13 @@ infer (UAst src ast) = (>>= (\(a, tt) -> return (UAst src a, tt))) $ case ast of
     (a', type_a) <- infer a
     scheme_a <- generalize type_a
     push_binding (n, scheme_a)
-    (UAst _ b', type_b) <- infer b
+    (b', type_b) <- infer b
     pop_binding
-    return (b', type_b)
+    return (LetUA (n, a') b', type_b)
   RecordNilUA -> return $ (RecordNilUA, UMonoType src $ RecordNilUMT)
   OpenUA m e -> do
     mod_ <- lookup_module m
     mapM_ push_binding mod_
-    (UAst _ e', type_e) <- infer e
+    (e', type_e) <- infer e
     mapM_ (const pop_binding) mod_
-    return (e', type_e)
+    return (OpenUA m e', type_e)
