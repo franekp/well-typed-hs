@@ -76,4 +76,4 @@ data UMonoType = UMonoType SourceInfo UMonoTypeImpl
 instance Show UMonoType where
   show (UMonoType src _) = show_source src
 
-data UPolyType = ForallUPT String UPolyType | MonoUPT UMonoType
+data UPolyType = UPolyType [String] UMonoType

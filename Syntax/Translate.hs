@@ -176,7 +176,7 @@ transExpr s (Pos p q x) = UAst (p, q, s) $ case x of
     in
       (lambdaUA (
         "__record__",
-        ForallUPT "r" $ ForallUPT "f" $ MonoUPT
+        UPolyType ["r", "f"]
           $ UMonoType (p, q, s) $ HasFieldUMT (transPIdent s id, UMonoType (p, q, s) $ VarUMT "f")
             $ UMonoType (p, q, s) $ VarUMT "r"
       ) $ UAst (p, q, s) $ RecordGetUA (transPIdent s id)
@@ -203,7 +203,7 @@ transRecordItem s (Pos _ _ x) = case x of
 transArg :: (String, String) -> Pos Arg -> (String, UPolyType)
 transArg s (Pos p q x) = case x of
   Arg id typescheme -> (transPIdent s id, transTypeScheme s typescheme)
-  ArgUnit -> ("__unit__", MonoUPT $ UMonoType (p, q, s) $ UnitUMT)
+  ArgUnit -> ("__unit__", UPolyType [] $ UMonoType (p, q, s) $ UnitUMT)
 
 transTypeV :: (String, String) -> Pos TypeV -> String
 transTypeV s (Pos _ _ x) = case x of
@@ -211,8 +211,7 @@ transTypeV s (Pos _ _ x) = case x of
 
 transTypeScheme :: (String, String) -> Pos TypeScheme -> UPolyType
 transTypeScheme s (Pos p q x) = case x of
-  TypeScheme [] type' -> MonoUPT $ transType s type'
-  TypeScheme (h:t) type' -> ForallUPT (transTypeV s h) $ transTypeScheme s $ Pos (left_end t) q $ TypeScheme t type'
+  TypeScheme li type' -> UPolyType (map (transTypeV s) li) $ transType s type'
 
 transType :: (String, String) -> Pos Type -> UMonoType
 transType s (Pos p q x) = UMonoType (p, q, s) $ case x of
