@@ -10,3 +10,4 @@ if [ $(hostname) == "students" ] ; then
 fi
 which ghc
 ghc -package ghc -XCPP -DGHC_LIBDIR="\"$(ghc --print-libdir)\"" --make Main.hs
+mv Main interpreter
