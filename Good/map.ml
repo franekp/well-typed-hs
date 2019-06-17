@@ -1,17 +1,17 @@
 open StdLib
 
-mkMap map111 = fun f li ->
-  if null li then [] else f (head li) `cons` map111 f (tail li)
+mkMap map = fun f li ->
+  if null li then [] else f (head li) `cons` map f (tail li)
 
-map111 = fix mkMap
+map = fix mkMap
 
-mkConcat concat111 li =
-  if null li then [] else head li ++ (concat111 $ tail li)
+mkConcat concat li =
+  if null li then [] else head li ++ (concat $ tail li)
 
-concat111 = fix mkConcat
+concat = fix mkConcat
 
 functions = [(+1), (+3), ( * 3)]
 
 main = begin
-    putStrLn $ show $ map111 (fun f -> f 2) functions
+    putStrLn $ concat $ map (fun f -> show (f 2) ++ ", ") functions
   end

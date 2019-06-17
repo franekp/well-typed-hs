@@ -1,7 +1,7 @@
 open StdLib
 
 fib = let
-    mkFib (fib : [Int]) = zipWith (+) ([1] ++ fib) ([0, 1] ++ fib)
+    mkFib fib = zipWith (+) ([1] ++ fib) ([0, 1] ++ fib)
   in fix mkFib
 fib_prefix = take 10 fib
 
